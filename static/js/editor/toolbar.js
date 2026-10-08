@@ -15,6 +15,10 @@ window.EditorToolbar = {
                 const hidden = dd.classList.contains('md-editor-dropdown-hidden');
                 closeAll();
                 if (hidden) {
+                    const r = btn.getBoundingClientRect();
+                    dd.style.position = 'fixed';
+                    dd.style.left = r.left + 'px';
+                    dd.style.top = (r.bottom + 4) + 'px';
                     dd.classList.remove('md-editor-dropdown-hidden');
                     btn.classList.add('md-editor-toolbar-active');
                 }
@@ -45,6 +49,9 @@ window.EditorToolbar = {
             else if (e.key === 'u' || e.key === 'U') { e.preventDefault(); U.surround(ta, '<u>', '</u>'); refresh(); }
         });
 
+        window.addEventListener('scroll', closeAll, true);
+        window.addEventListener('resize', closeAll);
+
         return { closeAll };
     },
 };
@@ -74,13 +81,17 @@ function handleAction(action, el, ta, refresh) {
             ta.focus();
             refresh();
         });
-    } else if (action === 'image-link' || action === 'image-upload') {
+    } else if (action === 'image-link') {
         window.showPrompt('图片地址', 'https://', { title: '插入图片' }).then(function (url) {
             if (url) {
                 U.insertAt(ta, '![](' + url + ')');
                 refresh();
             }
         });
+    } else if (action === 'image-upload') {
+        if (window.EditorUpload) {
+            window.EditorUpload.pickAndUpload(ta, refresh);
+        }
     } else if (action === 'undo') {
         ta.focus();
         try { document.execCommand('undo'); } catch (e) {}

@@ -102,6 +102,7 @@
   window.__DOMAIN__ = {{ (domain_name or '') | dump | safe }};
   window.__DISCUSS__ = {{ (discuss_name or '') | dump | safe }};
   window.__CURRENT_UID__ = {{ (current_user.id if current_user and current_user.id else '') | dump | safe }};
+  window.__UNREAD_COUNT__ = {{ (nav.unread_count if nav and nav.unread_count else 0) | dump | safe }};
   window.__CAN_PIN__ = {{ 'true' if can_pin else 'false' }};
   window.__CAN_MUTE__ = {{ 'true' if can_mute else 'false' }};
   window.__CAN_DELETE_ANY__ = {{ 'true' if can_delete_any else 'false' }};
@@ -125,6 +126,7 @@
 <script src="/static/js/core/dom.js"></script>
 <script src="/static/js/core/modal.js"></script>
 <script src="/static/js/core/notify.js"></script>
+<script src="/static/js/unread-notify.js"></script>
 <script src="/static/js/core/menu.js"></script>
 
 <!-- 通用 -->
@@ -135,6 +137,7 @@
 <script src="/static/js/editor/utils.js"></script>
 <script src="/static/js/editor/table.js"></script>
 <script src="/static/js/editor/toolbar.js"></script>
+<script src="/static/js/editor/upload-inline.js"></script>
 <script src="/static/js/editor/preview.js"></script>
 <script src="/static/js/editor/resize.js"></script>
 <script src="/static/js/editor/index.js"></script>
@@ -149,5 +152,6 @@
 <!-- 私信 + 上传 -->
 <script src="/static/js/dm.js"></script>
 <script src="/static/js/upload.js"></script>
+<script src="/static/js/copy-link.js"></script>
 </body>
 </html>

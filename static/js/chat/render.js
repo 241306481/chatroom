@@ -3,6 +3,65 @@
 // ============================================================
 (function () {
 
+    // ============================================================
+    // 新消息提示条
+    // ============================================================
+    let _newMsgCount = 0;
+    let _banner = null;
+
+    function isAtBottom() {
+        const l = document.getElementById('messageList');
+        if (!l) return true;
+        // column-reverse：scrollTop = 0 是底部，向上滚为负值
+        return Math.abs(l.scrollTop) <= 60;
+    }
+
+    function ensureBanner() {
+        if (_banner && document.body.contains(_banner)) return _banner;
+        const host = document.querySelector('.message-input-area')
+                  || document.querySelector('.message-area');
+        if (!host) return null;
+        _banner = document.createElement('button');
+        _banner.type = 'button';
+        _banner.className = 'new-msg-banner';
+        _banner.hidden = true;
+        _banner.addEventListener('click', () => {
+            const l = document.getElementById('messageList');
+            if (l) l.scrollTop = 0;
+            hideNewMsgBanner();
+        });
+        host.appendChild(_banner);
+        return _banner;
+    }
+
+    function showNewMsgBanner(inc) {
+        const b = ensureBanner();
+        if (!b) return;
+        _newMsgCount += (inc || 1);
+        b.innerHTML = '<span class="arrow">↓</span> ' + _newMsgCount + ' 条新消息';
+        b.hidden = false;
+    }
+
+    function hideNewMsgBanner() {
+        _newMsgCount = 0;
+        if (_banner) _banner.hidden = true;
+    }
+
+    // 用户滚回底部时自动隐藏
+    function bindBottomWatcher() {
+        const l = document.getElementById('messageList');
+        if (!l || l._bannerBound) return;
+        l._bannerBound = true;
+        l.addEventListener('scroll', () => {
+            if (isAtBottom()) hideNewMsgBanner();
+        }, { passive: true });
+    }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', bindBottomWatcher);
+    } else {
+        bindBottomWatcher();
+    }
+
     // ---------- 讨论侧栏 ----------
     function addDiscussionToSidebar(id, title) {
         const sidebar = document.querySelector('.sidebar-discussions');
@@ -51,7 +110,8 @@
         const list = document.getElementById('messageList');
         if (!list) return;
 
-        const empty = list.querySelector('.empty');
+        const inner = list.querySelector('.message-list-inner') || list;
+        const empty = inner.querySelector('.empty');
         if (empty) empty.remove();
 
         const div = document.createElement('div');
@@ -99,7 +159,7 @@
                 <div class="msg-content" data-raw="${escAttr(msg.content)}">${window.renderContent(msg.content)}</div>
                 <div class="msg-reactions" id="reactions-${mid}"></div>
             </div>`;
-        list.appendChild(div);
+        inner.insertBefore(div, inner.firstElementChild);
     }
 
     function removeMessage(id) {
@@ -222,7 +282,7 @@
     // ---------- 工具 ----------
     function scrollBottom() {
         const l = document.getElementById('messageList');
-        if (l) l.scrollTop = l.scrollHeight;
+        if (l) l.scrollTop = 0;
     }
 
     function showToast(m) {
@@ -247,5 +307,8 @@
         initReactions,
         scrollBottom,
         showToast,
+        isAtBottom,
+        showNewMsgBanner,
+        hideNewMsgBanner,
     };
 })();

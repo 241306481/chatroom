@@ -5,7 +5,7 @@
   box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.08); }
 .md-editor-toolbar-wrapper { border-bottom: 1px solid #eee; background: #fafafa; }
 .md-editor-toolbar { display: flex; align-items: center; justify-content: space-between;
-  padding: 2px 6px; flex-wrap: wrap; gap: 2px; }
+  padding: 2px 6px; flex-wrap: wrap; gap: 2px; position: relative; }
 .md-editor-toolbar-left,
 .md-editor-toolbar-right { display: inline-flex; align-items: center;
   gap: 1px; flex-wrap: wrap; }
@@ -17,7 +17,7 @@
 .md-editor-toolbar-item.md-editor-toolbar-active { background: #e6f7ff; color: #1890ff; }
 .md-editor-icon { width: 18px; height: 18px; display: block; }
 .md-editor-divider { width: 1px; height: 18px; background: #e0e0e0; margin: 0 4px; }
-.md-editor-dropdown { position: absolute; z-index: 1000; }
+.md-editor-dropdown { position: fixed; z-index: 10000; }
 .md-editor-dropdown-hidden { display: none; }
 .md-editor-dropdown-overlay { background: #fff; border: 1px solid #e0e0e0;
   border-radius: 6px; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);

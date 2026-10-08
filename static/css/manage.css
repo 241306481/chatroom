@@ -15,9 +15,9 @@
 .manage-entry h3 { font-size: 15px; margin-bottom: 6px; }
 .manage-entry p { font-size: 12px; color: #888; }
 .create-domain-btn { display: inline-block; padding: 6px 14px;
-  background: #1890ff; color: #fff; text-decoration: none;
+  background: #1890ff; color: #fff !important; text-decoration: none;
   border-radius: 6px; font-size: 13px; }
-.create-domain-btn:hover { background: #40a9ff; }
+.create-domain-btn:hover { background: #40a9ff; color: #fff !important; }
 .mydomain-header { display: flex; justify-content: space-between;
   align-items: center; margin-bottom: 16px; }
 .domain-grid { display: grid;

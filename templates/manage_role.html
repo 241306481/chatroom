@@ -32,7 +32,7 @@
   <h2>创建自定义角色</h2>
   <form method="POST" action="/domain/{{ domain_name }}/manage/role" class="form-stack">
     <input type="hidden" name="action" value="create">
-    <label>角色名（小写字母、数字、下划线）
+    <label>角色名（小写字母、数字、下划线、短横线，2-32 位）
       <input type="text" name="role_name" required pattern="[a-z0-9_-]{2,32}">
     </label>
     <label>显示名<input type="text" name="display" required></label>

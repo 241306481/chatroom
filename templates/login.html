@@ -1,11 +1,11 @@
 {% extends "base_simple.html" %}
 
-{% block title %}登录 - 离线聊天室{% endblock %}
+{% block title %}登录 - {{ site_name or '聊天室' }}{% endblock %}
 
 {% block header %}
 <header class="topbar">
   <div class="topbar-left">
-    <a href="/home" class="logo">💬 聊天室</a>
+    <a href="/home" class="logo">💬 {{ site_name or '聊天室' }}</a>
   </div>
   <nav class="topbar-nav">
     <a href="/login" class="nav-login-btn">登录</a>
@@ -17,7 +17,7 @@
 {% block content %}
 <div class="login-page">
   <div class="login-box">
-    <h1>💬 离线聊天室</h1>
+    <h1>💬 {{ site_name or '聊天室' }}</h1>
     <form method="POST" action="/login" class="login-form">
       <input type="hidden" name="return_to" value="{{ return_to | default('') }}">
       <label>昵称<input type="text" name="nickname" required autofocus></label>

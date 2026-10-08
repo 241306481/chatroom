@@ -35,12 +35,15 @@
   <section class="dm-main">
     {% if target and target_user and target_user.id %}
       <div class="dm-main-header">
-        <span class="avatar-circle" style="background:{{ target_user.avatar_color }}">{{ target_user.nickname | avatarText }}</span>
-        {{ target_user.nickname }}
+        <a href="/user/{{ target_user.id }}" class="dm-user-link">
+          <span class="avatar-circle" style="background:{{ target_user.avatar_color }}">{{ target_user.nickname | avatarText }}</span>
+          <span>{{ target_user.nickname }}</span>
+        </a>
       </div>
       <div class="dm-list" id="dmList">
+        <div class="dm-list-inner">
         {% if messages and messages.length %}
-          {% for m in messages %}
+          {% for m in messages | reverse %}
             <div class="dm-msg {% if m.is_me %}dm-me{% else %}dm-other{% endif %}">
               <div class="dm-bubble" data-raw="{{ m.content | e }}"></div>
               <div class="dm-time">
@@ -50,6 +53,7 @@
             </div>
           {% endfor %}
         {% endif %}
+        </div>
       </div>
       {% if can_send %}
         <div class="dm-input-area">
@@ -97,15 +101,11 @@
         if (badge) badge.remove();
     }
 
-    function scrollBottom() {
-        var list = document.getElementById('dmList');
-        if (list) list.scrollTop = list.scrollHeight;
-    }
-
     function init() {
         renderHistory();
         clearActiveBadge();
-        scrollBottom();
+        var l = document.getElementById('dmList');
+        if (l) l.scrollTop = 0;
     }
 
     if (document.readyState === 'loading') {

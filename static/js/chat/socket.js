@@ -54,7 +54,9 @@
             switch (data.type) {
                 case 'new_message':
                     R.appendMessage(data.message);
-                    R.scrollBottom();
+                    if (window.MY_UID && data.message.user_id !== window.MY_UID) {
+                        if (!R.isAtBottom()) R.showNewMsgBanner(1);
+                    }
                     break;
                 case 'message_deleted':
                     R.removeMessage(data.message_id);
@@ -116,5 +118,13 @@
     }
 
     // ---------- 滚动到底 ----------
-    window.ChatRender.scrollBottom();
+    const l = document.getElementById('messageList');
+    if (l) l.scrollTop = 0;
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => {
+            const list = document.getElementById('messageList');
+            if (list) list.scrollTop = 0;
+        });
+    }
 })();

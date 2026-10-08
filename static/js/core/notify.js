@@ -13,9 +13,10 @@ window.showNotification = function (opts) {
     card.className = 'notification-card';
     var title = opts.title || '新消息';
     var color = opts.color || '#1890ff';
+    var avatarText = opts.avatar != null ? String(opts.avatar) : (title || '?')[0];
     card.innerHTML =
         '<div class="notification-avatar" style="background:' + color + '">' +
-            esc((title || '?')[0]) +
+            esc(avatarText) +
         '</div>' +
         '<div class="notification-body">' +
             '<div class="notification-title">' + esc(title) + '</div>' +
