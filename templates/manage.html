@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-container">
+  <h1>系统管理</h1>
+
+  {% if is_system_admin %}
+    <div class="manage-entries">
+      <a href="/manage/settings" class="manage-entry">
+        <h3>⚙ 系统设置</h3>
+        <p>站点名称、注册开关、上传限制</p>
+      </a>
+      <a href="/manage/join_applications" class="manage-entry">
+        <h3>📥 加入申请
+          {% if pending_count > 0 %}<span class="badge-unread">{{ pending_count }}</span>{% endif %}
+        </h3>
+        <p>审批用户加入域的申请</p>
+      </a>
+      <a href="/manage/users" class="manage-entry">
+        <h3>👥 用户管理</h3>
+        <p>封禁 / 解封用户、设置系统管理员</p>
+      </a>
+      <a href="/create/domain" class="manage-entry">
+        <h3>+ 创建域</h3>
+        <p>创建一个新的域</p>
+      </a>
+    </div>
+  {% endif %}
+
+  <h2 style="margin-top:32px;">我管理的域</h2>
+  {% if domains and domains.length %}
+    <div class="manage-list">
+      {% for d in domains %}
+        <a href="/domain/{{ d.name }}/manage" class="manage-row">
+          <div>
+            <div class="name">{{ d.display }}</div>
+            <div class="meta">{{ d.member_count }} 位成员 · {{ d.name }}</div>
+          </div>
+          <span>→</span>
+        </a>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="empty">你还没有可管理的域</p>
+  {% endif %}
+</div>
+{% endblock %}

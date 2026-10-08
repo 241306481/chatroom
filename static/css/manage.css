@@ -1,0 +1,56 @@
+.manage-list { display: flex; flex-direction: column; gap: 8px; }
+.manage-row { display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 16px; background: #fafafa; border-radius: 6px;
+  text-decoration: none; color: #333; }
+.manage-row:hover { background: #e6f7ff; }
+.manage-row .name { font-weight: 600; }
+.manage-row .meta { color: #999; font-size: 12px; }
+.manage-entries { display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px; margin-top: 16px; }
+.manage-entry { display: block; padding: 16px; background: #fafafa;
+  border-radius: 8px; text-decoration: none; color: #333;
+  border-left: 3px solid #1890ff; }
+.manage-entry:hover { background: #e6f7ff; }
+.manage-entry h3 { font-size: 15px; margin-bottom: 6px; }
+.manage-entry p { font-size: 12px; color: #888; }
+.create-domain-btn { display: inline-block; padding: 6px 14px;
+  background: #1890ff; color: #fff; text-decoration: none;
+  border-radius: 6px; font-size: 13px; }
+.create-domain-btn:hover { background: #40a9ff; }
+.mydomain-header { display: flex; justify-content: space-between;
+  align-items: center; margin-bottom: 16px; }
+.domain-grid { display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; }
+.domain-card { display: block; padding: 16px; background: #fafafa;
+  border-radius: 8px; text-decoration: none; color: #333; }
+.domain-card:hover { background: #e6f7ff; }
+.domain-card h3 { font-size: 15px; margin-bottom: 8px; }
+.domain-card p { font-size: 12px; color: #888; }
+.perm-matrix { width: 100%; border-collapse: collapse; margin-top: 16px; }
+.perm-matrix th, .perm-matrix td { padding: 6px 10px;
+  border-bottom: 1px solid #eee; font-size: 13px; text-align: left; }
+.perm-matrix th { background: #fafafa; font-weight: 600; position: sticky; top: 0; }
+.perm-matrix .group-row { background: #f0f7ff; font-weight: 600; color: #1890ff; }
+.perm-matrix input[type="checkbox"] { transform: scale(1.2); }
+.role-table, .user-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+.role-table th, .user-table th, .role-table td, .user-table td {
+  padding: 8px 12px; border-bottom: 1px solid #eee;
+  text-align: left; font-size: 13px; }
+.role-table code { background: #f0f0f0; padding: 2px 6px; border-radius: 3px; }
+.user-link { display: inline-flex; align-items: center; gap: 8px;
+  text-decoration: none; color: #333; }
+.user-link:hover { color: #1890ff; }
+.mini-btn { display: inline-block; padding: 3px 10px;
+  border: 1px solid #d9d9d9; border-radius: 4px;
+  font-size: 12px; text-decoration: none; color: #333; background: #fff; }
+.mini-btn:hover { background: #e6f7ff; border-color: #1890ff; color: #1890ff; }
+.ban-form { display: inline-flex; gap: 4px; align-items: center; margin-left: 4px; }
+.ban-form .ban-reason { width: 80px; padding: 3px 6px; font-size: 12px;
+  border: 1px solid #d9d9d9; border-radius: 4px; }
+.ban-form .ban-until { width: 150px; padding: 3px 6px; font-size: 12px;
+  border: 1px solid #d9d9d9; border-radius: 4px; }
+.ban-form button { padding: 3px 10px; font-size: 12px; background: #fff;
+  border: 1px solid #ff4d4f; color: #ff4d4f; border-radius: 4px;
+  cursor: pointer; white-space: nowrap; }
+.ban-form button:hover { background: #fff1f0; }

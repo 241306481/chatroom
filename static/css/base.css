@@ -1,0 +1,81 @@
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif;
+       background: #f5f6f8; color: #333; }
+[hidden] { display: none !important; }
+.empty { color: #aaa; font-size: 13px; padding: 8px 0; }
+.hint { color: #999; font-size: 13px; margin-bottom: 16px; }
+.hint a { color: #1890ff; text-decoration: none; }
+.app-main { min-height: calc(100vh - 48px); }
+.toast { position: fixed; top: 60px; left: 50%; transform: translateX(-50%);
+  background: rgba(0,0,0,0.75); color: #fff; padding: 8px 20px;
+  border-radius: 6px; z-index: 9999; font-size: 14px; }
+
+/* 状态点与徽章 */
+.status-dot { display: inline-block; width: 8px; height: 8px;
+  border-radius: 50%; flex-shrink: 0; vertical-align: middle; }
+.status-dot.green { background: #52c41a; }
+.status-dot.red { background: #ff4d4f; }
+.status-dot.inline { margin-right: 4px; }
+.badge.root { background: #faad14; color: #fff; font-size: 10px; padding: 1px 6px; border-radius: 3px; }
+.badge.superuser { background: #f5222d; color: #fff; font-size: 10px; padding: 1px 6px; border-radius: 3px; }
+.badge.owner { background: linear-gradient(135deg, #faad14, #d48806); color: #fff;
+  font-size: 10px; padding: 1px 6px; border-radius: 3px;
+  box-shadow: 0 1px 2px rgba(212, 136, 6, 0.3); font-weight: 600; }
+.badge.admin { background: linear-gradient(135deg, #fa8c16, #d46b08);
+  color: #fff; font-size: 10px; padding: 1px 6px; border-radius: 3px; font-weight: 600; }
+.badge-mutual { background: #52c41a; color: #fff; font-size: 10px;
+  padding: 2px 8px; border-radius: 10px; font-weight: 600; }
+.badge-unread { display: inline-block; background: #ff4d4f; color: #fff;
+  font-size: 10px; line-height: 1; padding: 3px 6px; border-radius: 10px;
+  margin-left: 4px; vertical-align: middle; min-width: 16px; text-align: center; font-weight: 600; }
+
+/* 内联编辑 */
+.inline-edit-input { font-family: inherit; font-size: inherit;
+  color: #333; background: #fff; border: 1px solid #1890ff;
+  border-radius: 4px; padding: 2px 6px; outline: none;
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.15);
+  min-width: 100px; max-width: 400px; }
+.inline-edit-input:focus { border-color: #40a9ff; }
+.saving { opacity: 0.6; font-style: italic; }
+
+/* Lv exp 悬浮提示 */
+.member-level, .user-level { position: relative; cursor: help; }
+.member-level[data-exp]:hover::after,
+.user-level[data-exp]:hover::after {
+  content: attr(data-exp); position: absolute;
+  bottom: calc(100% + 4px); left: 50%; transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.78); color: #fff; padding: 3px 8px;
+  border-radius: 4px; font-size: 11px; white-space: nowrap;
+  z-index: 1000; pointer-events: none; }
+.member-level[data-exp]:hover::before,
+.user-level[data-exp]:hover::before {
+  content: ''; position: absolute; bottom: 100%; left: 50%;
+  transform: translateX(-50%); border: 4px solid transparent;
+  border-top-color: rgba(0, 0, 0, 0.78); z-index: 1000; pointer-events: none; }
+
+/* 通知卡片 */
+#notificationContainer { position: fixed; left: 20px; bottom: 20px;
+  z-index: 9999; display: flex; flex-direction: column-reverse;
+  gap: 8px; pointer-events: none; }
+.notification-card { pointer-events: auto; display: flex; align-items: center; gap: 10px;
+  background: #fff; border: 1px solid #e0e0e0; border-left: 4px solid #1890ff;
+  border-radius: 8px; padding: 12px 16px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+  min-width: 280px; max-width: 360px; cursor: pointer;
+  animation: notificationSlideIn 0.3s ease-out;
+  transition: opacity 0.3s, transform 0.3s; }
+.notification-card:hover { background: #f5faff; }
+.notification-card.closing { opacity: 0; transform: translateX(-20px); }
+@keyframes notificationSlideIn {
+  from { opacity: 0; transform: translateX(-30px); }
+  to   { opacity: 1; transform: translateX(0); } }
+.notification-avatar { width: 36px; height: 36px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  color: #fff; font-weight: 600; font-size: 14px; flex-shrink: 0; }
+.notification-body { flex: 1; min-width: 0; }
+.notification-title { font-size: 13px; font-weight: 600; color: #333; margin-bottom: 2px; }
+.notification-content { font-size: 12px; color: #666;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.notification-close { background: none; border: none; cursor: pointer;
+  color: #bbb; font-size: 16px; padding: 0 4px; }
+.notification-close:hover { color: #666; }

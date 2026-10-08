@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-container">
+  <h1>讨论 · {{ display_name }}</h1>
+
+  {% if can_create %}
+    <div class="inline-create-box">
+      <form method="POST" action="/domain/{{ domain_name }}/discuss" class="inline-create-form">
+        <input type="text" name="name" required pattern="[a-z0-9_-]{1,32}"
+               placeholder="讨论 ID（小写字母、数字、下划线）">
+        <input type="text" name="title" placeholder="标题（可选）">
+        <button type="submit">+ 新建讨论</button>
+      </form>
+    </div>
+  {% endif %}
+
+  {% if discussions and discussions.length %}
+    <div class="discuss-list">
+      {% for d in discussions %}
+        <a href="/domain/{{ domain_name }}/discuss/{{ d.id }}" class="discuss-row">
+          <div class="discuss-row-left">
+            <span class="discuss-id"
+                  data-old-id="{{ d.id }}"
+                  data-value="{{ d.id }}"
+                  {% if can_edit_discuss and d.id != 'general' %}
+                    onclick="event.preventDefault();event.stopPropagation();inlineEditId(this);"
+                  {% endif %}>#{{ d.id }}</span>
+            <span class="discuss-title {% if not d.title %}empty{% endif %}"
+                  data-id="{{ d.id }}"
+                  data-value="{{ d.title }}"
+                  {% if can_edit_discuss %}
+                    onclick="event.preventDefault();event.stopPropagation();inlineEditTitle(this);"
+                  {% endif %}>{{ d.title or '（无标题）' }}</span>
+          </div>
+          <span class="meta">{{ d.count }} 条</span>
+        </a>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="empty">暂无讨论</p>
+  {% endif %}
+</div>
+{% endblock %}

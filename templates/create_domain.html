@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-container">
+  <h1>新建域</h1>
+  {% if not allow %}
+    <p class="empty">管理员已关闭创建域功能。</p>
+  {% else %}
+    <p class="hint">每用户最多创建 {{ max }} 个域</p>
+    <form method="POST" action="/create/domain" class="form-stack">
+      <label>域名（小写字母、数字、下划线、短横线，2-32 位）
+        <input type="text" name="name" required pattern="[a-z0-9_-]{2,32}">
+      </label>
+      <label>显示名<input type="text" name="display_name" required></label>
+      <button type="submit">创建</button>
+    </form>
+  {% endif %}
+</div>
+{% endblock %}

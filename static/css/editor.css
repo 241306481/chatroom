@@ -1,0 +1,105 @@
+.md-editor { --md-editor-height: 220px; background: #fff;
+  border: 1px solid #d9d9d9; border-radius: 6px; overflow: hidden;
+  display: flex; flex-direction: column; font-size: 14px; }
+.md-editor:focus-within { border-color: #40a9ff;
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.08); }
+.md-editor-toolbar-wrapper { border-bottom: 1px solid #eee; background: #fafafa; }
+.md-editor-toolbar { display: flex; align-items: center; justify-content: space-between;
+  padding: 2px 6px; flex-wrap: wrap; gap: 2px; }
+.md-editor-toolbar-left,
+.md-editor-toolbar-right { display: inline-flex; align-items: center;
+  gap: 1px; flex-wrap: wrap; }
+.md-editor-toolbar-item { -webkit-appearance: none; appearance: none;
+  background: transparent; border: none; border-radius: 4px; cursor: pointer;
+  padding: 4px; color: #555; display: inline-flex; align-items: center;
+  justify-content: center; transition: background 0.1s, color 0.1s; position: relative; }
+.md-editor-toolbar-item:hover { background: #e6f7ff; color: #1890ff; }
+.md-editor-toolbar-item.md-editor-toolbar-active { background: #e6f7ff; color: #1890ff; }
+.md-editor-icon { width: 18px; height: 18px; display: block; }
+.md-editor-divider { width: 1px; height: 18px; background: #e0e0e0; margin: 0 4px; }
+.md-editor-dropdown { position: absolute; z-index: 1000; }
+.md-editor-dropdown-hidden { display: none; }
+.md-editor-dropdown-overlay { background: #fff; border: 1px solid #e0e0e0;
+  border-radius: 6px; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  padding: 4px; min-width: 140px; }
+.md-editor-menu { list-style: none; margin: 0; padding: 0; }
+.md-editor-menu-item { padding: 6px 12px; border-radius: 4px;
+  cursor: pointer; font-size: 13px; color: #333; user-select: none; }
+.md-editor-menu-item:hover { background: #f0f7ff; color: #1890ff; }
+.md-editor-table-shape { display: flex; flex-direction: column; gap: 2px; padding: 4px; }
+.md-editor-table-shape-row { display: flex; gap: 2px; }
+.md-editor-table-shape-col { width: 16px; height: 16px;
+  border: 1px solid #d9d9d9; border-radius: 2px; background: #fafafa;
+  cursor: pointer; transition: background 0.1s; }
+.md-editor-table-shape-col.active { background: #bae7ff; border-color: #1890ff; }
+.md-editor-table-shape-info { text-align: center; font-size: 12px; color: #888; padding: 4px 0 2px; }
+.md-editor-content { position: relative; }
+.md-editor-content-wrapper { display: flex; height: var(--md-editor-height); position: relative; }
+.md-editor-content-wrapper.md-editor-preview-hidden [data-pane="preview"],
+.md-editor-content-wrapper.md-editor-preview-hidden [data-resize] { display: none; }
+.md-editor-content-wrapper.md-editor-preview-hidden [data-pane="edit"] { flex: 1 1 100% !important; }
+.md-editor-pane { flex: 1 1 0; min-width: 0; overflow: hidden;
+  display: flex; flex-direction: column; }
+.md-editor-textarea { width: 100%; flex: 1; min-height: 0;
+  padding: 10px 12px; border: none; outline: none; resize: none;
+  font-size: 14px; font-family: inherit; line-height: 1.6;
+  background: #fff; color: #333; overflow-y: auto; }
+.md-editor-textarea::placeholder { color: #bbb; }
+.md-editor-preview { flex: 1; min-height: 0; overflow-y: auto;
+  padding: 10px 12px; background: #fafafa; line-height: 1.6; word-wrap: break-word; }
+.md-editor-preview:empty::before { content: '预览区（输入后显示渲染结果）';
+  color: #ccc; font-style: italic; }
+.md-editor-preview h1,
+.md-editor-preview h2,
+.md-editor-preview h3 { margin: 0.5em 0 0.3em; }
+.md-editor-preview p { margin: 0.4em 0; }
+.md-editor-preview code { background: #eef0f4; padding: 1px 5px;
+  border-radius: 3px; font-family: Consolas, monospace; font-size: 13px; }
+.md-editor-preview pre { background: #eef0f4; padding: 8px 12px;
+  border-radius: 4px; overflow-x: auto; }
+.md-editor-preview pre code { background: none; padding: 0; }
+.md-editor-preview blockquote { margin: 0.4em 0; padding: 2px 10px;
+  border-left: 3px solid #ddd; color: #666; }
+.md-editor-preview ul,
+.md-editor-preview ol { padding-left: 22px; margin: 0.4em 0; }
+.md-editor-preview table { border-collapse: collapse; margin: 0.4em 0; }
+.md-editor-preview table th,
+.md-editor-preview table td { border: 1px solid #ddd; padding: 4px 8px; }
+.md-editor-preview a { color: #1890ff; }
+.md-editor-resize-operate { width: 5px; background: #f0f0f0;
+  cursor: col-resize; position: relative; flex-shrink: 0;
+  transition: background 0.15s; }
+.md-editor-resize-operate:hover,
+.md-editor-resize-operate:active { background: #1890ff; }
+.md-editor-resize-operate::before { content: ''; position: absolute;
+  top: 50%; left: 50%; transform: translate(-50%, -50%);
+  width: 2px; height: 24px; background: rgba(0, 0, 0, 0.15); border-radius: 1px; }
+.md-editor-height-resize { height: 6px; cursor: row-resize;
+  background: #fafafa; position: relative; transition: background 0.15s; }
+.md-editor-height-resize-top { border-bottom: 1px solid #eee; }
+.md-editor-height-resize-bottom { border-top: 1px solid #eee; }
+.md-editor-height-resize:hover,
+.md-editor-height-resize:active { background: #1890ff; }
+.md-editor-height-resize::before { content: ''; position: absolute;
+  top: 50%; left: 50%; transform: translate(-50%, -50%);
+  width: 32px; height: 2px; background: rgba(0, 0, 0, 0.15); border-radius: 1px; }
+.md-editor-footer { display: flex; justify-content: space-between; align-items: center;
+  padding: 6px 12px; border-top: 1px solid #eee;
+  background: #fafafa; font-size: 12px; color: #888; }
+.md-editor-footer-left,
+.md-editor-footer-right { display: flex; align-items: center; gap: 14px; }
+.md-editor-footer-item { display: inline-flex; align-items: center; gap: 4px; }
+.md-editor-footer-label { cursor: pointer; user-select: none;
+  display: inline-flex; align-items: center; gap: 4px; }
+.md-editor-counter { color: #555; }
+.md-editor-sync { margin: 0; }
+.md-editor-submit { padding: 5px 18px; background: #1890ff; color: #fff;
+  border: none; border-radius: 4px; cursor: pointer; font-size: 13px;
+  font-family: inherit; transition: background 0.15s; }
+.md-editor-submit:hover { background: #40a9ff; }
+@media (max-width: 720px) {
+  .md-editor-content-wrapper { flex-direction: column; }
+  .md-editor-content-wrapper [data-resize] { display: none; }
+  .md-editor-pane { flex: none !important; height: 50%; }
+  .md-editor-height-resize { display: none; }
+}

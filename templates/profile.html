@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+{% from "context_edit.html" import context_edit %}
+{% block content %}
+<div class="page-container">
+  <div class="profile-header">
+    <div class="profile-avatar" style="background:{{ target.avatar_color }}">{{ target.nickname | avatarText }}</div>
+    <div class="profile-info">
+      <h1>{{ target.nickname }}</h1>
+      <div class="uid">UID: {{ target.id }}</div>
+      <div class="profile-stats">
+        <a href="/user/{{ target.id }}/followers">
+          <strong>{{ followers_count | default(0) }}</strong>粉丝
+        </a>
+        <a href="/user/{{ target.id }}/following">
+          <strong>{{ following_count | default(0) }}</strong>关注
+        </a>
+        {% if is_mutual %}<span class="badge-mutual">互相关注</span>{% endif %}
+      </div>
+    </div>
+    {% if is_me %}
+      <button type="button" class="profile-edit-btn" id="profileEditBtn">✎ 编辑资料</button>
+    {% endif %}
+  </div>
+
+  {# ============ 查看模式 ============ #}
+  <div class="profile-view" id="profileView">
+    <div class="profile-bio" id="bioStatic">{{ target.bio or '暂无简介' }}</div>
+  </div>
+
+  {# ============ 编辑模式（仅本人） ============ #}
+  {% if is_me %}
+    <div class="profile-edit" id="profileEdit" hidden>
+      <form method="POST" action="/user/{{ target.id }}" class="form-stack" id="profileForm">
+        <label>昵称<input type="text" name="nickname" value="{{ target.nickname }}" required></label>
+        {% set editorOpts = {
+            id: 'bioInput',
+            name: 'bio',
+            previewId: 'bioPreview',
+            previewCheckboxId: 'bioAutoPreview',
+            value: target.bio or '',
+            placeholder: '输入个人简介，支持 Markdown 与 LaTeX。',
+            rows: 6,
+            height: 340,
+            heightResize: 'bottom'
+        } %}
+        {{ context_edit(editorOpts) }}
+        <div class="profile-form-actions">
+          <button type="submit" class="btn-primary">保存</button>
+          <button type="button" class="btn-cancel" id="profileCancelBtn">取消</button>
+        </div>
+      </form>
+    </div>
+  {% endif %}
+
+  {# ============ 关注 + 私信操作 ============ #}
+  <div class="profile-actions-row">
+    {% if not is_me %}
+      {% if is_following %}
+        <form method="POST" action="/user/{{ target.id }}/unfollow" style="display:inline">
+          <button type="submit" class="btn-following" title="点击取消关注">✓ 已关注</button>
+        </form>
+      {% else %}
+        <form method="POST" action="/user/{{ target.id }}/follow" style="display:inline">
+          <button type="submit" class="btn-follow">+ 关注</button>
+        </form>
+      {% endif %}
+    {% endif %}
+
+    <a href="/messages?target={{ target.id }}" class="profile-dm-btn">✉ 发送私信</a>
+
+    {% if not is_me %}
+      {% if is_blocked %}
+        <form method="POST" action="/user/{{ target.id }}/unblock" style="display:inline">
+          <button type="submit" class="btn-cancel">取消拉黑</button>
+        </form>
+      {% else %}
+        <form method="POST" action="/user/{{ target.id }}/block" style="display:inline">
+          <button type="submit" class="btn-cancel"
+                  data-confirm="拉黑后对方无法给你发私信。确定拉黑 {{ target.nickname }}？">
+            🚫 拉黑
+          </button>
+        </form>
+      {% endif %}
+    {% endif %}
+
+    {% if not is_me and is_blocked_by %}
+      <span class="dm-policy-hint">🚫 对方已将你拉黑</span>
+    {% elif not is_me and dm_policy and dm_policy != 'everyone' %}
+      <span class="dm-policy-hint">🔒 {{ dm_policy_label }}</span>
+    {% endif %}
+  </div>
+</div>
+
+<script>
+(function () {
+    function renderBio() {
+        var stat = document.getElementById('bioStatic');
+        if (stat && window.renderContent) {
+            stat.innerHTML = window.renderContent(stat.textContent);
+        }
+    }
+
+    function init() {
+        renderBio();
+
+        var editBtn   = document.getElementById('profileEditBtn');
+        var cancelBtn = document.getElementById('profileCancelBtn');
+        var view      = document.getElementById('profileView');
+        var edit      = document.getElementById('profileEdit');
+        if (!editBtn || !edit || !view) return;
+
+        var ta = edit.querySelector('textarea');
+        var originalBio = ta ? ta.value : '';
+
+        editBtn.addEventListener('click', function () {
+            view.hidden = true;
+            editBtn.hidden = true;
+            edit.hidden = false;
+            if (ta) ta.focus();
+        });
+
+        if (cancelBtn) {
+            cancelBtn.addEventListener('click', function () {
+                if (ta) {
+                    ta.value = originalBio;
+                    ta.dispatchEvent(new Event('input', { bubbles: true }));
+                }
+                edit.hidden = true;
+                view.hidden = false;
+                editBtn.hidden = false;
+            });
+        }
+
+        var err = new URL(location.href).searchParams.get('error');
+        if (err && window.showAlert) window.showAlert(err);
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+})();
+</script>
+{% endblock %}

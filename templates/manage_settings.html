@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-container">
+  <h1>⚙ 系统设置</h1>
+  <p class="hint">仅拥有系统管理权限的用户可访问</p>
+  <form method="POST" action="/manage/settings" class="form-stack">
+    <label>站点名称
+      <input type="text" name="site_name" value="{{ config.site_name or '离线聊天室' }}">
+    </label>
+    <label>站点公告（首页顶部显示）
+      <textarea name="site_announcement" rows="3">{{ config.site_announcement or '' }}</textarea>
+    </label>
+    <hr style="margin:12px 0;border:none;border-top:1px solid #eee;">
+    <label class="checkbox-row">
+      <input type="checkbox" name="allow_register" {% if config.allow_register %}checked{% endif %}>
+      允许新用户注册
+    </label>
+    <label class="checkbox-row">
+      <input type="checkbox" name="allow_create_domain" {% if config.allow_create_domain %}checked{% endif %}>
+      允许用户创建域
+    </label>
+    <label class="checkbox-row">
+      <input type="checkbox" name="allow_file_upload" {% if config.allow_file_upload %}checked{% endif %}>
+      允许文件上传
+    </label>
+    <label>每用户最大域数
+      <input type="number" name="max_domains_per_user" value="{{ config.max_domains_per_user or 5 }}" min="0">
+    </label>
+    <label>最大文件大小 (MB)
+      <input type="number" name="max_file_size_mb" value="{{ config.max_file_size_mb or 50 }}" min="1">
+    </label>
+    <label>会话超时（小时）
+      <input type="number" name="session_timeout_hours" value="{{ config.session_timeout_hours or 24 }}" min="1">
+    </label>
+    <button type="submit">保存设置</button>
+  </form>
+  <p style="margin-top:24px;"><a href="/manage">← 返回系统管理</a></p>
+</div>
+{% endblock %}

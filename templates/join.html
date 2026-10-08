@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-container">
+  <h1>加入域 · {{ display_name }}</h1>
+  {% if join_policy == 'open' %}
+    <p>此域开放加入，点击下方按钮直接加入。</p>
+    <form method="POST" action="/domain/{{ domain_name }}/join" class="form-stack">
+      <button type="submit">加入</button>
+    </form>
+  {% elif join_policy == 'approval' %}
+    <p>此域需要审批。请填写申请说明。</p>
+    <form method="POST" action="/domain/{{ domain_name }}/join" class="form-stack">
+      <label>申请说明<textarea name="message" rows="3" placeholder="为什么想加入？"></textarea></label>
+      <button type="submit">提交申请</button>
+    </form>
+  {% else %}
+    <p>此域已关闭加入。</p>
+    <p><a href="/domain/{{ domain_name }}/home">返回域主页</a></p>
+  {% endif %}
+</div>
+{% endblock %}

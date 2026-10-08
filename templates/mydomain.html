@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-container">
+  <div class="mydomain-header">
+    <h1>我的域</h1>
+    <a href="/create/domain" class="create-domain-btn">+ 新建域</a>
+  </div>
+  {% if domains and domains.length %}
+    <div class="domain-grid">
+      {% for d in domains %}
+        <a class="domain-card" href="/domain/{{ d.name }}/home">
+          <h3>{{ d.display }}</h3>
+          <p>{{ d.announcement }}</p>
+          {% if d.is_owner %}<span class="badge root">我创建的</span>{% endif %}
+        </a>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="empty">你还没有加入任何域</p>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-container">
+  <h1>加入设置 · {{ display_name }}</h1>
+  <p class="hint">控制其他用户如何加入此域</p>
+  <form method="POST" action="/domain/{{ domain_name }}/manage/join" class="form-stack">
+    <label class="radio-row">
+      <input type="radio" name="join_policy" value="open" {% if join_policy == 'open' %}checked{% endif %}>
+      <div>
+        <strong>开放加入</strong>
+        <p style="color:#888;font-size:12px;margin-top:4px;">任何人都可以直接加入</p>
+      </div>
+    </label>
+    <label class="radio-row">
+      <input type="radio" name="join_policy" value="approval" {% if join_policy == 'approval' %}checked{% endif %}>
+      <div>
+        <strong>需要审批</strong>
+        <p style="color:#888;font-size:12px;margin-top:4px;">用户需提交申请，管理员审批通过后才能加入</p>
+      </div>
+    </label>
+    <label class="radio-row">
+      <input type="radio" name="join_policy" value="closed" {% if join_policy == 'closed' %}checked{% endif %}>
+      <div>
+        <strong>关闭加入</strong>
+        <p style="color:#888;font-size:12px;margin-top:4px;">任何人都不能加入</p>
+      </div>
+    </label>
+    <button type="submit" style="margin-top:12px;">保存</button>
+  </form>
+  <p style="margin-top:24px;"><a href="/domain/{{ domain_name }}/manage">← 返回域管理</a></p>
+</div>
+{% endblock %}

@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="layout-home">
+  <div class="main-column">
+
+    {% if site_announcement %}
+      <section class="announcement-panel site-notice">
+        <h2>📢 站点公告</h2>
+        <div class="announcement-item system-ann">
+          <div class="announcement-content">{{ site_announcement }}</div>
+        </div>
+      </section>
+    {% endif %}
+
+    {% if announcement %}
+      <section class="announcement-panel">
+        <h2>📢 域公告</h2>
+        <div class="announcement-item">
+          <div class="announcement-content">{{ announcement }}</div>
+        </div>
+      </section>
+    {% endif %}
+
+    <section class="announcement-panel">
+      <h2>📌 置顶消息</h2>
+      {% if announcements and announcements.length %}
+        {% for ann in announcements %}
+          <div class="announcement-item {% if ann.is_system %}system-ann{% endif %}">
+            <div class="announcement-content">{{ ann.content }}</div>
+            <div class="announcement-meta">{{ ann.nickname }} · {{ ann.created_at }}</div>
+          </div>
+        {% endfor %}
+      {% else %}
+        <p class="empty">暂无置顶消息</p>
+      {% endif %}
+    </section>
+
+    <section class="discussion-list">
+      <h2>
+        💬 讨论
+        <a href="/domain/{{ domain_name }}/discuss" class="more-link">全部 →</a>
+      </h2>
+      {% if discussions and discussions.length %}
+        {% for disc in discussions %}
+          {% if loop.index <= 5 %}
+            <a href="/domain/{{ domain_name }}/discuss/{{ disc.id }}" class="discussion-card">
+              <span class="disc-name">#{{ disc.id }}</span>
+              {% if disc.title %}<span class="disc-title-inline">{{ disc.title }}</span>{% endif %}
+              <span class="disc-count">{{ disc.reply_count }} 条</span>
+            </a>
+          {% endif %}
+        {% endfor %}
+        {% if discussions.length > 5 %}
+          <a href="/domain/{{ domain_name }}/discuss" class="discussion-more">
+            还有 {{ discussions.length - 5 }} 个讨论... 查看全部
+          </a>
+        {% endif %}
+      {% else %}
+        <p class="empty">暂无讨论</p>
+      {% endif %}
+    </section>
+
+    <section class="discussion-list">
+      <h2>📁 域文件</h2>
+      <a href="/domain/{{ domain_name }}/files" class="discussion-card">
+        <span class="disc-name">查看所有文件</span>
+        <span class="disc-count">→</span>
+      </a>
+    </section>
+
+  </div>
+
+  <aside class="sidebar-users">
+    <h3>
+      成员
+      <a href="/domain/{{ domain_name }}/users" class="more-link" style="font-size:12px;">全部 →</a>
+    </h3>
+    <div class="user-list">
+      {% if users and users.length %}
+        {% for u in users %}
+          {% if loop.index <= 15 %}
+            <a href="/user/{{ u.id }}" class="user-item {% if not u.online %}offline{% endif %}"
+               data-uid="{{ u.id }}"
+               style="text-decoration:none;color:inherit;">
+              <span class="status-dot {% if u.online %}green{% else %}red{% endif %}"></span>
+              <span class="user-avatar" style="background:{{ u.avatar_color }}">{{ u.nickname | avatarText }}</span>
+              <span class="user-name">{{ u.nickname }}</span>
+              <span class="user-level" data-exp="exp: {{ u.exp | default(0) }}">Lv.{{ u.level }}</span>
+            </a>
+          {% endif %}
+        {% endfor %}
+        {% if users.length > 15 %}
+          <div class="online-count" style="border-top:none;color:#1890ff;">
+            <a href="/domain/{{ domain_name }}/users" style="color:#1890ff;text-decoration:none;">还有 {{ users.length - 15 }} 位成员 →</a>
+          </div>
+        {% endif %}
+      {% else %}
+        <p class="empty">暂无成员</p>
+      {% endif %}
+    </div>
+    <div class="online-count">在线 {{ online_count | default(0) }} / {{ total_count | default(0) }}</div>
+  </aside>
+</div>
+{% endblock %}

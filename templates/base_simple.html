@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}{{ site_name or "聊天室" }}{% endblock %}</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>💬</text></svg>">
+<link rel="stylesheet" href="/static/css/main.css">
+{% block head %}{% endblock %}
+</head>
+<body>
+
+{% block header %}
+<header class="topbar">
+  <div class="topbar-left">
+    <a href="/home" class="logo">💬 {{ site_name or "聊天室" }}</a>
+  </div>
+  <nav class="topbar-nav">
+    <a href="/home">首页</a>
+    <a href="/discuss">讨论</a>
+  </nav>
+</header>
+{% endblock %}
+
+{% block content %}{% endblock %}
+
+{% block scripts %}{% endblock %}
+</body>
+</html>

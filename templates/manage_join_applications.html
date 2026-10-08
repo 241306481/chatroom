@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-container">
+  <h1>全局加入申请</h1>
+  <p class="hint">所有你管理的域收到的加入申请</p>
+
+  {% if applications and applications.length %}
+    <table class="user-table">
+      <thead>
+        <tr>
+          <th>用户</th>
+          <th>UID</th>
+          <th>目标域</th>
+          <th>说明</th>
+          <th>时间</th>
+          <th style="width:180px;">操作</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for a in applications %}
+          <tr>
+            <td>{{ a.nickname }}</td>
+            <td>{{ a.uid }}</td>
+            <td>
+              <a href="/domain/{{ a.domain_name }}/home">{{ a.domain_display }}</a>
+            </td>
+            <td>{{ a.message }}</td>
+            <td>{{ a.created_at }}</td>
+            <td>
+              <form method="POST" action="/manage/join_applications" style="display:inline">
+                <input type="hidden" name="domain_name" value="{{ a.domain_name }}">
+                <input type="hidden" name="uid" value="{{ a.uid }}">
+                <button type="submit" name="action" value="approve"
+                        class="file-action-btn">通过</button>
+                <button type="submit" name="action" value="reject"
+                        class="file-action-btn danger"
+                        onclick="return confirm('拒绝？')">拒绝</button>
+              </form>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="empty">暂无待审批的申请</p>
+  {% endif %}
+
+  <p style="margin-top:24px;"><a href="/manage">← 返回系统管理</a></p>
+</div>
+{% endblock %}

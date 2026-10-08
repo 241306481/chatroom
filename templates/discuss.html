@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+{% from "context_edit.html" import context_edit %}
+{% block content %}
+<div class="layout-discuss">
+
+  {# ==================== 左侧：讨论列表 ==================== #}
+  <nav class="sidebar-discussions">
+    <h3>讨论</h3>
+    {% if can_create_discuss %}
+      <a href="/domain/{{ domain_name }}/discuss" class="new-discuss-btn">+ 新建讨论</a>
+    {% endif %}
+    {% if discussions and discussions.length %}
+      {% for disc in discussions %}
+        <a href="/domain/{{ domain_name }}/discuss/{{ disc.id }}"
+           class="disc-item {% if disc.active %}active{% endif %}">
+          <span class="disc-item-id">#{{ disc.id }}</span>
+          {% if disc.title %}<span class="disc-item-title">{{ disc.title }}</span>{% endif %}
+        </a>
+      {% endfor %}
+    {% endif %}
+  </nav>
+
+  {# ==================== 中间：消息区 ==================== #}
+  <main class="message-area">
+    <div class="discuss-header">
+      <h2>
+        <span class="discuss-header-id">#{{ discuss_name }}</span>
+        <span class="discuss-header-title {% if not discuss_title %}empty{% endif %}"
+              data-id="{{ discuss_name }}"
+              data-value="{{ discuss_title }}"
+              {% if can_edit_discuss %}onclick="inlineEditTitle(this);"{% endif %}>
+          {{ discuss_title or '（无标题）' }}
+        </span>
+      </h2>
+      <span class="online-badge">● {{ online_count | default(0) }}/{{ total_count | default(0) }}</span>
+      {% if can_manage_discuss %}
+        <a href="/domain/{{ domain_name }}/manage/discussions" class="manage-link">管理</a>
+      {% endif %}
+    </div>
+
+    <div class="message-list" id="messageList">
+      {% if messages and messages.length %}
+        {% for msg in messages %}
+          <div class="message {% if msg.pinned %}pinned{% endif %} {% if msg.is_system %}system-msg{% endif %}"
+               data-id="{{ msg.id }}">
+            <div class="msg-avatar" style="background:{{ msg.avatar_color }}">{{ msg.nickname | avatarText }}</div>
+            <div class="msg-body">
+              <div class="msg-header">
+                {% if msg.pinned %}<span class="pin-icon">📌</span>{% endif %}
+                <span class="msg-nick">{{ msg.nickname }}</span>
+                <span class="msg-time">{{ msg.created_at }}</span>
+                {% if can_send %}
+                  <button type="button" class="msg-reply-btn"
+                          onclick="setReplyTo('{{ msg.id }}', this)"
+                          title="回复">↩️</button>
+                {% endif %}
+                {% if can_add_reaction or can_delete_any or msg.user_id == current_user.id or can_pin %}
+                  <div class="msg-actions">
+                    <button type="button" onclick="toggleSource(this)"
+                            title="查看源码">📄</button>
+                    {% if can_add_reaction %}
+                      <button type="button"
+                              onclick="toggleReactionPicker('{{ msg.id }}', this)"
+                              title="添加表情">😀</button>
+                    {% endif %}
+                    {% if can_pin %}
+                      <button type="button"
+                              onclick="pinMessage('{{ msg.id }}')"
+                              title="{% if msg.pinned %}取消置顶{% else %}置顶{% endif %}">📌</button>
+                    {% endif %}
+                    {% if can_delete_any or msg.user_id == current_user.id %}
+                      <button type="button" onclick="deleteMessage('{{ msg.id }}')" title="删除">🗑</button>
+                    {% endif %}
+                  </div>
+                {% endif %}
+              </div>
+              {% if msg.reply_info %}
+                <div class="msg-reply-quote" onclick="scrollToMessage('{{ msg.reply_info.id }}')">
+                  <span class="reply-quote-nick">{{ msg.reply_info.nickname }}</span>
+                  <span class="reply-quote-content">{{ msg.reply_info.content }}</span>
+                </div>
+              {% endif %}
+              <div class="msg-content" data-raw="{{ msg.content | e }}"></div>
+              <div class="msg-reactions" id="reactions-{{ msg.id }}"
+                   data-reactions="{{ msg.reactions_json | e }}"></div>
+            </div>
+          </div>
+        {% endfor %}
+      {% else %}
+        <p class="empty" style="padding:20px;text-align:center;">还没有消息，来发第一条吧</p>
+      {% endif %}
+    </div>
+
+    <div class="message-input-area">
+      {% if can_send %}
+        {% set editorOpts = {
+            id: 'msgInput',
+            previewId: 'previewPanel',
+            previewCheckboxId: 'autoPreview',
+            submitLabel: '发送',
+            submitOnClick: 'sendMessage()',
+            placeholder: '输入消息，支持 Markdown 与 LaTeX。Ctrl+Enter 发送',
+            rows: 6,
+            height: 260,
+            heightResize: 'top'
+        } %}
+        {{ context_edit(editorOpts) }}
+      {% elif nav and nav.is_logged_in %}
+        <div class="input-disabled">
+          {% if muted_until %}
+            你已被禁言至 {{ muted_until }}
+          {% elif not is_member %}
+            你还未加入此域，<a href="/domain/{{ domain_name }}/join">点此加入</a>
+          {% else %}
+            你没有发送消息的权限
+          {% endif %}
+        </div>
+      {% else %}
+        <div class="input-disabled">
+          请先 <a href="/login?return_to={{ ('/domain/' + domain_name + '/discuss/' + discuss_name) | urlencode }}">登录</a>
+        </div>
+      {% endif %}
+  </main>
+
+  {# ==================== 右侧：公告 + 成员 ==================== #}
+  <aside class="sidebar-right">
+    <section class="pinned-panel">
+      <h3>📌 置顶消息</h3>
+      {% if pinned_messages and pinned_messages.length %}
+        {% for pin in pinned_messages %}
+          <div class="pinned-item {% if pin.is_system %}system-pin{% endif %}" data-id="{{ pin.id }}">
+            <div class="pinned-content">{{ pin.content }}</div>
+            <div class="pinned-meta">{{ pin.nickname }}</div>
+            {% if can_pin %}
+              <div class="pinned-actions">
+                <button type="button" title="取消置顶" onclick="unpinMessage('{{ pin.id }}')">📌</button>
+              </div>
+            {% endif %}
+          </div>
+        {% endfor %}
+      {% else %}
+        <p class="empty">暂无置顶消息</p>
+      {% endif %}
+    </section>
+
+    <section class="members-panel">
+      <h3>
+        成员
+        <span class="online-badge" style="font-weight:normal;color:#888;font-size:12px;">
+          ● {{ online_count | default(0) }}/{{ total_count | default(0) }}
+        </span>
+      </h3>
+      <div class="member-list" id="memberList">
+        {% if all_members and all_members.length %}
+          {% for u in all_members %}
+            <div class="member-item {% if not u.online %}offline{% endif %}" data-uid="{{ u.id }}">
+              <span class="status-dot {% if u.online %}green{% else %}red{% endif %}"></span>
+              <span class="member-avatar" style="background:{{ u.avatar_color }}">{{ u.nickname | avatarText }}</span>
+              <a href="/user/{{ u.id }}" class="member-name">{{ u.nickname }}</a>
+              <span class="member-level" data-exp="exp: {{ u.exp | default(0) }}">Lv.{{ u.level }}</span>
+              {% if u.is_owner %}
+                <span class="badge owner">所有者</span>
+              {% elif u.role == 'root' %}
+                <span class="badge root">管理员</span>
+              {% endif %}
+              {% if can_mute and not u.is_owner %}
+                <div class="member-actions">
+                  <button type="button" onclick="muteMember('{{ u.id }}')" title="禁言">🔇</button>
+                </div>
+              {% endif %}
+            </div>
+          {% endfor %}
+        {% else %}
+          <p class="empty">暂无成员</p>
+        {% endif %}
+      </div>
+      <div class="member-footer">在线 {{ online_count | default(0) }} / {{ total_count | default(0) }}</div>
+    </section>
+  </aside>
+
+</div>
+{% endblock %}

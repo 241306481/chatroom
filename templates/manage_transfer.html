@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-container">
+  <h1>转让所有权 · {{ display_name }}</h1>
+  <p class="hint">转让后你将变为管理员。此操作不可撤销。</p>
+
+  {% if members and members.length %}
+    <form method="POST" action="/domain/{{ domain_name }}/manage/transfer" class="form-stack">
+      <label>选择新所有者
+        <select name="user_id" required>
+          <option value="">— 请选择 —</option>
+          {% for m in members %}
+            <option value="{{ m.id }}">
+              {{ m.nickname }} (UID {{ m.id }}{% if m.role == 'root' %} · 管理员{% endif %})
+            </option>
+          {% endfor %}
+        </select>
+      </label>
+      <button type="submit"
+              style="background:#faad14;"
+              data-confirm="确定转让所有权？此操作不可撤销。">
+        确认转让
+      </button>
+    </form>
+  {% else %}
+    <p class="empty">没有其他成员可以转让</p>
+  {% endif %}
+
+  <p style="margin-top:24px;"><a href="/domain/{{ domain_name }}/manage">← 返回域管理</a></p>
+</div>
+<script>
+  (function () {
+    function check() {
+      var err = new URL(location.href).searchParams.get('error');
+      if (err && window.showAlert) window.showAlert(err);
+    }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', check);
+    } else {
+      check();
+    }
+  })();
+</script>
+{% endblock %}

@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-container" style="max-width: 1200px;">
+  <h1>用户管理（全局）</h1>
+  <p class="hint">封禁后该用户无法登录；管理员拥有系统管理权限</p>
+
+  {% if users and users.length %}
+    <table class="user-table">
+      <thead>
+        <tr>
+          <th style="width:56px;"></th>
+          <th>昵称</th>
+          <th>UID</th>
+          <th>状态</th>
+          <th>系统权限</th>
+          <th>封禁信息</th>
+          <th style="width:400px;">操作</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for u in users %}
+          <tr data-uid="{{ u.id }}" {% if u.banned %}style="background:#fff1f0;"{% endif %}>
+            <td>
+              <span class="user-avatar-lg" style="background:{{ u.avatar_color }}">{{ u.nickname | avatarText }}</span>
+            </td>
+            <td>
+              {{ u.nickname }}
+              {% if u.is_superuser %}<span class="badge superuser">超级管理员</span>{% endif %}
+              {% if u.is_admin and not u.is_superuser %}<span class="badge admin">系统管理员</span>{% endif %}
+              {% if u.owns_domains and u.owns_domains.length %}
+                <span class="badge owner"
+                      title="所有者：{{ u.owns_domains | join(', ') }}">所有者</span>
+              {% endif %}
+            </td>
+            <td>{{ u.id }}</td>
+            <td>
+              {% if u.banned %}<span class="status-dot inline" style="background:#ff4d4f;"></span> 已封禁
+              {% elif u.online %}<span class="status-dot green inline"></span> 在线
+              {% else %}<span class="status-dot red inline"></span> 离线{% endif %}
+            </td>
+            <td>
+              {% if u.is_superuser %}
+                <span style="color:#f5222d;font-weight:600;">超级管理员</span>
+              {% elif u.is_admin %}
+                <span style="color:#fa8c16;font-weight:600;">系统管理员</span>
+                <form method="POST" action="/manage/users/admin" style="display:inline;margin-left:6px;">
+                  <input type="hidden" name="action" value="revoke">
+                  <input type="hidden" name="user_id" value="{{ u.id }}">
+                  <button type="submit" class="file-action-btn"
+                          data-confirm="撤销该用户的管理员权限？">撤销</button>
+                </form>
+              {% else %}
+                <span style="color:#aaa;">—</span>
+                <form method="POST" action="/manage/users/admin" style="display:inline;margin-left:6px;">
+                  <input type="hidden" name="action" value="grant">
+                  <input type="hidden" name="user_id" value="{{ u.id }}">
+                  <button type="submit" class="file-action-btn"
+                          data-confirm="授予该用户管理员权限？">设为管理员</button>
+                </form>
+              {% endif %}
+            </td>
+            <td style="font-size:12px;color:#888;">
+              {% if u.banned %}
+                {{ u.ban_reason }}<br>
+                {% if u.banned_until %}至 {{ u.banned_until }}{% else %}永久{% endif %}
+              {% else %}—{% endif %}
+            </td>
+            <td>
+              {% if u.is_superuser %}
+                <span style="color:#aaa;font-size:12px;">超管不可操作</span>
+              {% else %}
+                {% if u.banned %}
+                  <form method="POST" action="/manage/users/ban" style="display:inline">
+                    <input type="hidden" name="action" value="unban">
+                    <input type="hidden" name="user_id" value="{{ u.id }}">
+                    <button type="submit" class="file-action-btn">解封</button>
+                  </form>
+                {% else %}
+                  <form method="POST" action="/manage/users/ban"
+                        style="display:inline-flex;gap:4px;align-items:center;">
+                    <input type="hidden" name="action" value="ban">
+                    <input type="hidden" name="user_id" value="{{ u.id }}">
+                    <input type="text" name="reason" placeholder="原因"
+                           style="width:80px;padding:4px;font-size:12px;">
+                    <input type="datetime-local" name="until_local"
+                           style="font-size:12px;width:150px;">
+                    <button type="submit" class="file-action-btn danger"
+                            data-confirm="封禁该用户？">封禁</button>
+                  </form>
+                {% endif %}
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="empty">暂无用户</p>
+  {% endif %}
+
+  <p style="margin-top:16px;"><a href="/manage">← 返回系统管理</a></p>
+</div>
+<script>
+  (function () {
+    function init() {
+      var err = new URL(location.href).searchParams.get('error');
+      if (err && window.showAlert) window.showAlert(err);
+
+      document.querySelectorAll('input[name="until_local"]').forEach(function (input) {
+        var hidden = input.form.querySelector('input[name="until"]');
+        if (!hidden) {
+          hidden = document.createElement('input');
+          hidden.type = 'hidden';
+          hidden.name = 'until';
+          hidden.value = '';
+          input.form.appendChild(hidden);
+        }
+        input.addEventListener('input', function () {
+          if (!input.value) { hidden.value = ''; return; }
+          try {
+            var d = new Date(input.value);
+            if (isNaN(d.getTime())) { hidden.value = ''; return; }
+            hidden.value = d.toISOString().replace(/\.\d{3}Z$/, 'Z');
+          } catch (e) { hidden.value = ''; }
+        });
+      });
+    }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
+  })();
+</script>
+{% endblock %}

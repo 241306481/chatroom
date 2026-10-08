@@ -1,0 +1,163 @@
+/* 讨论布局 */
+.layout-discuss { display: grid; grid-template-columns: 200px 1fr 280px;
+  height: calc(100vh - 48px); }
+.sidebar-discussions { background: #fafafa; border-right: 1px solid #e0e0e0;
+  padding: 16px; overflow-y: auto; }
+.sidebar-discussions h3 { font-size: 14px; margin-bottom: 12px; color: #888; }
+.disc-item { display: block; padding: 8px 12px; margin-bottom: 4px;
+  border-radius: 4px; text-decoration: none; color: #333; font-size: 14px; }
+.disc-item:hover { background: #e6f7ff; }
+.disc-item.active { background: #1890ff; color: #fff; }
+.new-discuss-btn { display: block; width: 100%; padding: 8px; margin-bottom: 12px;
+  background: #1890ff; color: #fff; border: none; border-radius: 6px;
+  cursor: pointer; font-size: 13px; text-decoration: none; text-align: center; }
+.new-discuss-btn:hover { background: #40a9ff; text-decoration: none; }
+.message-area { display: flex; flex-direction: column; background: #fff; min-width: 0; }
+.discuss-header { display: flex; align-items: center; gap: 12px;
+  padding: 12px 16px; border-bottom: 1px solid #e0e0e0; }
+.discuss-header h2 { font-size: 16px; flex: 1; }
+.discuss-header-id { font-family: Consolas, "Courier New", monospace; }
+.discuss-header-title { color: #666; font-weight: normal; font-size: 14px;
+  padding: 2px 8px; border-radius: 4px; margin-left: 8px;
+  transition: background 0.15s, color 0.15s; }
+.discuss-header-title::before { content: '· '; color: #ccc; }
+.discuss-header-title.empty::before { content: ''; }
+.discuss-header-title.empty { color: #bbb; font-style: italic; }
+.discuss-header-title:hover { background: #e6f7ff; color: #1890ff; }
+.online-badge { font-size: 12px; color: #52c41a; }
+.manage-link { font-size: 13px; color: #1890ff; text-decoration: none; }
+.message-list { flex: 1; overflow-y: auto; padding: 16px; }
+.message { display: flex; gap: 10px; margin-bottom: 16px; }
+.message.pinned { background: #fffbe6; border-radius: 6px; padding: 8px;
+  border-left: 3px solid #faad14; }
+.message.system-msg .msg-nick { color: #1890ff; font-weight: 600; }
+.msg-avatar { width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  color: #fff; font-weight: 600; }
+.msg-body { flex: 1; min-width: 0; }
+.msg-header { display: flex; gap: 8px; font-size: 12px; color: #888;
+  margin-bottom: 4px; align-items: center; }
+.msg-nick { font-weight: 600; color: #333; }
+.msg-content { line-height: 1.6; word-wrap: break-word; }
+.msg-content code { background: #f0f0f0; padding: 2px 5px; border-radius: 3px;
+  font-family: "Consolas", monospace; font-size: 13px; }
+.pin-icon { color: #faad14; }
+.msg-actions { margin-left: auto; opacity: 0.35; transition: opacity 0.15s;
+  display: flex; gap: 4px; }
+.message:hover .msg-actions { opacity: 1; }
+.msg-actions button { background: transparent; border: none; cursor: pointer;
+  font-size: 13px; color: #888; padding: 2px 6px; border-radius: 3px;
+  transition: background 0.12s, color 0.12s; }
+.msg-actions button:hover { background: #ffe6e6; color: #ff4d4f; }
+.message-input-area { border-top: 1px solid #e0e0e0; padding: 12px; background: #fafafa; }
+.input-disabled { padding: 12px; text-align: center; color: #aaa;
+  background: #f5f5f5; border-radius: 6px; }
+.input-disabled a { color: #1890ff; text-decoration: none; }
+.msg-content[data-mode="source"] { font-family: Consolas, monospace;
+  font-size: 13px; white-space: pre-wrap; background: #f7f7f9;
+  padding: 6px 8px; border-radius: 4px; color: #555; }
+
+/* 右侧栏 */
+.sidebar-right { display: flex; flex-direction: column; background: #fff;
+  border-left: 1px solid #e0e0e0; overflow: hidden; }
+.pinned-panel { flex: 0 0 auto; max-height: 30vh; overflow-y: auto;
+  padding: 12px; background: #fffbe6; border-bottom: 2px solid #e0e0e0; }
+.pinned-panel h3 { font-size: 13px; margin-bottom: 8px; }
+.pinned-item { position: relative; padding: 8px; margin-bottom: 6px; background: #fff;
+  border-radius: 6px; border-left: 3px solid #faad14; font-size: 13px; }
+.pinned-item.system-pin { border-left-color: #1890ff; background: #e6f7ff; }
+.pinned-meta { font-size: 11px; color: #888; margin-top: 4px; }
+.pinned-item .pinned-actions { position: absolute; top: 4px; right: 4px;
+  opacity: 0; transition: opacity 0.15s; }
+.pinned-item:hover .pinned-actions { opacity: 1; }
+.pinned-actions button { background: transparent; border: none; cursor: pointer;
+  font-size: 13px; color: #888; padding: 2px 4px; border-radius: 3px;
+  transition: background 0.12s, color 0.12s; }
+.pinned-actions button:hover { background: #ffe6e6; color: #ff4d4f; }
+.members-panel { flex: 1 1 auto; overflow-y: auto; padding: 12px; }
+.members-panel h3 { font-size: 13px; margin-bottom: 8px; }
+.member-list { display: flex; flex-direction: column; gap: 2px; }
+.member-name { flex: 1; min-width: 0; overflow: hidden;
+  text-overflow: ellipsis; white-space: nowrap;
+  color: #333; text-decoration: none; font-size: 13px; }
+.member-name:hover { color: #1890ff; }
+.member-actions { margin-left: auto; display: flex; gap: 4px;
+  opacity: 0; transition: opacity 0.15s; }
+.member-item:hover .member-actions { opacity: 1; }
+.member-actions button { background: none; border: none; cursor: pointer;
+  color: #888; font-size: 11px; padding: 2px 4px; }
+.member-actions button:hover { background: #f0f0f0; color: #333; }
+
+/* 讨论列表页 */
+.discuss-list { display: flex; flex-direction: column; gap: 8px; }
+.discuss-row { display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 16px; background: #fafafa; border-radius: 6px;
+  text-decoration: none; color: #333; }
+.discuss-row:hover { background: #e6f7ff; }
+.discuss-row .meta { color: #999; font-size: 12px; }
+.discuss-row-left { display: flex; align-items: center; gap: 4px; flex: 1; min-width: 0; }
+.discuss-id { font-weight: 600; color: #333;
+  font-family: Consolas, "Courier New", monospace; font-size: 14px;
+  cursor: pointer; padding: 2px 6px; border-radius: 4px;
+  transition: background 0.15s, color 0.15s; }
+.discuss-id:hover { background: #e6f7ff; color: #1890ff; }
+.discuss-title { color: #666; font-size: 13px; cursor: pointer;
+  padding: 2px 6px; border-radius: 4px;
+  transition: background 0.15s, color 0.15s;
+  max-width: 400px; overflow: hidden;
+  text-overflow: ellipsis; white-space: nowrap; }
+.discuss-title::before { content: '· '; color: #ccc; }
+.discuss-title.empty::before { content: ''; }
+.discuss-title.empty { color: #bbb; font-style: italic; }
+.discuss-title:hover { background: #e6f7ff; color: #1890ff; }
+
+/* 回复 */
+.msg-reply-btn { background: transparent; border: none; cursor: pointer;
+  font-size: 13px; color: #888; padding: 2px 6px; border-radius: 3px;
+  opacity: 0.35;
+  transition: opacity 0.15s, background 0.12s, color 0.12s; }
+.message:hover .msg-reply-btn { opacity: 1; }
+.msg-reply-btn:hover { background: #e6f7ff; color: #1890ff; }
+.msg-reply-quote { display: flex; align-items: center; gap: 6px;
+  padding: 4px 8px; margin: 4px 0 6px; background: #f5f5f5;
+  border-left: 3px solid #d9d9d9; border-radius: 4px;
+  font-size: 12px; color: #888; cursor: pointer;
+  max-width: 100%; overflow: hidden;
+  transition: background 0.15s, border-color 0.15s; }
+.msg-reply-quote:hover { background: #eef6ff; border-left-color: #1890ff; }
+.reply-quote-nick { color: #1890ff; font-weight: 600; flex-shrink: 0; }
+.reply-quote-content { flex: 1; overflow: hidden;
+  text-overflow: ellipsis; white-space: nowrap; }
+.reply-banner { display: flex; align-items: center; justify-content: space-between;
+  gap: 8px; padding: 6px 12px; background: #e6f7ff;
+  border-left: 3px solid #1890ff; border-radius: 4px;
+  margin-bottom: 8px; font-size: 13px; color: #555; }
+.reply-banner b { color: #1890ff; }
+.reply-banner button { background: transparent; border: none; cursor: pointer;
+  color: #888; font-size: 16px; padding: 0 4px; line-height: 1; }
+.reply-banner button:hover { color: #ff4d4f; }
+.message.highlight { animation: msgHighlight 1.5s ease-out; }
+@keyframes msgHighlight {
+  0%   { background: #fffbe6; }
+  100% { background: transparent; } }
+
+/* 表情 */
+.msg-reactions { display: flex; gap: 4px; margin-top: 6px; flex-wrap: wrap; }
+.reaction-btn { background: #f0f0f0; border: 1px solid #e0e0e0;
+  border-radius: 12px; padding: 2px 8px; font-size: 12px; cursor: pointer;
+  display: inline-flex; align-items: center; gap: 4px;
+  transition: background 0.12s, border-color 0.12s; }
+.reaction-btn:hover { background: #e0e0e0; }
+.reaction-btn.mine { background: #e6f7ff; border-color: #1890ff; color: #1890ff; }
+.reaction-btn.mine:hover { background: #d0ebff; }
+.reaction-btn .reaction-emoji { font-size: 14px; line-height: 1; }
+.reaction-picker { position: absolute; z-index: 10000; background: #fff;
+  border: 1px solid #e0e0e0; border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12); padding: 6px;
+  display: grid; grid-template-columns: repeat(4, 32px);
+  gap: 2px; width: max-content; }
+.reaction-picker button { background: none; border: none; cursor: pointer;
+  font-size: 20px; width: 32px; height: 32px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 4px; line-height: 1; padding: 0; }
+.reaction-picker button:hover { background: #f0f7ff; }

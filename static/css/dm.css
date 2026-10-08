@@ -1,0 +1,64 @@
+.dm-layout { display: grid; grid-template-columns: 240px 1fr;
+  height: calc(100vh - 48px); }
+.dm-sidebar { background: #fafafa; border-right: 1px solid #e0e0e0;
+  overflow-y: auto; padding: 8px; }
+.dm-conv { display: flex; align-items: center; gap: 8px;
+  padding: 10px; border-radius: 6px; text-decoration: none;
+  color: #333; font-size: 13px; margin-bottom: 4px; }
+.dm-conv:hover { background: #e6f7ff; }
+.dm-conv.active { background: #1890ff; color: #fff; }
+.dm-conv .badge-unread { background: #ff4d4f; color: #fff; font-size: 10px;
+  padding: 1px 6px; border-radius: 10px; margin-left: auto; }
+.dm-new-btn { display: block; width: 100%; padding: 8px; margin-bottom: 8px;
+  background: #1890ff; color: #fff; border: none; border-radius: 6px;
+  cursor: pointer; font-size: 13px; }
+.dm-new-btn:hover { background: #40a9ff; }
+.dm-main { display: flex; flex-direction: column; background: #fff; }
+.dm-main-header { padding: 12px 16px; border-bottom: 1px solid #e0e0e0;
+  font-weight: 600; display: flex; align-items: center; gap: 8px; }
+.dm-list { flex: 1; overflow-y: auto; padding: 16px; }
+.dm-msg { margin-bottom: 12px; display: flex; flex-direction: column; }
+.dm-msg.dm-me { align-items: flex-end; }
+.dm-msg.dm-other { align-items: flex-start; }
+.dm-bubble { max-width: 70%; padding: 8px 12px; border-radius: 12px;
+  word-wrap: break-word; font-size: 14px; line-height: 1.5; }
+.dm-me .dm-bubble { background: #1890ff; color: #fff; }
+.dm-other .dm-bubble { background: #f0f0f0; color: #333; }
+.dm-time { font-size: 11px; color: #999; margin-top: 4px; }
+.dm-input-area { border-top: 1px solid #e0e0e0; padding: 12px; background: #fafafa; }
+.dm-input-area .md-editor { border-radius: 6px; }
+.dm-input-disabled { border-top: 1px solid #e0e0e0; padding: 20px;
+  text-align: center; color: #999; background: #fafafa; font-size: 13px; }
+.dm-empty { padding: 40px; text-align: center; color: #aaa; }
+.dm-bubble p { margin: 0.3em 0; }
+.dm-bubble p:first-child { margin-top: 0; }
+.dm-bubble p:last-child  { margin-bottom: 0; }
+.dm-bubble pre { background: rgba(0, 0, 0, 0.06); padding: 6px 10px;
+  border-radius: 4px; overflow-x: auto; font-size: 13px;
+  font-family: Consolas, monospace; }
+.dm-bubble code { background: rgba(0, 0, 0, 0.06); padding: 1px 5px;
+  border-radius: 3px; font-size: 13px; font-family: Consolas, monospace; }
+.dm-bubble pre code { background: none; padding: 0; }
+.dm-bubble blockquote { margin: 0.3em 0; padding: 2px 10px;
+  border-left: 3px solid rgba(0, 0, 0, 0.15); color: inherit; opacity: 0.85; }
+.dm-bubble ul, .dm-bubble ol { padding-left: 20px; margin: 0.3em 0; }
+.dm-bubble a { color: #1890ff; text-decoration: underline; }
+.dm-me .dm-bubble a { color: #fff; }
+.dm-bubble table { border-collapse: collapse; margin: 0.3em 0; font-size: 13px; }
+.dm-bubble table th, .dm-bubble table td {
+  border: 1px solid rgba(0, 0, 0, 0.15); padding: 3px 8px; }
+.dm-me .dm-bubble table th, .dm-me .dm-bubble table td {
+  border-color: rgba(255, 255, 255, 0.4); }
+.dm-settings { margin-bottom: 8px; background: #fff;
+  border: 1px solid #e0e0e0; border-radius: 6px; font-size: 13px; }
+.dm-settings > summary { padding: 8px 12px;
+  cursor: pointer; user-select: none; color: #333; }
+.dm-settings > summary:hover { background: #f5faff; color: #1890ff; }
+.dm-settings-form { padding: 8px 12px 12px; display: flex;
+  flex-direction: column; gap: 6px; }
+.dm-settings-form label { display: flex; align-items: center;
+  gap: 6px; font-size: 12px; color: #555; cursor: pointer; }
+.dm-settings-form button { margin-top: 6px; padding: 6px 12px;
+  background: #1890ff; color: #fff; border: none; border-radius: 4px;
+  cursor: pointer; font-size: 12px; align-self: flex-start; }
+.dm-settings-form button:hover { background: #40a9ff; }

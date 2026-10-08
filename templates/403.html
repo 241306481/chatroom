@@ -1,0 +1,17 @@
+{% extends "base_simple.html" %}
+
+{% block title %}403 - 无权访问{% endblock %}
+
+{% block content %}
+<div class="error-page">
+  <h1 style="color:#faad14;">403</h1>
+  <p>{{ message or '你没有权限访问此页面' }}</p>
+  <div>
+    <a href="javascript:history.back()"
+       style="background:#fff;color:#1890ff;border:1px solid #1890ff;margin-right:8px;">
+      ← 返回
+    </a>
+    <a href="/home">回到首页</a>
+  </div>
+</div>
+{% endblock %}

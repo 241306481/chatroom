@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-container">
+  <h1>管理域 · {{ domain.display_name or domain_name }}</h1>
+  <p class="hint">域名 {{ domain_name }} · {{ domain.members | length }} 位成员</p>
+  <div class="manage-entries">
+    <a href="/domain/{{ domain_name }}/manage/edit" class="manage-entry">
+      <h3>编辑域设置</h3>
+      <p>修改显示名、公告等</p>
+    </a>
+    <a href="/domain/{{ domain_name }}/manage/discussions" class="manage-entry">
+      <h3>讨论管理</h3>
+      <p>新建、删除讨论频道</p>
+    </a>
+    <a href="/domain/{{ domain_name }}/manage/role" class="manage-entry">
+      <h3>角色管理</h3>
+      <p>创建自定义角色</p>
+    </a>
+    <a href="/domain/{{ domain_name }}/manage/permission" class="manage-entry">
+      <h3>权限管理</h3>
+      <p>勾选各角色的权限</p>
+    </a>
+    <a href="/domain/{{ domain_name }}/manage/user" class="manage-entry">
+      <h3>用户管理</h3>
+      <p>分配角色、禁言、踢出</p>
+    </a>
+    <a href="/domain/{{ domain_name }}/manage/join" class="manage-entry">
+      <h3>加入设置</h3>
+      <p>开放加入 / 审批 / 关闭</p>
+    </a>
+    <a href="/domain/{{ domain_name }}/manage/applications" class="manage-entry">
+      <h3>加入申请
+        {% if pending_count > 0 %}<span class="badge-unread">{{ pending_count }}</span>{% endif %}
+      </h3>
+      <p>审批用户的加入申请</p>
+    </a>
+    {% if domain.owner_id == (current_user.id or '') or (nav and nav.is_superuser) %}
+      <a href="/domain/{{ domain_name }}/manage/transfer" class="manage-entry"
+         style="border-left-color:#faad14;">
+        <h3 style="color:#faad14;">转让所有权</h3>
+        <p>将域转让给其他成员</p>
+      </a>
+    {% endif %}
+    <a href="/domain/{{ domain_name }}/home" class="manage-entry">
+      <h3>返回域主页</h3>
+      <p>查看域内容</p>
+    </a>
+    {% if domain_name != "system" %}
+      <a href="/domain/{{ domain_name }}/manage/delete" class="manage-entry" style="border-left-color:#ff4d4f;">
+        <h3 style="color:#ff4d4f;">删除域</h3>
+        <p>不可恢复，谨慎操作</p>
+      </a>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-container">
+  <h1>编辑域 · {{ domain_name }}</h1>
+  <form method="POST" action="/domain/{{ domain_name }}/manage/edit" class="form-stack">
+    <label>显示名
+      <input type="text" name="display_name" value="{{ domain.display_name or domain_name }}">
+    </label>
+    <label>公告
+      <textarea name="announcement" rows="4">{{ domain.announcement or '' }}</textarea>
+    </label>
+    <button type="submit">保存</button>
+  </form>
+  <p style="margin-top:16px;"><a href="/domain/{{ domain_name }}/manage">← 返回域管理</a></p>
+</div>
+{% endblock %}

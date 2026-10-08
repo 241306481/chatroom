@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-container">
+  <h1 style="color:#ff4d4f;">⚠ 删除域 · {{ domain.display_name or domain_name }}</h1>
+  <p class="hint">此操作不可恢复，将删除该域的所有讨论、消息、文件。</p>
+  <form method="POST" action="/domain/{{ domain_name }}/manage/delete" class="form-stack">
+    <label>输入 <code>DELETE</code> 确认删除
+      <input type="text" name="confirm" required pattern="DELETE">
+    </label>
+    <button type="submit" style="background:#ff4d4f;">确认删除</button>
+  </form>
+  <p style="margin-top:16px;"><a href="/domain/{{ domain_name }}/manage">← 返回</a></p>
+</div>
+{% endblock %}

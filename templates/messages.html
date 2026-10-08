@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% from "context_edit.html" import context_edit %}
+{% block content %}
+<div id="dmRoot">
+<div class="dm-layout">
+  <aside class="dm-sidebar">
+    {% set cur = current_user.dm_policy or 'everyone' %}
+    <details class="dm-settings">
+      <summary>⚙ 私信设置</summary>
+      <form method="POST" action="/settings/security/dm_policy" class="dm-settings-form"
+            onsubmit="return submitDMPolicy(this)">
+        <label><input type="radio" name="dm_policy" value="everyone" {% if cur == 'everyone' %}checked{% endif %}> 所有人（拉黑的用户除外）</label>
+        <label><input type="radio" name="dm_policy" value="mutual" {% if cur == 'mutual' %}checked{% endif %}> 互相关注的人与管理员</label>
+        <label><input type="radio" name="dm_policy" value="following" {% if cur == 'following' %}checked{% endif %}> 我关注的人与管理员</label>
+        <label><input type="radio" name="dm_policy" value="admin" {% if cur == 'admin' %}checked{% endif %}> 仅管理员</label>
+        <button type="submit">保存</button>
+      </form>
+    </details>
+    <button class="dm-new-btn" onclick="newDMTarget()">+ 新增会话</button>
+    {% if conversations and conversations.length %}
+      {% for c in conversations %}
+        <a href="/messages?target={{ c.other }}"
+           class="dm-conv {% if c.other == target %}active{% endif %}"
+           data-uid="{{ c.other }}">
+          <span class="avatar-circle" style="background:{{ c.avatar_color }}">{{ c.nickname | avatarText }}</span>
+          <span>{{ c.nickname }}</span>
+          {% if c.unread > 0 %}<span class="badge-unread">{{ c.unread }}</span>{% endif %}
+        </a>
+      {% endfor %}
+    {% else %}
+      <p class="empty" style="padding:12px;">暂无会话</p>
+    {% endif %}
+  </aside>
+
+  <section class="dm-main">
+    {% if target and target_user and target_user.id %}
+      <div class="dm-main-header">
+        <span class="avatar-circle" style="background:{{ target_user.avatar_color }}">{{ target_user.nickname | avatarText }}</span>
+        {{ target_user.nickname }}
+      </div>
+      <div class="dm-list" id="dmList">
+        {% if messages and messages.length %}
+          {% for m in messages %}
+            <div class="dm-msg {% if m.is_me %}dm-me{% else %}dm-other{% endif %}">
+              <div class="dm-bubble" data-raw="{{ m.content | e }}"></div>
+              <div class="dm-time">
+                {{ m.created_at }}
+                <button type="button" class="msg-mini-btn" onclick="toggleSource(this)" title="查看源码">📄</button>
+              </div>
+            </div>
+          {% endfor %}
+        {% endif %}
+      </div>
+      {% if can_send %}
+        <div class="dm-input-area">
+          {% set editorOpts = {
+              id: 'dmInput',
+              previewId: 'dmInputPreview',
+              previewCheckboxId: 'dmInputAutoPreview',
+              submitLabel: '发送',
+              submitOnClick: 'sendDM()',
+              placeholder: '输入消息，支持 Markdown 与 LaTeX。Ctrl+Enter 发送',
+              rows: 6,
+              height: 260,
+              heightResize: 'top'
+          } %}
+          {{ context_edit(editorOpts) }}
+        </div>
+      {% else %}
+        <div class="dm-input-disabled">
+          🔒 {{ can_send_error or '你无法给对方发送私信' }}
+        </div>
+      {% endif %}
+    {% else %}
+      <div class="dm-empty">选择左侧会话开始聊天，或点上方"新增会话"</div>
+    {% endif %}
+  </section>
+</div>
+</div>
+
+<script>
+(function () {
+    function renderHistory() {
+        document.querySelectorAll('.dm-bubble[data-raw]').forEach(function (el) {
+            if (el.dataset.rendered === '1') return;
+            el.innerHTML = window.renderContent
+                ? window.renderContent(el.dataset.raw || '')
+                : (el.dataset.raw || '');
+            el.dataset.rendered = '1';
+        });
+    }
+
+    function clearActiveBadge() {
+        var active = document.querySelector('.dm-conv.active');
+        if (!active) return;
+        var badge = active.querySelector('.badge-unread');
+        if (badge) badge.remove();
+    }
+
+    function scrollBottom() {
+        var list = document.getElementById('dmList');
+        if (list) list.scrollTop = list.scrollHeight;
+    }
+
+    function init() {
+        renderHistory();
+        clearActiveBadge();
+        scrollBottom();
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+})();
+</script>
+{% endblock %}

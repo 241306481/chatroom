@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-container file-page">
+  <div class="file-header">
+    <h1>📁 我的文件</h1>
+    <div>
+      <input type="file" id="fileInput" multiple style="display:none">
+      <button type="button" class="file-upload-btn" onclick="document.getElementById('fileInput').click()">
+        ⬆ 上传文件
+      </button>
+    </div>
+  </div>
+
+  <div id="uploadProgress" class="upload-progress" style="display:none;">
+    <div class="progress-info">
+      <span id="progressFilename">准备中...</span>
+      <span id="progressPercent">0%</span>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-queue" id="progressQueue"></div>
+  </div>
+
+  <div class="file-info-bar">
+    <span>共 {{ files.length }} 个文件</span>
+  </div>
+
+  {% if files and files.length %}
+    <table class="file-table">
+      <thead>
+        <tr>
+          <th style="width:40px;"></th>
+          <th>文件名</th>
+          <th style="width:100px;">大小</th>
+          <th style="width:180px;">上传时间</th>
+          <th style="width:140px;">操作</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for f in files %}
+          <tr>
+            <td class="file-icon-cell">{{ f.icon }}</td>
+            <td class="file-name-cell">
+              <span class="file-name-editable"
+                    data-file-id="{{ f.id }}"
+                    data-value="{{ f.filename }}"
+                    data-rename-url="/myfile/{{ f.id }}/rename"
+                    onclick="inlineEditFilename(this);">{{ f.filename }}</span>
+            </td>
+            <td>{{ f.size_str }}</td>
+            <td>{{ f.created_at }}</td>
+            <td>
+              <a href="/myfile/{{ f.id }}/download" class="file-action-btn">下载</a>
+              <form method="POST" action="/myfile/{{ f.id }}/delete" style="display:inline">
+                <button type="submit" class="file-action-btn danger"
+                        data-confirm="确定删除此文件？">删除</button>
+              </form>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <div class="file-empty">
+      <div style="font-size:48px;margin-bottom:12px;">📂</div>
+      <p>暂无文件</p>
+      <p style="color:#999;font-size:13px;">点击右上角上传第一个文件</p>
+    </div>
+  {% endif %}
+</div>
+
+<script>
+  window.addEventListener('DOMContentLoaded', function () {
+    initUpload({
+      inputId: 'fileInput',
+      uploadUrl: '/myfile/upload',
+      maxMb: {{ max_file_size_mb | default(50) }}
+    });
+  });
+</script>
+{% endblock %}

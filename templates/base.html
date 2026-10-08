@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ site_name or display_name or "聊天室" }}</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>💬</text></svg>">
+<link rel="stylesheet" href="/static/katex/katex.min.css">
+<link rel="stylesheet" href="/static/css/main.css">
+<script defer src="/static/katex/katex.min.js"></script>
+<script defer src="/static/katex/contrib/auto-render.min.js"></script>
+<script src="/static/markdown/marked.min.js"></script>
+</head>
+<body data-domain="{{ domain_name }}" {% if target %}data-dm-target="{{ target }}"{% endif %}>
+<header class="topbar">
+  <div class="topbar-left">
+    <a href="/home" class="logo">💬 {{ site_name or "聊天室" }}</a>
+    {% if domain_name and domain_name != "system" %}
+      <span class="domain-badge">/ {{ display_name or domain_name }}</span>
+      {% if nav and nav.is_logged_in and not is_member and join_policy != 'closed' %}
+        <a href="/domain/{{ domain_name }}/join" class="join-btn">+ 加入域</a>
+      {% endif %}
+    {% endif %}
+  </div>
+
+  <nav class="topbar-nav">
+    {% if domain_name %}
+      {% set prefix = "/domain/" + domain_name %}
+    {% else %}
+      {% set prefix = "/domain/system" %}
+    {% endif %}
+
+    <a href="{{ prefix }}/home">首页</a>
+    <a href="{{ prefix }}/discuss">讨论</a>
+    <a href="{{ prefix }}/files">文件</a>
+
+    {% if domain_name %}
+      <a href="/domain/{{ domain_name }}/users">成员</a>
+    {% else %}
+      <a href="/users">用户列表</a>
+    {% endif %}
+
+    {% if nav and nav.is_logged_in and domain_name and nav.can_manage_current %}
+      <a href="/domain/{{ domain_name }}/manage" class="nav-manage">管理域</a>
+    {% endif %}
+
+    {% if nav and nav.is_system_admin %}
+      <a href="/manage" class="nav-manage">系统管理</a>
+    {% endif %}
+
+    {% if nav and nav.is_logged_in %}
+      <a href="/mydomain">我的域</a>
+      <div class="user-menu-wrapper">
+        <div class="user-avatar-btn" id="userMenuBtn" data-uid="{{ current_user.id }}">
+          <span class="avatar-circle" style="background: {{ current_user.avatar_color or '#888' }}">
+            {{ current_user.nickname | avatarText }}
+          </span>
+          <span class="user-name-label">{{ current_user.nickname }}</span>
+          <span class="caret">▾</span>
+        </div>
+        <div class="user-dropdown" id="userDropdown">
+          <div class="dropdown-header">
+            <span class="avatar-circle lg" style="background: {{ current_user.avatar_color or '#888' }}">
+              {{ current_user.nickname | avatarText }}
+            </span>
+            <div>
+              <div class="dropdown-nick">{{ current_user.nickname }}</div>
+              <div class="dropdown-uid">UID: {{ current_user.id }}</div>
+            </div>
+          </div>
+          <div class="dropdown-divider"></div>
+          <a href="/messages">📧 私信{% if nav.unread_count and nav.unread_count > 0 %}<span class="badge-unread">{{ nav.unread_count }}</span>{% endif %}</a>
+          <a href="/user/{{ current_user.id }}">👤 个人资料</a>
+          <a href="/settings/security">🔒 安全设置</a>
+          <a href="/myfile">📁 我的文件</a>
+          <div class="dropdown-divider"></div>
+          <a href="/logout" class="logout-link">↪ 退出登录</a>
+        </div>
+      </div>
+    {% else %}
+      {% if discuss_name %}
+        {% set login_return = '/domain/' + domain_name + '/discuss/' + discuss_name %}
+      {% elif domain_name %}
+        {% set login_return = '/domain/' + domain_name + '/home' %}
+      {% else %}
+        {% set login_return = '' %}
+      {% endif %}
+      <a href="/login{% if login_return %}?return_to={{ login_return | urlencode }}{% endif %}" class="nav-login-btn">登录</a>
+      <a href="/register{% if login_return %}?return_to={{ login_return | urlencode }}{% endif %}" class="nav-register-btn">注册</a>
+    {% endif %}
+  </nav>
+</header>
+
+<main class="app-main">
+{% block content %}{% endblock %}
+</main>
+
+<div id="notificationContainer"></div>
+
+<script>
+  window.__WS_PROTOCOL__ = "{{ ws_protocol or 'ws' }}";
+  window.__DOMAIN__ = "{{ domain_name or '' }}";
+  window.__DISCUSS__ = "{{ discuss_name or '' }}";
+  window.__CURRENT_UID__ = "{{ current_user.id if current_user and current_user.id else '' }}";
+  window.__CAN_PIN__ = {{ 'true' if can_pin else 'false' }};
+  window.__CAN_DELETE_ANY__ = {{ 'true' if can_delete_any else 'false' }};
+  window.__CAN_ADD_REACTION__ = {{ 'true' if can_add_reaction else 'false' }};
+</script>
+<script>
+  (function () {
+    var target = location.pathname + location.search;
+    if (target.startsWith('/login') || target.startsWith('/register')) return;
+    if (target === '/' || target === '/home') return;
+    document.querySelectorAll('a[href^="/login"], a[href^="/register"]').forEach(function (a) {
+      if (a.href.indexOf('return_to=') >= 0) return;
+      var u = new URL(a.href, location.origin);
+      u.searchParams.set('return_to', target);
+      a.href = u.pathname + u.search;
+    });
+  })();
+</script>
+
+<!-- core -->
+<script src="/static/js/core/dom.js"></script>
+<script src="/static/js/core/modal.js"></script>
+<script src="/static/js/core/notify.js"></script>
+<script src="/static/js/core/menu.js"></script>
+
+<!-- 通用 -->
+<script src="/static/js/online.js"></script>
+<script src="/static/js/inline-edit.js"></script>
+
+<!-- editor -->
+<script src="/static/js/editor/utils.js"></script>
+<script src="/static/js/editor/table.js"></script>
+<script src="/static/js/editor/toolbar.js"></script>
+<script src="/static/js/editor/preview.js"></script>
+<script src="/static/js/editor/resize.js"></script>
+<script src="/static/js/editor/index.js"></script>
+
+<!-- chat -->
+<script src="/static/js/chat/render.js"></script>
+<script src="/static/js/chat/reactions.js"></script>
+<script src="/static/js/chat/reply.js"></script>
+<script src="/static/js/chat/actions.js"></script>
+<script src="/static/js/chat/socket.js"></script>
+
+<!-- 私信 + 上传 -->
+<script src="/static/js/dm.js"></script>
+<script src="/static/js/upload.js"></script>
+</body>
+</html>

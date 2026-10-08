@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-container">
+  <h1>
+    <a href="/user/{{ target.id }}" class="user-link" style="display:inline-flex;">
+      <span class="user-avatar" style="background:{{ target.avatar_color }}">{{ target.nickname | avatarText }}</span>
+      <span>{{ target.nickname }}</span>
+    </a>
+    · {% if mode == 'following' %}关注{% else %}粉丝{% endif %}
+  </h1>
+  <p class="hint">共 {{ users.length }} 人</p>
+
+  {% if users and users.length %}
+    <table class="user-table">
+      <thead>
+        <tr>
+          <th style="width:40px;">状态</th>
+          <th>昵称</th>
+          <th style="width:80px;">UID</th>
+          <th>简介</th>
+          <th style="width:200px;">操作</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for u in users %}
+          <tr>
+            <td>
+              <span class="status-dot {% if u.online %}green{% else %}red{% endif %}"></span>
+            </td>
+            <td>
+              <a href="/user/{{ u.id }}" class="user-link">
+                <span class="user-avatar" style="background:{{ u.avatar_color }}">{{ u.nickname | avatarText }}</span>
+                <span>{{ u.nickname }}</span>
+              </a>
+            </td>
+            <td>{{ u.id }}</td>
+            <td style="color:#999;">{{ u.bio or '—' }}</td>
+            <td>
+              {% if current_user and current_user.id and current_user.id != u.id %}
+                <a href="/messages?target={{ u.id }}" class="mini-btn">私信</a>
+                {% if u.is_following %}
+                  <form method="POST" action="/user/{{ u.id }}/unfollow" style="display:inline">
+                    <button type="submit" class="mini-btn">已关注</button>
+                  </form>
+                {% else %}
+                  <form method="POST" action="/user/{{ u.id }}/follow" style="display:inline">
+                    <button type="submit" class="mini-btn">关注</button>
+                  </form>
+                {% endif %}
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="empty">{% if mode == 'following' %}还没有关注任何人{% else %}还没有粉丝{% endif %}</p>
+  {% endif %}
+
+  <p style="margin-top:24px;"><a href="/user/{{ target.id }}">← 返回个人主页</a></p>
+</div>
+{% endblock %}

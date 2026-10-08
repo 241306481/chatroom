@@ -1,0 +1,13 @@
+# 依赖
+node_modules/
+
+# 运行时数据（用户、消息、上传文件）
+data/
+
+# 证书私钥
+cert.pem
+key.pem
+
+# 临时文件和日志
+*.tmp
+*.log
