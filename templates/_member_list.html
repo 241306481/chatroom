@@ -1,0 +1,22 @@
+{% if all_members and all_members.length %}
+  {% for u in all_members %}
+    <div class="member-item {% if not u.online %}offline{% endif %}" data-uid="{{ u.id }}">
+      <span class="status-dot {% if u.online %}green{% else %}red{% endif %}"></span>
+      <span class="member-avatar" style="background:{{ u.avatar_color }}">{{ u.nickname | avatarText }}</span>
+      <a href="/user/{{ u.id }}" class="member-name">{{ u.nickname }}</a>
+      <span class="member-level" data-exp="exp: {{ u.exp | default(0) }}">Lv.{{ u.level }}</span>
+      {% if u.is_owner %}
+        <span class="badge owner">所有者</span>
+      {% elif u.role == 'root' %}
+        <span class="badge root">管理员</span>
+      {% endif %}
+      {% if can_mute and not u.is_owner %}
+        <div class="member-actions">
+          <button type="button" onclick="muteMember('{{ u.id }}')" title="禁言">🔇</button>
+        </div>
+      {% endif %}
+    </div>
+  {% endfor %}
+{% else %}
+  <p class="empty">暂无成员</p>
+{% endif %}

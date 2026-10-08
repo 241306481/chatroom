@@ -85,6 +85,18 @@ window.updateAllOnlineCounts = function () {
             if (data.type === 'user_online') window.updateUserStatus(data.user_id, true);
             else if (data.type === 'user_offline') window.updateUserStatus(data.user_id, false);
             else if (data.type === 'online_list') window.applyOnlineList(data.users);
+            else if (data.type === 'members_update') {
+                const list = document.getElementById('memberList');
+                if (list) {
+                    list.innerHTML = data.html;
+                    if (!window.__CAN_MUTE__) {
+                        list.querySelectorAll('.member-actions').forEach(el => el.remove());
+                    }
+                    if (typeof window.updateAllOnlineCounts === 'function') {
+                        window.updateAllOnlineCounts();
+                    }
+                }
+            }
         };
         socket.onclose = () => { reconnectTimer = setTimeout(connect, 3000); };
         socket.onerror = () => {};

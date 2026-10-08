@@ -24,6 +24,18 @@
         },
     };
 
+    function applyMembersUpdate(data) {
+        const list = document.getElementById('memberList');
+        if (!list) return;
+        list.innerHTML = data.html;
+        if (!window.__CAN_MUTE__) {
+            list.querySelectorAll('.member-actions').forEach(el => el.remove());
+        }
+        if (typeof window.updateAllOnlineCounts === 'function') {
+            window.updateAllOnlineCounts();
+        }
+    }
+
     // ---------- 连接 ----------
     function connect() {
         socket = new WebSocket(wsUrl);
@@ -62,6 +74,9 @@
                     break;
                 case 'online_list':
                     window.applyOnlineList(data.users);
+                    break;
+                case 'members_update':
+                    applyMembersUpdate(data);
                     break;
                 case 'discussion_created':
                     R.addDiscussionToSidebar(data.id, data.title);

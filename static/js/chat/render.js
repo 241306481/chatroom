@@ -26,6 +26,28 @@
 
     // ---------- 追加 / 移除消息 ----------
     function appendMessage(msg) {
+        // 头像色白名单：仅允许 HSL / HEX / rgb / 具名色 的常见字符
+        function safeColor(c) {
+            const s = String(c || '');
+            if (/^#[0-9a-fA-F]{3,8}$/.test(s)) return s;
+            if (/^hsl\(\s*-?\d+(\.\d+)?\s*,\s*\d+(\.\d+)?%\s*,\s*\d+(\.\d+)?%\s*\)$/.test(s)) return s;
+            if (/^rgba?\([0-9,\s.]+\)$/.test(s)) return s;
+            if (/^[a-zA-Z]{3,20}$/.test(s)) return s; // 具名色如 red / blue
+            return '#888';
+        }
+
+        // 单引号安全化（用于 onclick="foo('...')" 上下文）
+        function escSingle(s) {
+            return String(s == null ? '' : s)
+                .replace(/\\/g, '\\\\')
+                .replace(/'/g, "\\'")
+                .replace(/"/g, '&quot;')
+                .replace(/</g, '\\x3c')
+                .replace(/>/g, '\\x3e')
+                .replace(/\n/g, '\\n')
+                .replace(/\r/g, '\\r');
+        }
+
         const list = document.getElementById('messageList');
         if (!list) return;
 
@@ -44,19 +66,23 @@
         const showPin = canPin;
         const showDelete = canDeleteAny || isOwn;
 
+        const nick = (msg.nickname || '?')[0];
+        const color = safeColor(msg.avatar_color);
+        const mid = escSingle(msg.id);
+
         const canReply = !!document.getElementById('msgInput');
         const replyBtn = canReply
-            ? `<button type="button" class="msg-reply-btn" onclick="setReplyTo('${msg.id}', this)" title="回复">↩️</button>`
+            ? `<button type="button" class="msg-reply-btn" onclick="setReplyTo('${mid}', this)" title="回复">↩️</button>`
             : '';
         const replyQuote = msg.reply_info
-            ? `<div class="msg-reply-quote" onclick="scrollToMessage('${msg.reply_info.id}')">
+            ? `<div class="msg-reply-quote" onclick="scrollToMessage('${escSingle(msg.reply_info.id)}')">
                    <span class="reply-quote-nick">${esc(msg.reply_info.nickname)}</span>
                    <span class="reply-quote-content">${esc(msg.reply_info.content)}</span>
                </div>`
             : '';
 
         div.innerHTML = `
-            <div class="msg-avatar" style="background:${msg.avatar_color || '#888'}">${(msg.nickname || '?')[0]}</div>
+            <div class="msg-avatar" style="background:${color}">${esc(nick)}</div>
             <div class="msg-body">
                 <div class="msg-header">
                     <span class="msg-nick">${esc(msg.nickname)}</span>
@@ -64,14 +90,14 @@
                     ${replyBtn}
                     <div class="msg-actions">
                         <button type="button" onclick="toggleSource(this)" title="查看源码">📄</button>
-                        ${canAddReaction ? `<button type="button" onclick="toggleReactionPicker('${msg.id}', this)" title="添加表情">😀</button>` : ''}
-                        ${showPin ? `<button type="button" onclick="pinMessage('${msg.id}')" title="置顶">📌</button>` : ''}
-                        ${showDelete ? `<button type="button" onclick="deleteMessage('${msg.id}')" title="删除">🗑</button>` : ''}
+                        ${canAddReaction ? `<button type="button" onclick="toggleReactionPicker('${mid}', this)" title="添加表情">😀</button>` : ''}
+                        ${showPin ? `<button type="button" onclick="pinMessage('${mid}')" title="置顶">📌</button>` : ''}
+                        ${showDelete ? `<button type="button" onclick="deleteMessage('${mid}')" title="删除">🗑</button>` : ''}
                     </div>
                 </div>
                 ${replyQuote}
                 <div class="msg-content" data-raw="${escAttr(msg.content)}">${window.renderContent(msg.content)}</div>
-                <div class="msg-reactions" id="reactions-${msg.id}"></div>
+                <div class="msg-reactions" id="reactions-${mid}"></div>
             </div>`;
         list.appendChild(div);
     }

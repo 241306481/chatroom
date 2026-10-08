@@ -98,11 +98,12 @@
 <div id="notificationContainer"></div>
 
 <script>
-  window.__WS_PROTOCOL__ = "{{ ws_protocol or 'ws' }}";
-  window.__DOMAIN__ = "{{ domain_name or '' }}";
-  window.__DISCUSS__ = "{{ discuss_name or '' }}";
-  window.__CURRENT_UID__ = "{{ current_user.id if current_user and current_user.id else '' }}";
+  window.__WS_PROTOCOL__ = {{ (ws_protocol or 'ws') | dump | safe }};
+  window.__DOMAIN__ = {{ (domain_name or '') | dump | safe }};
+  window.__DISCUSS__ = {{ (discuss_name or '') | dump | safe }};
+  window.__CURRENT_UID__ = {{ (current_user.id if current_user and current_user.id else '') | dump | safe }};
   window.__CAN_PIN__ = {{ 'true' if can_pin else 'false' }};
+  window.__CAN_MUTE__ = {{ 'true' if can_mute else 'false' }};
   window.__CAN_DELETE_ANY__ = {{ 'true' if can_delete_any else 'false' }};
   window.__CAN_ADD_REACTION__ = {{ 'true' if can_add_reaction else 'false' }};
 </script>
