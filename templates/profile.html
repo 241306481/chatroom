@@ -31,7 +31,9 @@
   {% if is_me %}
     <div class="profile-edit" id="profileEdit" hidden>
       <form method="POST" action="/user/{{ target.id }}" class="form-stack" id="profileForm">
-        <label>昵称<input type="text" name="nickname" value="{{ target.nickname }}" required></label>
+        <label>昵称<input type="text" name="nickname" value="{{ target.nickname }}" required
+          pattern="[^0-9\s].*" maxlength="32"
+          title="昵称不能以数字开头，长度 1-32"></label>
         {% set editorOpts = {
             id: 'bioInput',
             name: 'bio',

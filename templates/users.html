@@ -3,12 +3,10 @@
 <div class="page-container">
   {% if is_domain_view %}
     <h1>{{ display_name }} · 成员列表</h1>
-    <p class="hint">本域全部成员</p>
-    <p class="hint">共 {{ users.length }} 位成员</p>
+    <p class="hint">本域共 {{ users.length }} 位成员</p>
   {% else %}
     <h1>全局用户列表</h1>
-    <p class="hint">站点所有注册用户</p>
-    <p class="hint">共 {{ users.length }} 个用户</p>
+    <p class="hint">站点共 {{ users.length }} 个用户</p>
   {% endif %}
 
   {% if users and users.length %}
