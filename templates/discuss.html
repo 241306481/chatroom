@@ -32,42 +32,58 @@
           {{ discuss_title or '（无标题）' }}
         </span>
       </h2>
+      <div class="inline-search-wrap">
+        <input type="text" class="inline-search-input"
+               placeholder="搜索本讨论…" autocomplete="off">
+        <button type="button" class="inline-search-close" hidden>×</button>
+        <span class="inline-search-count"></span>
+      </div>
       <span class="online-badge">● {{ online_count | default(0) }}/{{ total_count | default(0) }}</span>
       {% if can_manage_discuss %}
         <a href="/domain/{{ domain_name }}/manage/discussions" class="manage-link">管理</a>
       {% endif %}
     </div>
 
-    <div class="message-list" id="messageList">
+    <div class="message-list" id="messageList"
+         data-total="{{ messages_total | default(0) }}"
+         data-offset="{{ messages_offset | default(0) }}"
+         data-limit="{{ messages_limit | default(100) }}">
       <div class="message-list-inner">
       {% if messages and messages.length %}
         {% for msg in messages | reverse %}
           <div class="message {% if msg.pinned %}pinned{% endif %} {% if msg.is_system %}system-msg{% endif %}"
-               data-id="{{ msg.id }}">
+               data-id="{{ msg.id }}" {% if msg.reply_to %}data-reply-to="{{ msg.reply_to }}"{% endif %} id="msg-{{ msg.id }}">
             <div class="msg-avatar" style="background:{{ msg.avatar_color }}">{{ msg.nickname | avatarText }}</div>
             <div class="msg-body">
               <div class="msg-header">
                 {% if msg.pinned %}<span class="pin-icon">📌</span>{% endif %}
                 <span class="msg-nick">{{ msg.nickname }}</span>
                 <span class="msg-time">{{ msg.created_at }}</span>
-                {% if can_send %}
+                {% if can_send and not msg.revoked %}
                   <button type="button" class="msg-reply-btn"
                           onclick="setReplyTo('{{ msg.id }}', this)"
                           title="回复">↩️</button>
                 {% endif %}
                 {% if can_add_reaction or can_delete_any or msg.user_id == current_user.id or can_pin %}
                   <div class="msg-actions">
-                    <button type="button" onclick="toggleSource(this)"
-                            title="查看源码">📄</button>
-                    {% if can_add_reaction %}
+                    {% if not msg.revoked %}
+                      <button type="button" onclick="toggleSource(this)"
+                              title="查看源码">📄</button>
+                    {% endif %}
+                    {% if can_add_reaction and not msg.revoked %}
                       <button type="button"
                               onclick="toggleReactionPicker('{{ msg.id }}', this)"
                               title="添加表情">😀</button>
                     {% endif %}
-                    {% if can_pin %}
+                    {% if can_pin and not msg.revoked %}
                       <button type="button"
                               onclick="pinMessage('{{ msg.id }}')"
                               title="{% if msg.pinned %}取消置顶{% else %}置顶{% endif %}">📌</button>
+                    {% endif %}
+                    {% if not msg.revoked %}
+                      {% if (msg.user_id == current_user.id and nav.can_revoke_own) or nav.can_revoke_any %}
+                        <button type="button" onclick="revokeMessage('{{ msg.id }}')" title="撤回">↩️</button>
+                      {% endif %}
                     {% endif %}
                     {% if can_delete_any or msg.user_id == current_user.id %}
                       <button type="button" onclick="deleteMessage('{{ msg.id }}')" title="删除">🗑</button>
@@ -76,14 +92,33 @@
                 {% endif %}
               </div>
               {% if msg.reply_info %}
-                <div class="msg-reply-quote" onclick="scrollToMessage('{{ msg.reply_info.id }}')">
-                  <span class="reply-quote-nick">{{ msg.reply_info.nickname }}</span>
-                  <span class="reply-quote-content">{{ msg.reply_info.content }}</span>
-                </div>
+                {% if msg.reply_info.deleted %}
+                  <div class="msg-reply-quote msg-reply-quote-deleted">
+                    <span class="reply-quote-content"><em>该消息已被删除</em></span>
+                  </div>
+                {% elif msg.reply_info.revoked %}
+                  <div class="msg-reply-quote msg-reply-quote-revoked">
+                    <span class="reply-quote-content"><em>该消息已被撤回</em></span>
+                  </div>
+                {% else %}
+                  <div class="msg-reply-quote" onclick="scrollToMessage('{{ msg.reply_info.id }}')">
+                    <span class="reply-quote-nick">{{ msg.reply_info.nickname }}</span>
+                    <span class="reply-quote-content">{{ msg.reply_info.content }}</span>
+                  </div>
+                {% endif %}
               {% endif %}
-              <div class="msg-content" data-raw="{{ msg.content | e }}"></div>
-              <div class="msg-reactions" id="reactions-{{ msg.id }}"
-                   data-reactions="{{ msg.reactions_json | e }}"></div>
+              {% if msg.revoked %}
+                <div class="msg-content msg-revoked">
+                  <span class="revoked-nick">{{ msg.revoked_by_nickname or msg.nickname }}</span>
+                  撤回了一条消息
+                </div>
+              {% else %}
+                <div class="msg-content" data-raw="{{ msg.content | e }}"></div>
+              {% endif %}
+              {% if not msg.revoked %}
+                <div class="msg-reactions" id="reactions-{{ msg.id }}"
+                     data-reactions="{{ msg.reactions_json | e }}"></div>
+              {% endif %}
             </div>
           </div>
         {% endfor %}
@@ -181,4 +216,12 @@
   </aside>
 
 </div>
+
+<script>
+  window.__MENTION_CANDIDATES__ = [
+    {% for u in all_members %}
+      { id: '{{ u.id }}', nickname: '{{ u.nickname }}' }{% if not loop.last %},{% endif %}
+    {% endfor %}
+  ];
+</script>
 {% endblock %}

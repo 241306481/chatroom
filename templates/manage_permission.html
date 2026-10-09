@@ -4,7 +4,8 @@
   <h1>权限管理 · {{ domain_name }}</h1>
   <p class="hint">勾选各角色的权限，点击底部的"保存所有"按钮一次性提交</p>
 
-  <form method="POST" action="/domain/{{ domain_name }}/manage/permission" id="permForm">
+  <form method="POST" action="/domain/{{ domain_name }}/manage/permission"
+        id="permForm" onsubmit="return syncPermForm(this)">
     <table class="perm-matrix">
       <thead>
         <tr>
@@ -31,8 +32,7 @@
                     <input type="checkbox"
                       data-role="{{ r.name }}"
                       data-bit="{{ p.bit }}"
-                      {% if r.bitMap[p.key] %}checked{% endif %}
-                      onchange="togglePerm('{{ r.name }}', {{ p.bit }}, this.checked)">
+                      {% if r.bitMap[p.key] %}checked{% endif %}>
                   {% else %}
                     <input type="checkbox" disabled {% if r.bitMap[p.key] %}checked{% endif %}>
                   {% endif %}
@@ -44,7 +44,7 @@
       </tbody>
     </table>
 
-    {# 隐藏字段：每个可编辑角色一个 #}
+    {# 隐藏字段：每个可编辑角色一个（初始值兜底，提交时由 syncPermForm 重算） #}
     {% for r in roles %}
       {% if r.editable %}
         <input type="hidden" name="perm_{{ r.name }}" id="perm_value_{{ r.name }}" value="{{ r.perm }}">
@@ -58,19 +58,33 @@
       <a href="/domain/{{ domain_name }}/manage" style="margin-left:16px;">取消</a>
     </div>
   </form>
+
+  <div style="margin-top:12px;font-size:12px;color:#888;">
+    保存时会根据当前勾选状态生成权限值。若页面异常，请刷新后重试。
+  </div>
 </div>
 
 <script>
-  const permState = {};
-  {% for r in roles %}
-    permState['{{ r.name }}'] = {{ r.perm }};
-  {% endfor %}
-
-  function togglePerm(roleName, bit, checked) {
-    if (checked) permState[roleName] = (permState[roleName] | bit) >>> 0;
-    else permState[roleName] = (permState[roleName] & ~bit) >>> 0;
-    const el = document.getElementById('perm_value_' + roleName);
-    if (el) el.value = permState[roleName];
+  function syncPermForm(form) {
+    const state = {};
+    form.querySelectorAll('input[type="checkbox"][data-role][data-bit]').forEach(cb => {
+      const role = cb.dataset.role;
+      const bit = parseInt(cb.dataset.bit, 10);
+      if (!role || !bit) return;
+      if (!state[role]) state[role] = 0;
+      if (cb.checked) state[role] = (state[role] | bit) >>> 0;
+    });
+    Object.keys(state).forEach(role => {
+      let hidden = form.querySelector('input[name="perm_' + role + '"]');
+      if (!hidden) {
+        hidden = document.createElement('input');
+        hidden.type = 'hidden';
+        hidden.name = 'perm_' + role;
+        form.appendChild(hidden);
+      }
+      hidden.value = String(state[role]);
+    });
+    return true;
   }
 </script>
 {% endblock %}

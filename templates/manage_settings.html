@@ -15,14 +15,7 @@
       <input type="checkbox" name="allow_register" {% if config.allow_register %}checked{% endif %}>
       允许新用户注册
     </label>
-    <label class="checkbox-row">
-      <input type="checkbox" name="allow_create_domain" {% if config.allow_create_domain %}checked{% endif %}>
-      允许用户创建域
-    </label>
-    <label class="checkbox-row">
-      <input type="checkbox" name="allow_file_upload" {% if config.allow_file_upload %}checked{% endif %}>
-      允许文件上传
-    </label>
+
     <label>每用户最大域数
       <input type="number" name="max_domains_per_user" value="{{ config.max_domains_per_user or 5 }}" min="0">
     </label>

@@ -21,6 +21,8 @@
         if (!ta || !preview) return;
 
         // 预览
+        if (window.MentionPicker) window.MentionPicker.attach(ta);
+
         const previewApi = window.EditorPreview.attach({
             root, ta, preview, counter, wrapper,
         });

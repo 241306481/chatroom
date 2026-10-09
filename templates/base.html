@@ -44,7 +44,7 @@
       <a href="/domain/{{ domain_name }}/manage" class="nav-manage">管理域</a>
     {% endif %}
 
-    {% if nav and nav.is_system_admin %}
+    {% if nav and nav.can_manage_system %}
       <a href="/manage" class="nav-manage">系统管理</a>
     {% endif %}
 
@@ -131,6 +131,8 @@
 
 <!-- 通用 -->
 <script src="/static/js/online.js"></script>
+<script src="/static/js/user-list-filter.js"></script>
+<script src="/static/js/discuss-list-filter.js"></script>
 <script src="/static/js/inline-edit.js"></script>
 
 <!-- editor -->
@@ -140,6 +142,7 @@
 <script src="/static/js/editor/upload-inline.js"></script>
 <script src="/static/js/editor/preview.js"></script>
 <script src="/static/js/editor/resize.js"></script>
+<script src="/static/js/editor/mention.js"></script>
 <script src="/static/js/editor/index.js"></script>
 
 <!-- chat -->
@@ -148,10 +151,12 @@
 <script src="/static/js/chat/reply.js"></script>
 <script src="/static/js/chat/actions.js"></script>
 <script src="/static/js/chat/socket.js"></script>
+<script src="/static/js/chat/inline-search.js"></script>
 
 <!-- 私信 + 上传 -->
 <script src="/static/js/dm.js"></script>
 <script src="/static/js/upload.js"></script>
 <script src="/static/js/copy-link.js"></script>
+<script src="/static/js/file-visibility.js"></script>
 </body>
 </html>

@@ -6,13 +6,14 @@
     function getUploadUrl() {
         const dn = window.__DOMAIN__;
         if (dn) return '/domain/' + encodeURIComponent(dn) + '/files/upload';
-        return '/myfile/upload';
+        return '/myfile/upload?visibility=public';
     }
 
     function getViewUrl(fileId) {
         const dn = window.__DOMAIN__;
+        const uid = window.MY_UID || window.__CURRENT_UID__ || '';
         if (dn) return location.origin + '/domain/' + encodeURIComponent(dn) + '/files/' + fileId;
-        return location.origin + '/myfile/' + fileId;
+        return location.origin + '/myfile/' + encodeURIComponent(uid) + '/' + fileId;
     }
 
     window.EditorUpload = {

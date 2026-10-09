@@ -184,3 +184,28 @@
 .message-input-area > .new-msg-banner { bottom: calc(100% + 8px); }
 /* fallback：若挂在 .message-area 上，退回到底部 12px */
 .message-area > .new-msg-banner { bottom: 12px; }
+
+.msg-revoked { color: #999; font-style: italic; }
+.msg-revoked .revoked-nick { color: #1890ff; font-style: normal; font-weight: 600; }
+.msg-reply-quote-deleted,
+.msg-reply-quote-revoked { opacity: 0.6; cursor: default; }
+.msg-reply-quote-deleted .reply-quote-content,
+.msg-reply-quote-revoked .reply-quote-content { color: #999; }
+
+.mention-link { color: #1890ff; text-decoration: none; }
+.mention-link:hover { text-decoration: underline; }
+.mention-link.mention-silent { color: #888; }
+
+.inline-search-wrap { display: flex; align-items: center; gap: 6px;
+  margin-left: auto; margin-right: 12px; }
+.inline-search-input { width: 180px; padding: 4px 10px;
+  border: 1px solid #d9d9d9; border-radius: 16px; font-size: 13px;
+  font-family: inherit; outline: none; transition: width 0.15s; }
+.inline-search-input:focus { width: 240px; border-color: #1890ff;
+  box-shadow: 0 0 0 2px rgba(24,144,255,0.1); }
+.inline-search-close { background: transparent; border: none;
+  color: #999; font-size: 16px; cursor: pointer; padding: 0 4px; }
+.inline-search-close:hover { color: #ff4d4f; }
+.inline-search-count { font-size: 12px; color: #999; white-space: nowrap; }
+.message.inline-search-hit { background: #fffbe6;
+  box-shadow: inset 3px 0 0 #faad14; border-radius: 4px; }

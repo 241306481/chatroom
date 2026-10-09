@@ -59,7 +59,10 @@
                     }
                     break;
                 case 'message_deleted':
-                    R.removeMessage(data.message_id);
+                    R.applyDelete(data.message_id);
+                    break;
+                case 'message_revoked':
+                    R.applyRevoke(data);
                     break;
                 case 'message_pinned':
                     R.updatePinned(data.message_id, data.pinned, data.message);
@@ -102,6 +105,48 @@
 
     connect();
 
+    // ---------- 触顶加载更老消息 ----------
+    (function bindLoadMore() {
+        const list = document.getElementById('messageList');
+        if (!list) return;
+        const dataEl = list;
+        const initialOffset = parseInt(dataEl.dataset.offset || '0', 10) || 0;
+        const initialLimit = parseInt(dataEl.dataset.limit || '100', 10) || 100;
+        let total = parseInt(dataEl.dataset.total || '0', 10) || 0;
+        const PAGE = 50;
+        let loading = false;
+        let loadedCount = initialOffset + initialLimit;
+        if (total && loadedCount >= total) return;
+
+        function loadMore() {
+            if (loading) return;
+            if (total && loadedCount >= total) return;
+            loading = true;
+            const url = '/domain/' + encodeURIComponent(DOMAIN)
+                + '/discuss/' + encodeURIComponent(DISCUSS)
+                + '/messages?offset=' + loadedCount + '&limit=' + PAGE;
+            fetch(url).then(function (r) { return r.json(); }).then(function (res) {
+                if (!res || !res.ok) { loading = false; return; }
+                if (typeof res.total === 'number' && res.total > total) {
+                    total = res.total;
+                }
+                const msgs = res.messages || [];
+                msgs.forEach(function (m) {
+                    window.ChatRender.prependMessage(m);
+                });
+                loadedCount += msgs.length;
+                if (res.has_more === false) total = loadedCount;
+                loading = false;
+            }).catch(function () { loading = false; });
+        }
+
+        list.addEventListener('scroll', function () {
+            const distanceFromTop = -list.scrollTop;
+            const maxScroll = list.scrollHeight - list.clientHeight;
+            if (maxScroll - distanceFromTop < 300) loadMore();
+        }, { passive: true });
+    })();
+
     // ---------- 初始渲染 ----------
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', () => window.ChatRender.renderAllHistory());
@@ -127,4 +172,17 @@
             if (list) list.scrollTop = 0;
         });
     }
+
+    (function jumpToHash() {
+        const h = location.hash;
+        if (!h || !h.startsWith('#msg-')) return;
+        const id = h.substring(5);
+        const el = document.querySelector('.message[data-id="' + id + '"]');
+        if (!el) return;
+        setTimeout(() => {
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            el.classList.add('highlight');
+            setTimeout(() => el.classList.remove('highlight'), 2000);
+        }, 300);
+    })();
 })();

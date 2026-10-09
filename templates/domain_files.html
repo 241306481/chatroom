@@ -32,10 +32,10 @@
         <tr>
           <th style="width:40px;"></th>
           <th>文件名</th>
-          <th style="width:100px;">大小</th>
-          <th style="width:140px;">上传者</th>
-          <th style="width:180px;">上传时间</th>
-          <th style="width:140px;">操作</th>
+          <th style="width:80px;">大小</th>
+          <th style="width:120px;">上传者</th>
+          <th style="width:170px;">上传时间</th>
+          <th style="width:210px;">操作</th>
         </tr>
       </thead>
       <tbody>
@@ -54,7 +54,7 @@
               {% endif %}
             </td>
             <td>{{ f.size_str }}</td>
-            <td>{{ f.uploader_name }}</td>
+            <td>{% if f.uploader %}<a href="/user/{{ f.uploader }}">{{ f.uploader_name }}</a>{% else %}{{ f.uploader_name }}{% endif %}</td>
             <td>{{ f.created_at }}</td>
             <td>
               <a href="/domain/{{ domain_name }}/files/{{ f.id }}/download" class="file-action-btn">下载</a>

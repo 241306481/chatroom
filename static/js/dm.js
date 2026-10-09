@@ -109,10 +109,83 @@
     };
 
     window.newDMTarget = function () {
-        window.showPrompt('输入对方 UID', '', { title: '新增会话' }).then(function (uid) {
-            if (uid && uid.trim()) location.href = '/messages?target=' + encodeURIComponent(uid.trim());
-        });
+        const picker = document.getElementById('dmNewPicker');
+        const input = document.getElementById('dmSearchInput');
+        const list = document.getElementById('dmSearchList');
+        if (!picker || !input || !list) return;
+
+        const users = window.__DM_USERS__ || [];
+
+        function renderList(query) {
+            const q = (query || '').toLowerCase().trim();
+            let items = users;
+            if (q) {
+                items = users.filter(u =>
+                    String(u.nickname || '').toLowerCase().indexOf(q) >= 0
+                    || String(u.id).indexOf(q) >= 0
+                );
+            }
+            items = items.slice(0, 20);
+            list.innerHTML = '';
+            if (!items.length) {
+                list.innerHTML = '<div class="dm-search-empty">未找到用户</div>';
+                return;
+            }
+            items.forEach(u => {
+                const a = document.createElement('a');
+                a.className = 'dm-search-item';
+                a.href = '/messages?target=' + encodeURIComponent(u.id);
+                a.innerHTML =
+                    '<span class="avatar-circle" style="background:' + u.avatar_color + '">'
+                    + (u.nickname || '?')[0] + '</span>'
+                    + '<span>' + u.nickname + '</span>'
+                    + '<span class="dm-search-uid">UID ' + u.id + '</span>';
+                list.appendChild(a);
+            });
+        }
+
+        const open = picker.hidden;
+        picker.hidden = !open;
+        if (open) {
+            input.value = '';
+            renderList('');
+            input.focus();
+        }
     };
+
+    // 输入筛选
+    document.addEventListener('input', function (e) {
+        if (e.target && e.target.id === 'dmSearchInput') {
+            const users = window.__DM_USERS__ || [];
+            const q = e.target.value.toLowerCase().trim();
+            let items = users;
+            if (q) {
+                items = users.filter(u =>
+                    String(u.nickname || '').toLowerCase().indexOf(q) >= 0
+                    || String(u.id).indexOf(q) >= 0
+                );
+            }
+            items = items.slice(0, 20);
+            const list = document.getElementById('dmSearchList');
+            if (!list) return;
+            list.innerHTML = '';
+            if (!items.length) {
+                list.innerHTML = '<div class="dm-search-empty">未找到用户</div>';
+                return;
+            }
+            items.forEach(u => {
+                const a = document.createElement('a');
+                a.className = 'dm-search-item';
+                a.href = '/messages?target=' + encodeURIComponent(u.id);
+                a.innerHTML =
+                    '<span class="avatar-circle" style="background:' + u.avatar_color + '">'
+                    + (u.nickname || '?')[0] + '</span>'
+                    + '<span>' + u.nickname + '</span>'
+                    + '<span class="dm-search-uid">UID ' + u.id + '</span>';
+                list.appendChild(a);
+            });
+        }
+    });
 
     window.submitDMPolicy = function (form) {
         const data = new URLSearchParams(new FormData(form)).toString();

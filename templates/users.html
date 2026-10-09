@@ -68,5 +68,15 @@
   {% else %}
     <p class="empty">暂无用户</p>
   {% endif %}
+
+  <div class="list-filter-bar">
+    <input type="text" class="list-filter-input"
+           placeholder="输入昵称或 UID 筛选…" autocomplete="off">
+    <span class="list-filter-count"></span>
+  </div>
+
+<script>
+  window.__LIST_FILTER_SCOPE__ = 'userTable';
+</script>
 </div>
 {% endblock %}

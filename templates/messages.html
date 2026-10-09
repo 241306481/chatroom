@@ -17,6 +17,17 @@
       </form>
     </details>
     <button class="dm-new-btn" onclick="newDMTarget()">+ 新增会话</button>
+
+    <div class="dm-new-picker" id="dmNewPicker" hidden>
+      <input type="text" id="dmSearchInput" class="dm-search-input"
+             placeholder="搜索用户昵称…" autocomplete="off">
+      <div class="dm-search-list" id="dmSearchList"></div>
+    </div>
+
+    <script>
+      window.__DM_USERS__ = {{ all_users | dump | safe }};
+    </script>
+
     {% if conversations and conversations.length %}
       {% for c in conversations %}
         <a href="/messages?target={{ c.other }}"

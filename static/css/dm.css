@@ -13,7 +13,22 @@
 .dm-new-btn { display: block; width: 100%; padding: 8px; margin-bottom: 8px;
   background: #1890ff; color: #fff; border: none; border-radius: 6px;
   cursor: pointer; font-size: 13px; }
-.dm-new-btn:hover { background: #40a9ff; }
+.dm-new-picker { margin-bottom: 8px; background: #fff;
+  border: 1px solid #e0e0e0; border-radius: 6px; padding: 6px; }
+.dm-search-input { width: 100%; padding: 6px 10px;
+  border: 1px solid #d9d9d9; border-radius: 4px; font-size: 13px;
+  font-family: inherit; outline: none; }
+.dm-search-input:focus { border-color: #1890ff;
+  box-shadow: 0 0 0 2px rgba(24,144,255,0.1); }
+.dm-search-list { margin-top: 6px; max-height: 260px; overflow-y: auto;
+  display: flex; flex-direction: column; gap: 1px; }
+.dm-search-item { display: flex; align-items: center; gap: 6px;
+  padding: 6px 8px; border-radius: 4px; text-decoration: none;
+  color: #333; font-size: 13px; }
+.dm-search-item:hover { background: #e6f7ff; color: #1890ff; }
+.dm-search-item .avatar-circle { width: 22px; height: 22px; font-size: 11px; }
+.dm-search-item .dm-search-uid { margin-left: auto; color: #999; font-size: 11px; }
+.dm-search-empty { padding: 12px; color: #aaa; font-size: 13px; text-align: center; }
 .dm-main { display: flex; flex-direction: column; background: #fff;
   min-height: 0; overflow: hidden; position: relative; }
 .dm-main-header { padding: 12px 16px; border-bottom: 1px solid #e0e0e0;

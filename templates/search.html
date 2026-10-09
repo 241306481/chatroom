@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-container" style="max-width:1100px;">
+  <h1>🔍 消息搜索</h1>
+
+  <form method="GET" action="/search" class="search-form">
+    <input type="text" name="q" value="{{ q }}" placeholder="输入关键词…" autofocus
+           class="search-input">
+
+    <div class="search-options">
+      <label>域
+        <select name="domain" id="searchDomain">
+          <option value="">全部可访问域</option>
+          {% for d in domains %}
+            <option value="{{ d.name }}" {% if d.name == domainFilter %}selected{% endif %}>
+              {{ d.display }}
+            </option>
+          {% endfor %}
+        </select>
+      </label>
+
+      <label>讨论
+        <select name="discuss" id="searchDiscuss">
+          <option value="">全部讨论</option>
+        </select>
+      </label>
+
+      <label>用户
+        <select name="user">
+          <option value="">全部用户</option>
+          {% for u in users %}
+            <option value="{{ u.id }}" {% if u.id == userFilter %}selected{% endif %}>
+              {{ u.nickname }}
+            </option>
+          {% endfor %}
+        </select>
+      </label>
+
+      <label class="checkbox-row">
+        <input type="checkbox" name="mode" value="advanced"
+               {% if advanced %}checked{% endif %}>
+        高级模式
+      </label>
+    </div>
+
+    <button type="submit">搜索</button>
+  </form>
+
+  {% if advanced %}
+    <div class="search-advanced-hint">
+      高级语法：from:uid · in:discuss · domain:dn · before:YYYY-MM-DD · after:YYYY-MM-DD · 关键词空格分隔为 AND
+    </div>
+  {% endif %}
+
+  {% if searched %}
+    <div class="search-results-info">
+      {% if results and results.length %}
+        共 {{ results.length }} 条结果{% if results.length >= 200 %}（显示前 200 条）{% endif %}
+      {% else %}
+        无匹配结果
+      {% endif %}
+    </div>
+
+    {% if results and results.length %}
+      <div class="search-results">
+        {% for r in results %}
+          <a class="search-result"
+             href="/domain/{{ r.domain }}/discuss/{{ r.disc }}#msg-{{ r.msg_id }}">
+            <div class="search-result-meta">
+              <span>{{ r.nickname }}</span>
+              <span>{{ r.created_at }}</span>
+              <span class="search-result-loc">{{ r.domain }} / #{{ r.disc }}</span>
+            </div>
+            <div class="search-result-content">{{ r.content }}</div>
+          </a>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endif %}
+</div>
+
+<script>
+  window.__SEARCH_DOMAINS__ = {{ domains | dump | safe }};
+  window.__SEARCH_DISCUSS__ = {{ discFilter | dump | safe }};
+</script>
+<script>
+  (function () {
+    const domainSel = document.getElementById('searchDomain');
+    const discSel = document.getElementById('searchDiscuss');
+    if (!domainSel || !discSel) return;
+    const data = window.__SEARCH_DOMAINS__ || [];
+    const current = window.__SEARCH_DISCUSS__ || '';
+
+    function fill() {
+      const name = domainSel.value;
+      const entry = data.filter(d => d.name === name)[0];
+      const discs = entry && entry.discussions ? entry.discussions : [];
+      discSel.innerHTML = '';
+      const all = document.createElement('option');
+      all.value = '';
+      all.textContent = '全部讨论';
+      discSel.appendChild(all);
+      discs.forEach(id => {
+        const o = document.createElement('option');
+        o.value = id;
+        o.textContent = '#' + id;
+        if (id === current) o.selected = true;
+        discSel.appendChild(o);
+      });
+    }
+
+    fill();
+    domainSel.addEventListener('change', fill);
+  })();
+</script>
+{% endblock %}

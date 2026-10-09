@@ -14,6 +14,12 @@
     </div>
   {% endif %}
 
+  <div class="list-filter-bar">
+    <input type="text" class="list-filter-input"
+           placeholder="筛选本域讨论 ID 或标题…" autocomplete="off">
+    <span class="list-filter-count"></span>
+  </div>
+
   {% if discussions and discussions.length %}
     <div class="discuss-list">
       {% for d in discussions %}

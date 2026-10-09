@@ -16,7 +16,7 @@
 .file-table td { padding: 10px 12px; border-bottom: 1px solid #f0f0f0;
   vertical-align: middle; }
 .file-table tr:hover td { background: #f5faff; }
-.file-icon-cell { text-align: center; font-size: 20px; }
+.file-icon-cell { text-align: center; font-size: 16px; opacity: 0.7; }
 .file-name-cell { word-break: break-all; color: #333; }
 .file-name-cell .file-name-editable { color: #333; font-size: 14px;
   cursor: pointer; padding: 2px 6px; border-radius: 4px;

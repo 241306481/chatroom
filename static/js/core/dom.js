@@ -23,13 +23,35 @@ window.renderContent = function (text) {
     if (text == null) return '';
     text = String(text);
 
+    const escText = text
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+
+    const mentionPlaceholders = [];
+    let processed = escText.replace(/@(@?)\[([^\/\]]+)\/(\d+)\]/g, (whole, at, nick, uid) => {
+        const silent = at === '@';
+        const idx = mentionPlaceholders.length;
+        mentionPlaceholders.push({ nick, uid, silent });
+        return '<!--MENTION_' + idx + '-->';
+    });
+
     let html;
     if (typeof marked !== 'undefined') {
-        try { html = marked.parse(text, { breaks: true, gfm: true }); }
-        catch (e) { html = esc(text).replace(/\n/g, '<br>'); }
+        try { html = marked.parse(processed, { breaks: true, gfm: true }); }
+        catch (e) { html = processed.replace(/\n/g, '<br>'); }
     } else {
-        html = esc(text).replace(/\n/g, '<br>');
+        html = processed.replace(/\n/g, '<br>');
     }
+
+    html = html.replace(/<!--MENTION_(\d+)-->/g, (whole, i) => {
+        const item = mentionPlaceholders[parseInt(i, 10)];
+        if (!item) return '';
+        const atSymbol = item.silent ? '@' : '@';
+        const cls = item.silent ? 'mention-link mention-silent' : 'mention-link';
+        return '<a class="' + cls + '" href="/user/' + item.uid + '">'
+             + atSymbol + esc(item.nick) + '</a>';
+    });
 
     const container = document.createElement('div');
     container.innerHTML = html;

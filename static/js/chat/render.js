@@ -84,19 +84,17 @@
     }
 
     // ---------- 追加 / 移除消息 ----------
-    function appendMessage(msg) {
-        // 头像色白名单：仅允许 HSL / HEX / rgb / 具名色 的常见字符
-        function safeColor(c) {
+    function buildMessageEl(msg) {
+        const safeColor = function (c) {
             const s = String(c || '');
             if (/^#[0-9a-fA-F]{3,8}$/.test(s)) return s;
             if (/^hsl\(\s*-?\d+(\.\d+)?\s*,\s*\d+(\.\d+)?%\s*,\s*\d+(\.\d+)?%\s*\)$/.test(s)) return s;
             if (/^rgba?\([0-9,\s.]+\)$/.test(s)) return s;
-            if (/^[a-zA-Z]{3,20}$/.test(s)) return s; // 具名色如 red / blue
+            if (/^[a-zA-Z]{3,20}$/.test(s)) return s;
             return '#888';
-        }
+        };
 
-        // 单引号安全化（用于 onclick="foo('...')" 上下文）
-        function escSingle(s) {
+        const escSingle = function (s) {
             return String(s == null ? '' : s)
                 .replace(/\\/g, '\\\\')
                 .replace(/'/g, "\\'")
@@ -105,41 +103,56 @@
                 .replace(/>/g, '\\x3e')
                 .replace(/\n/g, '\\n')
                 .replace(/\r/g, '\\r');
-        }
-
-        const list = document.getElementById('messageList');
-        if (!list) return;
-
-        const inner = list.querySelector('.message-list-inner') || list;
-        const empty = inner.querySelector('.empty');
-        if (empty) empty.remove();
+        };
 
         const div = document.createElement('div');
         div.className = 'message';
         if (msg.is_system) div.classList.add('system-msg');
         div.dataset.id = msg.id;
+        if (msg.id) div.id = 'msg-' + msg.id;
+        if (msg.reply_to) div.dataset.replyTo = msg.reply_to;
 
         const canPin = window.__CAN_PIN__ === true;
         const canDeleteAny = window.__CAN_DELETE_ANY__ === true;
         const canAddReaction = window.__CAN_ADD_REACTION__ === true;
         const isOwn = msg.user_id === window.MY_UID;
-        const showPin = canPin;
+        const showPin = canPin && !msg.revoked;
         const showDelete = canDeleteAny || isOwn;
+        const revoked = !!msg.revoked;
 
         const nick = (msg.nickname || '?')[0];
         const color = safeColor(msg.avatar_color);
         const mid = escSingle(msg.id);
 
-        const canReply = !!document.getElementById('msgInput');
+        const canReply = !!document.getElementById('msgInput') && !revoked;
         const replyBtn = canReply
             ? `<button type="button" class="msg-reply-btn" onclick="setReplyTo('${mid}', this)" title="回复">↩️</button>`
             : '';
         const replyQuote = msg.reply_info
-            ? `<div class="msg-reply-quote" onclick="scrollToMessage('${escSingle(msg.reply_info.id)}')">
-                   <span class="reply-quote-nick">${esc(msg.reply_info.nickname)}</span>
-                   <span class="reply-quote-content">${esc(msg.reply_info.content)}</span>
-               </div>`
+            ? (msg.reply_info.deleted
+                ? `<div class="msg-reply-quote msg-reply-quote-deleted"><span class="reply-quote-content"><em>该消息已被删除</em></span></div>`
+                : msg.reply_info.revoked
+                    ? `<div class="msg-reply-quote msg-reply-quote-revoked"><span class="reply-quote-content"><em>该消息已被撤回</em></span></div>`
+                    : `<div class="msg-reply-quote" onclick="scrollToMessage('${escSingle(msg.reply_info.id)}')">
+                           <span class="reply-quote-nick">${esc(msg.reply_info.nickname)}</span>
+                           <span class="reply-quote-content">${esc(msg.reply_info.content)}</span>
+                       </div>`)
             : '';
+        const revokeBtn = !revoked && (isOwn || window.__CAN_REVOKE_ANY__ === true)
+            ? `<button type="button" onclick="revokeMessage('${mid}')" title="撤回">↩️</button>`
+            : '';
+        const sourceBtn = !revoked
+            ? `<button type="button" onclick="toggleSource(this)" title="查看源码">📄</button>`
+            : '';
+        const reactionBtn = canAddReaction && !revoked
+            ? `<button type="button" onclick="toggleReactionPicker('${mid}', this)" title="添加表情">😀</button>`
+            : '';
+        const reactionsDiv = !revoked
+            ? `<div class="msg-reactions" id="reactions-${mid}" data-reactions="${escAttr(msg.reactions_json || '{}')}"></div>`
+            : '';
+        const contentHtml = revoked
+            ? `<div class="msg-content msg-revoked"><span class="revoked-nick">${esc(msg.revoked_by_nickname || msg.nickname)}</span> 撤回了一条消息</div>`
+            : `<div class="msg-content" data-raw="${escAttr(msg.content)}">${window.renderContent(msg.content)}</div>`;
 
         div.innerHTML = `
             <div class="msg-avatar" style="background:${color}">${esc(nick)}</div>
@@ -149,22 +162,112 @@
                     <span class="msg-time">${esc(msg.created_at)}</span>
                     ${replyBtn}
                     <div class="msg-actions">
-                        <button type="button" onclick="toggleSource(this)" title="查看源码">📄</button>
-                        ${canAddReaction ? `<button type="button" onclick="toggleReactionPicker('${mid}', this)" title="添加表情">😀</button>` : ''}
+                        ${sourceBtn}
+                        ${reactionBtn}
                         ${showPin ? `<button type="button" onclick="pinMessage('${mid}')" title="置顶">📌</button>` : ''}
+                        ${revokeBtn}
                         ${showDelete ? `<button type="button" onclick="deleteMessage('${mid}')" title="删除">🗑</button>` : ''}
                     </div>
                 </div>
                 ${replyQuote}
-                <div class="msg-content" data-raw="${escAttr(msg.content)}">${window.renderContent(msg.content)}</div>
-                <div class="msg-reactions" id="reactions-${mid}"></div>
+                ${contentHtml}
+                ${reactionsDiv}
             </div>`;
-        inner.insertBefore(div, inner.firstElementChild);
+        return div;
+    }
+
+    function appendMessage(msg) {
+        const list = document.getElementById('messageList');
+        if (!list) return;
+        const inner = list.querySelector('.message-list-inner') || list;
+        const empty = inner.querySelector('.empty');
+        if (empty) empty.remove();
+        inner.insertBefore(buildMessageEl(msg), inner.firstElementChild);
+    }
+
+    function prependMessage(msg) {
+        const list = document.getElementById('messageList');
+        if (!list) return;
+        const inner = list.querySelector('.message-list-inner') || list;
+        if (inner.querySelector('.message[data-id="' + (msg.id || '') + '"]')) return;
+        const div = buildMessageEl(msg);
+        inner.appendChild(div);
+        const re = div.querySelector('.msg-reactions[data-reactions]');
+        if (re) initReactionsIn(re);
+    }
+
+    function revokeMessage(id) {
+        window.showConfirm('撤回这条消息？').then(function (ok) {
+            if (!ok) return;
+            if (window.ChatWS && window.ChatWS.isOpen()) {
+                window.ChatWS.send({ type: 'revoke', message_id: id });
+            }
+        });
+    }
+
+    function updateReplyQuotes(messageId, revoked) {
+        document.querySelectorAll('[data-reply-to="' + messageId + '"]').forEach(msgEl => {
+            const q = msgEl.querySelector('.msg-reply-quote');
+            if (!q) return;
+            q.classList.add(revoked ? 'msg-reply-quote-revoked' : 'msg-reply-quote-deleted');
+            q.innerHTML = '<span class="reply-quote-content"><em>'
+                + (revoked ? '该消息已被撤回' : '该消息已被删除')
+                + '</em></span>';
+            q.onclick = null;
+        });
+    }
+
+    function applyRevoke(data) {
+        const el = document.querySelector(`.message[data-id="${data.message_id}"]`);
+        if (!el) return;
+
+        const content = el.querySelector('.msg-content');
+        if (content) {
+            content.classList.add('msg-revoked');
+            content.removeAttribute('data-raw');
+            content.innerHTML = '<span class="revoked-nick">'
+                + esc(data.revoked_by_nickname || '?')
+                + '</span> 撤回了一条消息';
+        }
+
+        const actions = el.querySelector('.msg-actions');
+        if (actions) {
+            actions.querySelectorAll('button').forEach(b => {
+                const t = (b.getAttribute('title') || '');
+                if (t === '删除') return;
+                b.remove();
+            });
+        }
+
+        const re = el.querySelector('.msg-reactions');
+        if (re) re.remove();
+
+        updateReplyQuotes(data.message_id, true);
+
+        if (data.was_pinned) {
+            el.classList.remove('pinned');
+            const icon = el.querySelector('.pin-icon');
+            if (icon) icon.remove();
+        }
+
+        if (data.was_pinned) {
+            const panel = document.querySelector('.pinned-panel');
+            if (panel) {
+                const item = panel.querySelector('.pinned-item[data-id="' + data.message_id + '"]');
+                if (item) item.remove();
+            }
+        }
     }
 
     function removeMessage(id) {
         const el = document.querySelector(`.message[data-id="${id}"]`);
         if (el) el.remove();
+    }
+
+    function applyDelete(messageId) {
+        const el = document.querySelector('.message[data-id="' + messageId + '"]');
+        if (el) el.remove();
+        updateReplyQuotes(messageId, false);
     }
 
     // ---------- 置顶 ----------
@@ -264,19 +367,21 @@
     }
 
     // ---------- 初始化历史表情 ----------
-    function initReactions() {
-        document.querySelectorAll('.msg-reactions[data-reactions]').forEach(function (el) {
-            if (el.dataset.rendered === '1') return;
-            let obj = {};
-            try { obj = JSON.parse(el.dataset.reactions || '{}'); } catch (e) {}
-            const msgId = el.id.replace('reactions-', '');
-            Object.keys(obj).forEach(function (key) {
-                const emoji = key.substring(2);
-                const uids = Array.isArray(obj[key]) ? obj[key] : [];
-                renderReaction(el, msgId, emoji, uids.length, uids.indexOf(window.MY_UID) >= 0);
-            });
-            el.dataset.rendered = '1';
+    function initReactionsIn(el) {
+        if (el.dataset.rendered === '1') return;
+        let obj = {};
+        try { obj = JSON.parse(el.dataset.reactions || '{}'); } catch (e) {}
+        const msgId = el.id.replace('reactions-', '');
+        Object.keys(obj).forEach(function (key) {
+            const emoji = key.substring(2);
+            const uids = Array.isArray(obj[key]) ? obj[key] : [];
+            renderReaction(el, msgId, emoji, uids.length, uids.indexOf(window.MY_UID) >= 0);
         });
+        el.dataset.rendered = '1';
+    }
+
+    function initReactions() {
+        document.querySelectorAll('.msg-reactions[data-reactions]').forEach(initReactionsIn);
     }
 
     // ---------- 工具 ----------
@@ -298,7 +403,10 @@
         addDiscussionToSidebar,
         removeDiscussionFromSidebar,
         appendMessage,
+        prependMessage,
+        buildMessageEl,
         removeMessage,
+        applyDelete,
         updatePinned,
         updatePinnedPanel,
         renderReaction,
@@ -310,5 +418,9 @@
         isAtBottom,
         showNewMsgBanner,
         hideNewMsgBanner,
+        revokeMessage,
+        applyRevoke,
     };
+
+    window.revokeMessage = revokeMessage;
 })();

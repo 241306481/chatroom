@@ -30,9 +30,9 @@
         <tr>
           <th style="width:40px;"></th>
           <th>文件名</th>
-          <th style="width:100px;">大小</th>
-          <th style="width:180px;">上传时间</th>
-          <th style="width:140px;">操作</th>
+          <th style="width:80px;">大小</th>
+          <th style="width:170px;">上传时间</th>
+          <th style="width:210px;">操作</th>
         </tr>
       </thead>
       <tbody>
@@ -51,8 +51,14 @@
             <td>
               <a href="/myfile/{{ f.id }}/download" class="file-action-btn">下载</a>
               <button type="button" class="file-action-btn"
-                      data-copy-url="/myfile/{{ f.id }}"
+                      data-copy-url="/myfile/{{ current_user.id }}/{{ f.id }}"
                       onclick="copyFileLink(this)">复制链接</button>
+              <button type="button" class="file-action-btn"
+                      data-file-id="{{ f.id }}"
+                      data-visibility="{{ f.visibility or 'private' }}"
+                      onclick="toggleFileVisibility(this, '/myfile/{{ f.id }}/visibility');">
+                {% if f.visibility == 'public' %}🔓 公开{% else %}🔒 隐藏{% endif %}
+              </button>
               <form method="POST" action="/myfile/{{ f.id }}/delete" style="display:inline">
                 <button type="submit" class="file-action-btn danger"
                         data-confirm="确定删除此文件？">删除</button>

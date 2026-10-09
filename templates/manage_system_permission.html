@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-container" style="max-width:1400px;">
+  <h1>系统权限管理</h1>
+  <p class="hint">勾选各角色的权限，点击底部的"保存所有"按钮一次性提交</p>
+
+  <form method="POST" action="/manage/system_permissions"
+        id="permForm" onsubmit="return syncPermForm(this)">
+    <table class="perm-matrix">
+      <thead>
+        <tr>
+          <th style="width:240px;">权限</th>
+          {% for r in roles %}
+            <th style="text-align:center;">
+              {{ r.display }}<br>
+              <small style="color:#999;">{{ r.name }}</small>
+            </th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for group_name, perms in groups %}
+          <tr class="group-row">
+            <td colspan="{{ roles.length + 1 }}">{{ group_name }}</td>
+          </tr>
+          {% for p in perms %}
+            <tr>
+              <td>{{ p.name }}</td>
+              {% for r in roles %}
+                <td style="text-align:center;">
+                  {% if r.editable %}
+                    <input type="checkbox"
+                      data-role="{{ r.name }}"
+                      data-bit="{{ p.bit }}"
+                      {% if r.bitMap[p.key] %}checked{% endif %}>
+                  {% else %}
+                    <input type="checkbox" disabled {% if r.bitMap[p.key] %}checked{% endif %}>
+                  {% endif %}
+                </td>
+              {% endfor %}
+            </tr>
+          {% endfor %}
+        {% endfor %}
+      </tbody>
+    </table>
+
+    {# 隐藏字段：每个可编辑角色一个（初始值兜底，提交时由 syncPermForm 重算） #}
+    {% for r in roles %}
+      {% if r.editable %}
+        <input type="hidden" name="perm_{{ r.name }}" id="perm_value_{{ r.name }}" value="{{ r.priv }}">
+      {% endif %}
+    {% endfor %}
+
+    <div style="margin-top:24px;">
+      <button type="submit" style="padding:10px 32px;background:#1890ff;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:15px;">
+        💾 保存所有
+      </button>
+      <a href="/manage" style="margin-left:16px;">取消</a>
+    </div>
+  </form>
+
+  <div style="margin-top:12px;font-size:12px;color:#888;">
+    保存时会根据当前勾选状态生成权限值。若页面异常，请刷新后重试。
+  </div>
+</div>
+
+<script>
+  function syncPermForm(form) {
+    const state = {};
+    form.querySelectorAll('input[type="checkbox"][data-role][data-bit]').forEach(cb => {
+      const role = cb.dataset.role;
+      const bit = parseInt(cb.dataset.bit, 10);
+      if (!role || !bit) return;
+      if (!state[role]) state[role] = 0;
+      if (cb.checked) state[role] = (state[role] | bit) >>> 0;
+    });
+    Object.keys(state).forEach(role => {
+      let hidden = form.querySelector('input[name="perm_' + role + '"]');
+      if (!hidden) {
+        hidden = document.createElement('input');
+        hidden.type = 'hidden';
+        hidden.name = 'perm_' + role;
+        form.appendChild(hidden);
+      }
+      hidden.value = String(state[role]);
+    });
+    return true;
+  }
+</script>
+{% endblock %}

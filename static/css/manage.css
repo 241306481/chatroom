@@ -54,3 +54,5 @@
   border: 1px solid #ff4d4f; color: #ff4d4f; border-radius: 4px;
   cursor: pointer; white-space: nowrap; }
 .ban-form button:hover { background: #fff1f0; }
+
+.mydomain-actions { display: flex; align-items: center; }
