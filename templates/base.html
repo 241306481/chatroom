@@ -4,6 +4,17 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>{{ site_name or display_name or "聊天室" }}</title>
+<script>
+  (function () {
+    try {
+      var t = localStorage.getItem('chatroom_theme')
+          || (window.matchMedia
+              && window.matchMedia('(prefers-color-scheme: dark)').matches
+              ? 'dark' : 'light');
+      document.documentElement.setAttribute('data-theme', t);
+    } catch (e) {}
+  })();
+</script>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>💬</text></svg>">
 <link rel="stylesheet" href="/static/katex/katex.min.css">
 <link rel="stylesheet" href="/static/css/main.css">
@@ -88,6 +99,9 @@
       <a href="/login{% if login_return %}?return_to={{ login_return | urlencode }}{% endif %}" class="nav-login-btn">登录</a>
       <a href="/register{% if login_return %}?return_to={{ login_return | urlencode }}{% endif %}" class="nav-register-btn">注册</a>
     {% endif %}
+
+    <button type="button" class="theme-toggle" id="themeToggle"
+            title="切换主题" aria-label="切换主题">🌙</button>
   </nav>
 </header>
 
@@ -171,5 +185,35 @@
 <script src="/static/js/upload.js"></script>
 <script src="/static/js/copy-link.js"></script>
 <script src="/static/js/file-visibility.js"></script>
+
+<script>
+  (function () {
+    var KEY = 'chatroom_theme';
+    var stored = localStorage.getItem(KEY);
+    var theme = stored || (window.matchMedia
+        && window.matchMedia('(prefers-color-scheme: dark)').matches
+        ? 'dark' : 'light');
+    document.documentElement.setAttribute('data-theme', theme);
+
+    function updateButton() {
+      var btn = document.getElementById('themeToggle');
+      if (!btn) return;
+      var cur = document.documentElement.getAttribute('data-theme');
+      btn.textContent = cur === 'dark' ? '☀' : '🌙';
+      btn.title = cur === 'dark' ? '切换为浅色' : '切换为深色';
+    }
+    updateButton();
+
+    document.addEventListener('click', function (e) {
+      var btn = e.target.closest && e.target.closest('#themeToggle');
+      if (!btn) return;
+      var cur = document.documentElement.getAttribute('data-theme');
+      var next = cur === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem(KEY, next);
+      updateButton();
+    });
+  })();
+</script>
 </body>
 </html>

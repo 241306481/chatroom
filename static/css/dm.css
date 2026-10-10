@@ -47,8 +47,9 @@
   width: 36px; height: 36px; border-radius: 50%;
   color: #fff; font-weight: 600; font-size: 14px; }
 
-.dm-msg-body { flex: 1; min-width: 0; display: flex; flex-direction: column; }
-.dm-msg.dm-me .dm-msg-body { align-items: flex-end; }
+.dm-msg-body { flex: 1; min-width: 0; display: flex; flex-direction: column;
+  padding-right: 46px; }
+.dm-msg.dm-me .dm-msg-body { padding-right: 0; padding-left: 46px; }
 
 .dm-msg-header { display: flex; align-items: center; gap: 8px;
   font-size: 12px; color: #888; margin-bottom: 4px; padding: 0 4px; }
@@ -56,7 +57,7 @@
 .dm-nick { font-weight: 600; color: #333; }
 .dm-time { color: #999; font-size: 11px; }
 
-.dm-bubble { position: relative; width: 100%; max-width: 100%;
+.dm-bubble { position: relative; width: 100%;
   padding: 10px 14px; border-radius: 12px;
   word-wrap: break-word; font-size: 14px; line-height: 1.6;
   background: #f0f0f0; color: #333; box-sizing: border-box; }
@@ -65,10 +66,12 @@
 /* 源码模式 */
 .dm-bubble[data-mode="source"] { white-space: pre-wrap; word-wrap: break-word;
   font-family: Consolas, "Courier New", monospace; font-size: 13px;
-  color: #555; background: #f7f7f9; padding: 6px 10px;
+  color: #24292e; background: #f6f8fa; padding: 6px 10px;
   border-radius: 4px; }
 .dm-me .dm-bubble[data-mode="source"] { color: #fff;
-  background: rgba(0, 0, 0, 0.2); }
+  background: #40a9ff; padding: 6px 10px; border-radius: 4px;
+  white-space: pre-wrap; word-wrap: break-word;
+  font-family: Consolas, "Courier New", monospace; font-size: 13px; }
 
 /* Markdown 内部样式 */
 .dm-bubble p { margin: 0.3em 0; }
@@ -80,8 +83,6 @@
 .dm-bubble code { background: rgba(0, 0, 0, 0.06); padding: 1px 5px;
   border-radius: 3px; font-size: 13px; font-family: Consolas, monospace; }
 .dm-bubble pre code { background: none; padding: 0; }
-.dm-me .dm-bubble pre { background: rgba(255, 255, 255, 0.15); }
-.dm-me .dm-bubble code { background: rgba(255, 255, 255, 0.15); }
 .dm-bubble blockquote { margin: 0.3em 0; padding: 2px 10px;
   border-left: 3px solid rgba(0, 0, 0, 0.15); color: inherit; opacity: 0.85; }
 .dm-bubble ul, .dm-bubble ol { padding-left: 20px; margin: 0.3em 0; }
@@ -154,6 +155,13 @@
 .dm-bubble code { background: rgba(0, 0, 0, 0.06); padding: 1px 5px;
   border-radius: 3px; font-family: Consolas, "Courier New", monospace;
   font-size: 13px; }
-.dm-me .dm-bubble pre { background: rgba(255, 255, 255, 0.18); }
-.dm-me .dm-bubble code { background: rgba(255, 255, 255, 0.18); }
-.dm-me .dm-bubble pre code { background: none; }
+
+/* 对方消息代码块 */
+.dm-other .dm-bubble pre { background: rgba(0, 0, 0, 0.06); color: #333; }
+.dm-other .dm-bubble pre code { background: none; color: #333; }
+.dm-other .dm-bubble code { background: rgba(0, 0, 0, 0.06); color: #333; }
+
+/* 自己消息代码块 */
+.dm-me .dm-bubble pre { background: rgba(0, 0, 0, 0.18); color: #fff; }
+.dm-me .dm-bubble pre code { background: none; color: #fff; }
+.dm-me .dm-bubble code { background: rgba(0, 0, 0, 0.18); color: #fff; }
