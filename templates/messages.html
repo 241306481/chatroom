@@ -56,10 +56,19 @@
         {% if messages and messages.length %}
           {% for m in messages | reverse %}
             <div class="dm-msg {% if m.is_me %}dm-me{% else %}dm-other{% endif %}">
-              <div class="dm-bubble" data-raw="{{ m.content | e }}"></div>
-              <div class="dm-time">
-                {{ m.created_at }}
-                <button type="button" class="msg-mini-btn" onclick="toggleSource(this)" title="查看源码">📄</button>
+              <div class="dm-avatar-wrap">
+                <span class="dm-avatar" style="background:{{ m.avatar_color or '#888' }}">
+                  {{ m.nickname | avatarText }}
+                </span>
+              </div>
+              <div class="dm-msg-body">
+                <div class="dm-msg-header">
+                  <span class="dm-nick">{{ m.nickname }}</span>
+                  <span class="dm-time">{{ m.created_at }}</span>
+                  <button type="button" class="msg-mini-btn"
+                          onclick="toggleSource(this)" title="查看源码">📄</button>
+                </div>
+                <div class="dm-bubble" data-raw="{{ m.content | e }}"></div>
               </div>
             </div>
           {% endfor %}

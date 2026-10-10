@@ -17,7 +17,7 @@
     <a href="/home" class="logo">💬 {{ site_name or "聊天室" }}</a>
     {% if domain_name and domain_name != "system" %}
       <span class="domain-badge">/ {{ display_name or domain_name }}</span>
-      {% if nav and nav.is_logged_in and not is_member and join_policy != 'closed' %}
+      {% if nav and nav.is_logged_in and not nav.is_member and nav.join_policy != 'closed' %}
         <a href="/domain/{{ domain_name }}/join" class="join-btn">+ 加入域</a>
       {% endif %}
     {% endif %}
@@ -120,6 +120,19 @@
       a.href = u.pathname + u.search;
     });
   })();
+</script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('.announcement-content[data-raw], .pinned-content[data-raw]')
+        .forEach(function (el) {
+            if (el.dataset.rendered === '1') return;
+            el.innerHTML = window.renderContent
+                ? window.renderContent(el.dataset.raw || '')
+                : (el.dataset.raw || '');
+            el.dataset.rendered = '1';
+        });
+  });
 </script>
 
 <!-- core -->

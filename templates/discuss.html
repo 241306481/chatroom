@@ -166,8 +166,17 @@
       {% if pinned_messages and pinned_messages.length %}
         {% for pin in pinned_messages %}
           <div class="pinned-item {% if pin.is_system %}system-pin{% endif %}" data-id="{{ pin.id }}">
-            <div class="pinned-content">{{ pin.content }}</div>
-            <div class="pinned-meta">{{ pin.nickname }}</div>
+            <div class="pinned-meta-top">
+              <span class="pinned-nick">{{ pin.nickname }}</span>
+              <span class="pinned-time">{{ pin.created_at }}</span>
+              <button type="button" class="pinned-src-btn"
+                      onclick="scrollToMessage('{{ pin.id }}');return false;"
+                      title="定位原消息">↩</button>
+              <button type="button" class="pinned-src-btn"
+                      onclick="toggleSource(this)"
+                      title="查看源码">📄</button>
+            </div>
+            <div class="pinned-content" data-raw="{{ pin.content | e }}"></div>
             {% if can_pin %}
               <div class="pinned-actions">
                 <button type="button" title="取消置顶" onclick="unpinMessage('{{ pin.id }}')">📌</button>

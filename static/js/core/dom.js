@@ -17,63 +17,146 @@ window.escAttr = function (s) {
 };
 
 // ============================================================
-// 内容渲染：Markdown + LaTeX
+// 剪贴板
+// ============================================================
+window.copyToClipboard = function (text, btn) {
+    const done = function () {
+        if (!btn) return;
+        const old = btn.textContent;
+        btn.textContent = '已复制';
+        setTimeout(function () { btn.textContent = old; }, 1500);
+    };
+    function fallbackCopy(t) {
+        const ta = document.createElement('textarea');
+        ta.value = t;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand('copy'); } catch (e) {}
+        ta.remove();
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done).catch(function () {
+            fallbackCopy(text);
+            done();
+        });
+    } else {
+        fallbackCopy(text);
+        done();
+    }
+};
+
+// 代码块复制按钮的点击处理：renderContent 返回的是 HTML 字符串，
+// 按钮在调用方 innerHTML 赋值时会被重新解析，节点上的监听器无法保留，
+// 因此统一在文档级做事件委托。
+document.addEventListener('click', function (e) {
+    const t = e.target;
+    if (!t || !t.closest) return;
+    const btn = t.closest('.code-copy-btn');
+    if (!btn) return;
+    const pre = btn.closest('pre');
+    if (!pre) return;
+    const code = pre.querySelector('code');
+    window.copyToClipboard(code ? code.textContent : pre.textContent, btn);
+});
+
+// ============================================================
+// 内容渲染：Markdown 解析 → DOM 上渲染 LaTeX
 // ============================================================
 window.renderContent = function (text) {
     if (text == null) return '';
     text = String(text);
 
-    const escText = text
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;');
-
+    // ---- 1. 处理 @ 提及（在 marked 之前）----
+    // 语法：@[nickname/uid] 或 @@[nickname/uid]
+    // 用 HTML 注释占位，避免被 marked 解析为链接/强调
     const mentionPlaceholders = [];
-    let processed = escText.replace(/@(@?)\[([^\/\]]+)\/(\d+)\]/g, (whole, at, nick, uid) => {
-        const silent = at === '@';
-        const idx = mentionPlaceholders.length;
-        mentionPlaceholders.push({ nick, uid, silent });
-        return '<!--MENTION_' + idx + '-->';
-    });
+    const processed = text.replace(/@(@?)\[([^\/\]]+)\/(\d+)\]/g,
+        (whole, at, nick, uid) => {
+            const idx = mentionPlaceholders.length;
+            mentionPlaceholders.push({ nick: nick, uid: uid, silent: at === '@' });
+            return '<!--MENTION_' + idx + '-->';
+        });
 
+    // ---- 2. Markdown 解析（breaks: false 保证公式内换行不被 <br> 破坏）----
     let html;
     if (typeof marked !== 'undefined') {
-        try { html = marked.parse(processed, { breaks: true, gfm: true }); }
-        catch (e) { html = processed.replace(/\n/g, '<br>'); }
+        try {
+            html = marked.parse(processed, { breaks: false, gfm: true });
+        } catch (e) {
+            console.error('Markdown parse error:', e);
+            html = esc(processed).replace(/\n/g, '<br>');
+        }
     } else {
-        html = processed.replace(/\n/g, '<br>');
+        html = esc(processed).replace(/\n/g, '<br>');
     }
 
-    html = html.replace(/<!--MENTION_(\d+)-->/g, (whole, i) => {
-        const item = mentionPlaceholders[parseInt(i, 10)];
-        if (!item) return '';
-        const atSymbol = item.silent ? '@' : '@';
-        const cls = item.silent ? 'mention-link mention-silent' : 'mention-link';
-        return '<a class="' + cls + '" href="/user/' + item.uid + '">'
-             + atSymbol + esc(item.nick) + '</a>';
-    });
+    // ---- 3. 用 template 元素承载（离线构建，不触发资源加载）----
+    const tpl = document.createElement('template');
+    tpl.innerHTML = html;
+    const container = tpl.content;
 
-    const container = document.createElement('div');
-    container.innerHTML = html;
+    // ---- 4. 还原 @ 提及占位符（在 sanitize 之前，作元素插入）----
+    (function restoreMentions(root) {
+        const walker = document.createTreeWalker(root, NodeFilter.SHOW_COMMENT, null);
+        const comments = [];
+        let node;
+        while ((node = walker.nextNode())) {
+            const m = /^MENTION_(\d+)$/.exec(node.nodeValue || '');
+            if (m) comments.push({ comment: node, idx: parseInt(m[1], 10) });
+        }
+        comments.forEach(function (item) {
+            const info = mentionPlaceholders[item.idx];
+            if (!info) { item.comment.remove(); return; }
+            const a = document.createElement('a');
+            a.className = 'mention-link' + (info.silent ? ' mention-silent' : '');
+            a.href = '/user/' + info.uid;
+            a.textContent = '@' + info.nick;
+            item.comment.parentNode.replaceChild(a, item.comment);
+        });
+    })(container);
+
+    // ---- 5. sanitize ----
     sanitize(container);
 
+    // ---- 6. KaTeX auto-render（在 sanitize 后的 DOM 上，跳过 pre/code）----
     if (window.renderMathInElement) {
         try {
             renderMathInElement(container, {
                 delimiters: [
                     { left: '$$', right: '$$', display: true },
+                    { left: '\\[', right: '\\]', display: true },
                     { left: '$', right: '$', display: false },
                     { left: '\\(', right: '\\)', display: false },
-                    { left: '\\[', right: '\\]', display: true },
                 ],
-                ignoredTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code', 'option'],
+                ignoredTags: ['script', 'noscript', 'style', 'textarea',
+                              'pre', 'code', 'option'],
+                ignoredClasses: ['no-katex', 'katex-ignore', 'md-editor-preview',
+                                 'msg-content', 'md-editor-textarea'],
                 throwOnError: false,
                 trust: false,
             });
-        } catch (e) {}
+        } catch (e) {
+            console.error('KaTeX render error:', e);
+        }
     }
 
-    return container.innerHTML;
+    // ---- 7. 代码块复制按钮（仅渲染节点，点击由文档级委托处理）----
+    container.querySelectorAll('pre').forEach(function (pre) {
+        if (pre.querySelector('.code-copy-btn')) return;
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'code-copy-btn';
+        btn.textContent = '复制';
+        btn.title = '复制代码';
+        pre.appendChild(btn);
+    });
+
+    // ---- 8. 用临时容器取 innerHTML（template 的 content 没有 innerHTML 属性）----
+    const wrap = document.createElement('div');
+    wrap.appendChild(container);
+    return wrap.innerHTML;
 
     function sanitize(root) {
         root.querySelectorAll('script, iframe, object, embed, link, meta, style, base, form')
@@ -96,14 +179,20 @@ window.renderContent = function (text) {
 // 源码 / 渲染切换（供模板内联 onclick 调用）
 // ============================================================
 window.toggleSource = function (btn) {
-    const wrap = btn.closest('.msg-body') || btn.closest('.dm-msg') || btn.closest('.md-editor-footer');
+    const wrap = btn.closest('.msg-body')
+              || btn.closest('.dm-msg')
+              || btn.closest('.pinned-item')
+              || btn.closest('.md-editor-footer');
     if (!wrap) return;
     const el = wrap.querySelector('.msg-content')
             || wrap.querySelector('.dm-bubble')
+            || wrap.querySelector('.pinned-content')
             || wrap.querySelector('.md-editor-preview');
     if (!el) return;
-    const raw = el.dataset.raw || el.textContent;
+    const raw = el.dataset.raw != null ? el.dataset.raw : el.textContent;
     if (el.dataset.mode === 'source') {
+        const copyBtn = el.querySelector('.source-copy-btn');
+        if (copyBtn) copyBtn.remove();
         el.innerHTML = window.renderContent ? window.renderContent(raw) : raw;
         el.dataset.mode = 'render';
         btn.textContent = '📄';
@@ -113,5 +202,18 @@ window.toggleSource = function (btn) {
         el.dataset.mode = 'source';
         btn.textContent = '👁';
         btn.title = '查看渲染';
+        let copyEl = el.querySelector('.source-copy-btn');
+        if (!copyEl) {
+            copyEl = document.createElement('button');
+            copyEl.type = 'button';
+            copyEl.className = 'source-copy-btn';
+            copyEl.textContent = '复制';
+            copyEl.title = '复制源码';
+            copyEl.addEventListener('click', function () {
+                window.copyToClipboard(raw, copyEl);
+            });
+            el.style.position = 'relative';
+            el.appendChild(copyEl);
+        }
     }
 };

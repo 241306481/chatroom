@@ -38,30 +38,50 @@
 .dm-list-inner { width: 100%;
   display: flex; flex-direction: column-reverse;
   margin-bottom: auto; }
-.dm-msg { margin-bottom: 12px; display: flex; flex-direction: column; }
-.dm-msg.dm-me { align-items: flex-end; }
-.dm-msg.dm-other { align-items: flex-start; }
-.dm-bubble { max-width: 70%; padding: 8px 12px; border-radius: 12px;
-  word-wrap: break-word; font-size: 14px; line-height: 1.5; }
+.dm-msg { display: flex; gap: 10px; margin-bottom: 16px;
+  align-items: flex-start; }
+.dm-msg.dm-me { flex-direction: row-reverse; }
+
+.dm-avatar-wrap { flex-shrink: 0; }
+.dm-avatar { display: inline-flex; align-items: center; justify-content: center;
+  width: 36px; height: 36px; border-radius: 50%;
+  color: #fff; font-weight: 600; font-size: 14px; }
+
+.dm-msg-body { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.dm-msg.dm-me .dm-msg-body { align-items: flex-end; }
+
+.dm-msg-header { display: flex; align-items: center; gap: 8px;
+  font-size: 12px; color: #888; margin-bottom: 4px; padding: 0 4px; }
+.dm-msg.dm-me .dm-msg-header { flex-direction: row-reverse; }
+.dm-nick { font-weight: 600; color: #333; }
+.dm-time { color: #999; font-size: 11px; }
+
+.dm-bubble { position: relative; width: 100%; max-width: 100%;
+  padding: 10px 14px; border-radius: 12px;
+  word-wrap: break-word; font-size: 14px; line-height: 1.6;
+  background: #f0f0f0; color: #333; box-sizing: border-box; }
 .dm-me .dm-bubble { background: #1890ff; color: #fff; }
-.dm-other .dm-bubble { background: #f0f0f0; color: #333; }
-.dm-time { font-size: 11px; color: #999; margin-top: 4px; }
-.dm-input-area { border-top: 1px solid #e0e0e0; padding: 12px; background: #fafafa;
-  position: relative; }
-.dm-input-area .md-editor { border-radius: 6px; }
-.dm-input-disabled { border-top: 1px solid #e0e0e0; padding: 20px;
-  text-align: center; color: #999; background: #fafafa; font-size: 13px;
-  position: relative; }
-.dm-empty { padding: 40px; text-align: center; color: #aaa; }
+
+/* 源码模式 */
+.dm-bubble[data-mode="source"] { white-space: pre-wrap; word-wrap: break-word;
+  font-family: Consolas, "Courier New", monospace; font-size: 13px;
+  color: #555; background: #f7f7f9; padding: 6px 10px;
+  border-radius: 4px; }
+.dm-me .dm-bubble[data-mode="source"] { color: #fff;
+  background: rgba(0, 0, 0, 0.2); }
+
+/* Markdown 内部样式 */
 .dm-bubble p { margin: 0.3em 0; }
 .dm-bubble p:first-child { margin-top: 0; }
 .dm-bubble p:last-child  { margin-bottom: 0; }
-.dm-bubble pre { background: rgba(0, 0, 0, 0.06); padding: 6px 10px;
+.dm-bubble pre { background: rgba(0, 0, 0, 0.06); padding: 8px 10px;
   border-radius: 4px; overflow-x: auto; font-size: 13px;
   font-family: Consolas, monospace; }
 .dm-bubble code { background: rgba(0, 0, 0, 0.06); padding: 1px 5px;
   border-radius: 3px; font-size: 13px; font-family: Consolas, monospace; }
 .dm-bubble pre code { background: none; padding: 0; }
+.dm-me .dm-bubble pre { background: rgba(255, 255, 255, 0.15); }
+.dm-me .dm-bubble code { background: rgba(255, 255, 255, 0.15); }
 .dm-bubble blockquote { margin: 0.3em 0; padding: 2px 10px;
   border-left: 3px solid rgba(0, 0, 0, 0.15); color: inherit; opacity: 0.85; }
 .dm-bubble ul, .dm-bubble ol { padding-left: 20px; margin: 0.3em 0; }
@@ -72,6 +92,19 @@
   border: 1px solid rgba(0, 0, 0, 0.15); padding: 3px 8px; }
 .dm-me .dm-bubble table th, .dm-me .dm-bubble table td {
   border-color: rgba(255, 255, 255, 0.4); }
+.dm-input-area { border-top: 1px solid #e0e0e0; padding: 12px; background: #fafafa;
+  position: relative; }
+.dm-input-area .md-editor { border-radius: 6px; }
+.dm-input-disabled { border-top: 1px solid #e0e0e0; padding: 20px;
+  text-align: center; color: #999; background: #fafafa; font-size: 13px;
+  position: relative; }
+.dm-empty { padding: 40px; text-align: center; color: #aaa; }
+.dm-bubble .source-copy-btn { position: absolute; top: 6px; right: 6px;
+  padding: 2px 8px; font-size: 12px; background: #fff; color: #666;
+  border: 1px solid #e0e0e0; border-radius: 4px; cursor: pointer;
+  opacity: 0.4; transition: opacity 0.15s, background 0.15s; }
+.dm-bubble .source-copy-btn:hover { background: #e6f7ff; color: #1890ff; }
+.dm-bubble[data-mode="source"] .source-copy-btn { opacity: 0.7; }
 .dm-settings { margin-bottom: 8px; background: #fff;
   border: 1px solid #e0e0e0; border-radius: 6px; font-size: 13px; }
 .dm-settings > summary { padding: 8px 12px;
@@ -110,3 +143,17 @@
   padding: 4px 10px; border-radius: 20px;
   transition: background 0.15s; }
 .dm-user-link:hover { background: #f0f0f0; }
+
+/* 私信气泡内的代码块样式 */
+.dm-bubble pre { background: rgba(0, 0, 0, 0.06); padding: 10px 14px;
+  border-radius: 6px; overflow-x: auto; font-size: 13px;
+  line-height: 1.5; font-family: Consolas, "Courier New", monospace;
+  margin: 6px 0; position: relative; }
+.dm-bubble pre code { background: none; padding: 0;
+  font-family: inherit; font-size: inherit; border-radius: 0; }
+.dm-bubble code { background: rgba(0, 0, 0, 0.06); padding: 1px 5px;
+  border-radius: 3px; font-family: Consolas, "Courier New", monospace;
+  font-size: 13px; }
+.dm-me .dm-bubble pre { background: rgba(255, 255, 255, 0.18); }
+.dm-me .dm-bubble code { background: rgba(255, 255, 255, 0.18); }
+.dm-me .dm-bubble pre code { background: none; }

@@ -79,3 +79,24 @@ body { font-family: -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif;
 .notification-close { background: none; border: none; cursor: pointer;
   color: #bbb; font-size: 16px; padding: 0 4px; }
 .notification-close:hover { color: #666; }
+
+/* 代码块定位上下文 + 复制按钮样式（全局兜底） */
+pre { position: relative; }
+pre .code-copy-btn { position: absolute; top: 6px; right: 6px;
+  padding: 2px 8px; font-size: 12px; background: #fff; color: #666;
+  border: 1px solid #e0e0e0; border-radius: 4px; cursor: pointer;
+  opacity: 0; transition: opacity 0.15s, background 0.15s;
+  pointer-events: none; z-index: 2; }
+pre:hover .code-copy-btn,
+pre .code-copy-btn:focus { opacity: 1; pointer-events: auto; }
+pre .code-copy-btn:hover { background: #e6f7ff; color: #1890ff; }
+
+/* 公告栏 / 置顶面板内的代码块样式 */
+.announcement-content pre,
+.pinned-content pre { background: #f6f8fa; padding: 10px 14px;
+  border-radius: 6px; overflow-x: auto; font-size: 13px;
+  line-height: 1.5; font-family: Consolas, "Courier New", monospace;
+  margin: 6px 0; position: relative; }
+.announcement-content pre code,
+.pinned-content pre code { background: none; padding: 0;
+  font-family: inherit; font-size: inherit; border-radius: 0; }

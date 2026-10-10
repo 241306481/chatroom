@@ -7,7 +7,7 @@
       <section class="announcement-panel site-notice">
         <h2>📢 站点公告</h2>
         <div class="announcement-item system-ann">
-          <div class="announcement-content">{{ site_announcement }}</div>
+          <div class="announcement-content" data-raw="{{ site_announcement | e }}"></div>
         </div>
       </section>
     {% endif %}
@@ -16,7 +16,7 @@
       <section class="announcement-panel">
         <h2>📢 域公告</h2>
         <div class="announcement-item">
-          <div class="announcement-content">{{ announcement }}</div>
+          <div class="announcement-content" data-raw="{{ announcement | e }}"></div>
         </div>
       </section>
     {% endif %}
@@ -26,7 +26,7 @@
       {% if announcements and announcements.length %}
         {% for ann in announcements %}
           <div class="announcement-item {% if ann.is_system %}system-ann{% endif %}">
-            <div class="announcement-content">{{ ann.content }}</div>
+            <div class="announcement-content" data-raw="{{ ann.content | e }}"></div>
             <div class="announcement-meta">{{ ann.nickname }} · {{ ann.created_at }}</div>
           </div>
         {% endfor %}

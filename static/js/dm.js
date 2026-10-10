@@ -205,20 +205,33 @@
     function appendDM(msg, isMe) {
         const list = document.getElementById('dmList');
         if (!list) return;
+        const inner = list.querySelector('.dm-list-inner') || list;
         const div = document.createElement('div');
         div.className = 'dm-msg ' + (isMe ? 'dm-me' : 'dm-other');
         const contentHtml = window.renderContent
             ? window.renderContent(msg.content)
             : esc(msg.content);
-        const rawAttr = window.escAttr
-            ? window.escAttr(msg.content)
-            : esc(msg.content);
+        const rawAttr = window.escAttr ? window.escAttr(msg.content) : esc(msg.content);
+        const nick = msg.from_nickname || '?';
+        const color = msg.from_avatar_color || '#888';
+        const firstChar = nick[0] || '?';
         div.innerHTML =
-            '<div class="dm-bubble" data-raw="' + rawAttr + '">' + contentHtml + '</div>' +
-            '<div class="dm-time">' + esc(msg.created_at) +
-            ' <button type="button" class="msg-mini-btn" onclick="toggleSource(this)" title="查看源码">📄</button>' +
-            '</div>';
-        const inner = list.querySelector('.dm-list-inner') || list;
+            '<div class="dm-avatar-wrap">'
+              + '<span class="dm-avatar" style="background:' + esc(color) + '">'
+              + esc(firstChar)
+              + '</span>'
+            + '</div>'
+            + '<div class="dm-msg-body">'
+              + '<div class="dm-msg-header">'
+                + '<span class="dm-nick">' + esc(nick) + '</span>'
+                + '<span class="dm-time">' + esc(msg.created_at) + '</span>'
+                + '<button type="button" class="msg-mini-btn" '
+                + 'onclick="toggleSource(this)" title="查看源码">📄</button>'
+              + '</div>'
+              + '<div class="dm-bubble" data-raw="' + rawAttr + '">'
+                + contentHtml
+              + '</div>'
+            + '</div>';
         inner.insertBefore(div, inner.firstElementChild);
     }
     const ta = document.getElementById('dmInput');
