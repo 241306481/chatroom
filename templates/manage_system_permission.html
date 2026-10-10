@@ -25,7 +25,10 @@
           </tr>
           {% for p in perms %}
             <tr>
-              <td>{{ p.name }}</td>
+              <td>
+                {{ p.name }}
+                {% if p.desc %}<div class="perm-desc">{{ p.desc }}</div>{% endif %}
+              </td>
               {% for r in roles %}
                 <td style="text-align:center;">
                   {% if r.editable %}

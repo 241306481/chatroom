@@ -757,3 +757,7 @@ html[data-theme="dark"] .dm-settings-form button {
 html[data-theme="dark"] .md-editor-toolbar-item.md-editor-toolbar-active {
   background: #1e3a5f; color: #4da3ff;
 }
+
+.perm-desc { font-size: 11px; color: #999; margin-top: 2px;
+  line-height: 1.4; }
+html[data-theme="dark"] .perm-desc { color: #888; }
