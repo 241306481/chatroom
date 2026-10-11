@@ -762,6 +762,12 @@ html[data-theme="dark"] .md-editor-toolbar-item.md-editor-toolbar-active {
   line-height: 1.4; }
 html[data-theme="dark"] .perm-desc { color: #888; }
 
+.perm-group-title { font-size: 16px; margin: 24px 0 8px;
+  padding: 6px 12px; background: #f0f7ff; color: #1890ff;
+  border-radius: 4px; border-left: 3px solid #1890ff; }
+html[data-theme="dark"] .perm-group-title {
+  background: #1e3a5f; color: #4da3ff; border-left-color: #4da3ff; }
+
 .badge.mod { background: #52c41a; color: #fff; font-size: 10px;
   padding: 1px 5px; border-radius: 3px; margin-left: 4px;
   font-weight: 600; letter-spacing: 0.5px; }

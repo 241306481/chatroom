@@ -2,54 +2,60 @@
 {% block content %}
 <div class="page-container" style="max-width:1400px;">
   <h1>系统权限管理</h1>
-  <p class="hint">勾选各角色的全局权限，点击底部的"保存所有"按钮一次性提交</p>
+  <p class="hint">勾选各角色在各组的全局权限，点击底部的"保存所有"按钮一次性提交</p>
 
   <form method="POST" action="/manage/permissions" id="permForm"
         onsubmit="return syncPermForm(this)">
-    <table class="perm-matrix">
-      <thead>
-        <tr>
-          <th style="width:240px;">权限</th>
-          {% for r in roles %}
-            <th style="text-align:center;">
-              {{ r.display }}<br>
-              <small style="color:#999;">{{ r.name }}</small>
-            </th>
-          {% endfor %}
-        </tr>
-      </thead>
-      <tbody>
-        {% for group_name, perms in groups %}
-          <tr class="group-row">
-            <td colspan="{{ roles.length + 1 }}">{{ group_name }}</td>
-          </tr>
-          {% for p in perms %}
+
+    {% for group_name, group_data in groups %}
+      {% if group_data.items and group_data.items.length %}
+        <h2 class="perm-group-title">
+          {{ group_data.label or group_name }}
+          {% if group_name == 'discuss' or group_name == 'message'
+                or group_name == 'file' or group_name == 'member'
+                or group_name == 'domain' %}
+            <small style="color:#999;font-weight:normal;font-size:12px;">
+              （域级权限，需与域内对应权限同时满足）
+            </small>
+          {% endif %}
+        </h2>
+        <table class="perm-matrix">
+          <thead>
             <tr>
-              <td>
-                {{ p.name }}
-                {% if p.desc %}<div class="perm-desc">{{ p.desc }}</div>{% endif %}
-              </td>
+              <th style="width:280px;">权限</th>
               {% for r in roles %}
-                <td style="text-align:center;">
-                  {% if r.editable %}
-                    <input type="checkbox"
-                      data-role="{{ r.name }}"
-                      data-bit="{{ p.bit }}"
-                      {% if r.bitMap[p.key] %}checked{% endif %}>
-                  {% else %}
-                    <input type="checkbox" disabled {% if r.bitMap[p.key] %}checked{% endif %}>
-                  {% endif %}
-                </td>
+                <th style="text-align:center;">
+                  {{ r.display }}<br>
+                  <small style="color:#999;">{{ r.name }}</small>
+                </th>
               {% endfor %}
             </tr>
-          {% endfor %}
-        {% endfor %}
-      </tbody>
-    </table>
-
-    {% for r in roles %}
-      {% if r.editable %}
-        <input type="hidden" name="perm_{{ r.name }}" id="perm_value_{{ r.name }}" value="{{ r.priv }}">
+          </thead>
+          <tbody>
+            {% for p in group_data.items %}
+              <tr>
+                <td>
+                  {{ p.name }}
+                  {% if p.desc %}<div class="perm-desc">{{ p.desc }}</div>{% endif %}
+                </td>
+                {% for r in roles %}
+                  <td style="text-align:center;">
+                    {% if r.editable %}
+                      <input type="checkbox"
+                        data-role="{{ r.name }}"
+                        data-group="{{ p.group }}"
+                        data-bit="{{ p.bit }}"
+                        {% if r.bitMap[p.key] %}checked{% endif %}>
+                    {% else %}
+                      <input type="checkbox" disabled
+                        {% if r.bitMap[p.key] %}checked{% endif %}>
+                    {% endif %}
+                  </td>
+                {% endfor %}
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
       {% endif %}
     {% endfor %}
 
@@ -60,34 +66,34 @@
       <a href="/manage" style="margin-left:16px;">取消</a>
     </div>
   </form>
-
-  <div style="margin-top:12px;font-size:12px;color:#888;">
-    保存时会根据当前勾选状态生成权限值。若页面异常，请刷新后重试。
-  </div>
 </div>
 
 <script>
 function syncPermForm(form) {
+  // 按 (role, group) 聚合位掩码
   var state = {};
-  var checkboxes = form.querySelectorAll('input[type="checkbox"][data-role][data-bit]');
-  for (var i = 0; i < checkboxes.length; i++) {
-    var cb = checkboxes[i];
+  var cbs = form.querySelectorAll('input[type="checkbox"][data-role][data-group][data-bit]');
+  for (var i = 0; i < cbs.length; i++) {
+    var cb = cbs[i];
     var role = cb.dataset.role;
+    var group = cb.dataset.group;
     var bit = parseInt(cb.dataset.bit, 10);
-    if (!state[role]) state[role] = 0;
-    if (cb.checked) state[role] = (state[role] | bit) >>> 0;
+    var k = role + '.' + group;
+    if (!state[k]) state[k] = 0;
+    if (cb.checked) state[k] = (state[k] | bit) >>> 0;
   }
-  var keys = Object.keys(state);
-  for (var j = 0; j < keys.length; j++) {
-    var roleName = keys[j];
-    var hidden = form.querySelector('input[name="perm_' + roleName + '"]');
-    if (!hidden) {
-      hidden = document.createElement('input');
-      hidden.type = 'hidden';
-      hidden.name = 'perm_' + roleName;
-      form.appendChild(hidden);
-    }
-    hidden.value = String(state[roleName]);
+  // 移除旧的 hidden（如果有）
+  var olds = form.querySelectorAll('input[type="hidden"][data-sync-hidden]');
+  for (var j = 0; j < olds.length; j++) olds[j].remove();
+  // 生成新 hidden
+  for (var k2 in state) {
+    if (!Object.prototype.hasOwnProperty.call(state, k2)) continue;
+    var h = document.createElement('input');
+    h.type = 'hidden';
+    h.name = 'priv_' + k2;
+    h.value = String(state[k2]);
+    h.setAttribute('data-sync-hidden', '1');
+    form.appendChild(h);
   }
   return true;
 }
