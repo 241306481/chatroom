@@ -23,27 +23,50 @@
   {% if discussions and discussions.length %}
     <div class="discuss-list">
       {% for d in discussions %}
-        <a href="/domain/{{ domain_name }}/discuss/{{ d.id }}" class="discuss-row">
-          <div class="discuss-row-left">
-            <span class="discuss-id"
-                  data-old-id="{{ d.id }}"
-                  data-value="{{ d.id }}"
-                  {% if can_edit_discuss and d.id != 'general' %}
-                    onclick="event.preventDefault();event.stopPropagation();inlineEditId(this);"
-                  {% endif %}>#{{ d.id }}</span>
-            <span class="discuss-title {% if not d.title %}empty{% endif %}"
-                  data-id="{{ d.id }}"
-                  data-value="{{ d.title }}"
-                  {% if can_edit_discuss %}
-                    onclick="event.preventDefault();event.stopPropagation();inlineEditTitle(this);"
-                  {% endif %}>{{ d.title or '（无标题）' }}</span>
-          </div>
-          <span class="meta">{{ d.count }} 条</span>
-        </a>
+        <div class="discuss-row-wrap">
+          <a href="/domain/{{ domain_name }}/discuss/{{ d.id }}" class="discuss-row">
+            <div class="discuss-row-left">
+              <span class="discuss-id"
+                    data-old-id="{{ d.id }}"
+                    data-value="{{ d.id }}"
+                    {% if can_edit_discuss and d.id != 'general' %}
+                      onclick="event.preventDefault();event.stopPropagation();inlineEditId(this);"
+                    {% endif %}>#{{ d.id }}</span>
+              <span class="discuss-title {% if not d.title %}empty{% endif %}"
+                    data-id="{{ d.id }}"
+                    data-value="{{ d.title }}"
+                    {% if can_edit_discuss %}
+                      onclick="event.preventDefault();event.stopPropagation();inlineEditTitle(this);"
+                    {% endif %}>{{ d.title or '（无标题）' }}</span>
+            </div>
+            <span class="meta">{{ d.count }} 条</span>
+          </a>
+          {% if can_edit_discuss and d.id != 'general' %}
+            <button type="button" class="discuss-del-btn"
+                    data-disc="{{ d.id }}"
+                    onclick="deleteListItem(this);"
+                    title="删除">🗑</button>
+          {% endif %}
+        </div>
       {% endfor %}
     </div>
   {% else %}
     <p class="empty">暂无讨论</p>
   {% endif %}
 </div>
+<script>
+  window.deleteListItem = function (btn) {
+    const disc = btn.dataset.disc;
+    if (!confirm('确定删除讨论「' + disc + '」？所有消息将丢失')) return;
+    const dn = window.__DOMAIN__;
+    fetch('/domain/' + encodeURIComponent(dn) + '/discuss/'
+        + encodeURIComponent(disc) + '/delete', { method: 'POST' })
+      .then(r => r.json())
+      .then(res => {
+        if (res.ok) btn.closest('.discuss-row-wrap').remove();
+        else alert(res.error || '删除失败');
+      })
+      .catch(() => alert('删除失败'));
+  };
+</script>
 {% endblock %}

@@ -761,3 +761,7 @@ html[data-theme="dark"] .md-editor-toolbar-item.md-editor-toolbar-active {
 .perm-desc { font-size: 11px; color: #999; margin-top: 2px;
   line-height: 1.4; }
 html[data-theme="dark"] .perm-desc { color: #888; }
+
+.badge.mod { background: #52c41a; color: #fff; font-size: 10px;
+  padding: 1px 5px; border-radius: 3px; margin-left: 4px;
+  font-weight: 600; letter-spacing: 0.5px; }

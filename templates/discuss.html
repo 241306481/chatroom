@@ -42,6 +42,11 @@
       {% if can_manage_discuss %}
         <a href="/domain/{{ domain_name }}/manage/discussions" class="manage-link">管理</a>
       {% endif %}
+      {% if can_delete_current_disc and discuss_name != 'general' %}
+        <button type="button" class="delete-disc-btn"
+                onclick="deleteCurrentDiscussion();"
+                title="删除此讨论">删除</button>
+      {% endif %}
     </div>
 
     <div class="message-list" id="messageList"
@@ -58,6 +63,7 @@
               <div class="msg-header">
                 {% if msg.pinned %}<span class="pin-icon">📌</span>{% endif %}
                 <span class="msg-nick">{{ msg.nickname }}</span>
+                {% if msg.is_mod %}<span class="badge mod">MOD</span>{% endif %}
                 <span class="msg-time">{{ msg.created_at }}</span>
                 {% if can_send and not msg.revoked %}
                   <button type="button" class="msg-reply-btn"
@@ -209,6 +215,7 @@
               {% elif u.role == 'root' %}
                 <span class="badge root">管理员</span>
               {% endif %}
+              {% if u.is_mod %}<span class="badge mod">MOD</span>{% endif %}
               {% if can_mute and not u.is_owner %}
                 <div class="member-actions">
                   <button type="button" onclick="muteMember('{{ u.id }}')" title="禁言">🔇</button>
@@ -232,5 +239,26 @@
       { id: '{{ u.id }}', nickname: '{{ u.nickname }}' }{% if not loop.last %},{% endif %}
     {% endfor %}
   ];
+  window.__MENTION_NAMES__ = {
+    {% for u in all_members %}
+      '{{ u.id }}': '{{ u.nickname }}'{% if not loop.last %},{% endif %}
+    {% endfor %}
+  };
+window.deleteCurrentDiscussion = function () {
+    if (!confirm('确定删除当前讨论？所有消息将丢失')) return;
+    const dn = window.__DOMAIN__;
+    const disc = window.__DISCUSS__;
+    fetch('/domain/' + encodeURIComponent(dn) + '/discuss/'
+        + encodeURIComponent(disc) + '/delete', { method: 'POST' })
+      .then(r => r.json())
+      .then(res => {
+        if (res.ok) {
+          location.href = '/domain/' + encodeURIComponent(dn) + '/discuss';
+        } else {
+          alert(res.error || '删除失败');
+        }
+      })
+      .catch(() => alert('删除失败'));
+  };
 </script>
 {% endblock %}

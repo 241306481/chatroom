@@ -39,23 +39,20 @@
               {% else %}<span class="status-dot red inline"></span> 离线{% endif %}
             </td>
             <td>
-              {% if u.is_superuser %}
+              {% if u.system_role == 'root' %}
                 <span style="color:#f5222d;font-weight:600;">超级管理员</span>
-              {% elif u.is_admin %}
-                <span style="color:#fa8c16;font-weight:600;">系统管理员</span>
-                <form method="POST" action="/manage/users/admin" style="display:inline;margin-left:6px;">
-                  <input type="hidden" name="action" value="revoke">
-                  <input type="hidden" name="user_id" value="{{ u.id }}">
-                  <button type="submit" class="file-action-btn"
-                          data-confirm="撤销该用户的管理员权限？">撤销</button>
-                </form>
               {% else %}
-                <span style="color:#aaa;">—</span>
-                <form method="POST" action="/manage/users/admin" style="display:inline;margin-left:6px;">
-                  <input type="hidden" name="action" value="grant">
+                <form method="POST" action="/manage/users/role" style="display:inline;">
                   <input type="hidden" name="user_id" value="{{ u.id }}">
-                  <button type="submit" class="file-action-btn"
-                          data-confirm="授予该用户管理员权限？">设为管理员</button>
+                  <select name="role" onchange="this.form.submit()">
+                    {% for r in roles %}
+                      {% if r.name != 'root' %}
+                        <option value="{{ r.name }}" {% if r.name == u.system_role %}selected{% endif %}>
+                          {{ r.display }}
+                        </option>
+                      {% endif %}
+                    {% endfor %}
+                  </select>
                 </form>
               {% endif %}
             </td>

@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-container">
+  <h1>系统角色管理</h1>
+  <p class="hint">内置角色不可删除，可修改权限；自定义角色可自由增删</p>
+
+  <table class="role-table">
+    <thead>
+      <tr><th>角色</th><th>显示名</th><th>类型</th><th>操作</th></tr>
+    </thead>
+    <tbody>
+      {% for r in roles %}
+        <tr>
+          <td><code>{{ r.name }}</code></td>
+          <td>{{ r.display }}</td>
+          <td>{% if r.builtin %}内置{% else %}自定义{% endif %}</td>
+          <td>
+            {% if r.editable and not r.builtin %}
+              <form method="POST" action="/manage/system_roles" style="display:inline">
+                <input type="hidden" name="action" value="delete">
+                <input type="hidden" name="role_name" value="{{ r.name }}">
+                <button type="submit" data-confirm="确定删除该角色？">删除</button>
+              </form>
+            {% else %}
+              <span style="color:#aaa;font-size:12px;">🔒 锁定</span>
+            {% endif %}
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <h2 style="margin-top:24px;">创建自定义角色</h2>
+  <form method="POST" action="/manage/system_roles" class="form-stack">
+    <input type="hidden" name="action" value="create">
+    <label>角色名（小写字母、数字、下划线、短横线，2-32 位）
+      <input type="text" name="role_name" required pattern="[a-z0-9_-]{2,32}">
+    </label>
+    <label>显示名<input type="text" name="display" required></label>
+    <button type="submit">创建</button>
+  </form>
+
+  <p style="margin-top:24px;">
+    <a href="/manage/permissions">→ 配置系统权限</a>
+    &nbsp;·&nbsp;
+    <a href="/manage">← 返回系统管理</a>
+  </p>
+</div>
+{% endblock %}

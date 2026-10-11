@@ -159,6 +159,7 @@
             <div class="msg-body">
                 <div class="msg-header">
                     <span class="msg-nick">${esc(msg.nickname)}</span>
+                    ${msg.is_mod ? '<span class="badge mod">MOD</span>' : ''}
                     <span class="msg-time">${esc(msg.created_at)}</span>
                     ${replyBtn}
                     <div class="msg-actions">

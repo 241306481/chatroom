@@ -118,6 +118,13 @@
 
 /* 讨论列表页 */
 .discuss-list { display: flex; flex-direction: column; gap: 8px; }
+.discuss-row-wrap { position: relative; display: flex; align-items: center; gap: 8px; }
+.discuss-row-wrap .discuss-row { flex: 1; min-width: 0; }
+.discuss-del-btn { background: transparent; border: none;
+  cursor: pointer; color: #ccc; font-size: 14px; padding: 4px 8px;
+  opacity: 0; transition: opacity 0.15s, color 0.15s; }
+.discuss-row-wrap:hover .discuss-del-btn { opacity: 1; }
+.discuss-del-btn:hover { color: #ff4d4f; }
 .discuss-row { display: flex; align-items: center; justify-content: space-between;
   padding: 12px 16px; background: #fafafa; border-radius: 6px;
   text-decoration: none; color: #333; }

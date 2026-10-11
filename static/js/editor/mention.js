@@ -56,7 +56,7 @@
             const c = matches[idx];
             if (!c) return;
             const prefix = info.silent ? '@@[' : '@[';
-            const insert = prefix + c.nickname + '/' + c.id + '] ';
+            const insert = prefix + c.id + '] ';
             const pos = ta.selectionStart;
             ta.value = ta.value.substring(0, info.start) + insert + ta.value.substring(pos);
             const newPos = info.start + insert.length;

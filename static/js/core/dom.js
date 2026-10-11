@@ -69,13 +69,13 @@ window.renderContent = function (text) {
     text = String(text);
 
     // ---- 1. 处理 @ 提及（在 marked 之前）----
-    // 语法：@[nickname/uid] 或 @@[nickname/uid]
+    // 语法：@[uid] 或 @@[uid]
     // 用 HTML 注释占位，避免被 marked 解析为链接/强调
     const mentionPlaceholders = [];
-    const processed = text.replace(/@(@?)\[([^\/\]]+)\/(\d+)\]/g,
-        (whole, at, nick, uid) => {
+    const processed = text.replace(/@(@?)\[(\d+)\]/g,
+        (whole, at, uid) => {
             const idx = mentionPlaceholders.length;
-            mentionPlaceholders.push({ nick: nick, uid: uid, silent: at === '@' });
+            mentionPlaceholders.push({ uid: uid, silent: at === '@' });
             return '<!--MENTION_' + idx + '-->';
         });
 
@@ -112,7 +112,9 @@ window.renderContent = function (text) {
             const a = document.createElement('a');
             a.className = 'mention-link' + (info.silent ? ' mention-silent' : '');
             a.href = '/user/' + info.uid;
-            a.textContent = '@' + info.nick;
+            const nick = (window.__MENTION_NAMES__ && window.__MENTION_NAMES__[info.uid])
+                || ('user-' + info.uid);
+            a.textContent = '@' + nick;
             item.comment.parentNode.replaceChild(a, item.comment);
         });
     })(container);
