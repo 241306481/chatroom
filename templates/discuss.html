@@ -17,6 +17,8 @@
           {% if disc.title %}<span class="disc-item-title">{{ disc.title }}</span>{% endif %}
         </a>
       {% endfor %}
+    {% else %}
+      <p class="empty" style="padding:8px 4px;font-size:12px;">暂无讨论</p>
     {% endif %}
   </nav>
 
@@ -68,31 +70,32 @@
                 {% if can_send and not msg.revoked %}
                   <button type="button" class="msg-reply-btn"
                           onclick="setReplyTo('{{ msg.id }}', this)"
-                          title="回复">↩️</button>
+                          title="回复" aria-label="回复">↩️</button>
                 {% endif %}
                 {% if can_add_reaction or can_delete_any or msg.user_id == current_user.id or can_pin %}
                   <div class="msg-actions">
                     {% if not msg.revoked %}
                       <button type="button" onclick="toggleSource(this)"
-                              title="查看源码">📄</button>
+                              title="查看源码" aria-label="查看源码">📄</button>
                     {% endif %}
                     {% if can_add_reaction and not msg.revoked %}
                       <button type="button"
                               onclick="toggleReactionPicker('{{ msg.id }}', this)"
-                              title="添加表情">😀</button>
+                              title="添加表情" aria-label="添加表情">😀</button>
                     {% endif %}
                     {% if can_pin and not msg.revoked %}
                       <button type="button"
                               onclick="pinMessage('{{ msg.id }}')"
-                              title="{% if msg.pinned %}取消置顶{% else %}置顶{% endif %}">📌</button>
+                              title="{% if msg.pinned %}取消置顶{% else %}置顶{% endif %}"
+                              aria-label="{% if msg.pinned %}取消置顶{% else %}置顶{% endif %}">📌</button>
                     {% endif %}
                     {% if not msg.revoked %}
                       {% if (msg.user_id == current_user.id and nav.can_revoke_own) or nav.can_revoke_any %}
-                        <button type="button" onclick="revokeMessage('{{ msg.id }}')" title="撤回">↩️</button>
+                        <button type="button" onclick="revokeMessage('{{ msg.id }}')" title="撤回">↺</button>
                       {% endif %}
                     {% endif %}
                     {% if can_delete_any or msg.user_id == current_user.id %}
-                      <button type="button" onclick="deleteMessage('{{ msg.id }}')" title="删除">🗑</button>
+                      <button type="button" onclick="deleteMessage('{{ msg.id }}')" title="删除" aria-label="删除">🗑</button>
                     {% endif %}
                   </div>
                 {% endif %}
@@ -203,29 +206,7 @@
         </span>
       </h3>
       <div class="member-list" id="memberList">
-        {% if all_members and all_members.length %}
-          {% for u in all_members %}
-            <div class="member-item {% if not u.online %}offline{% endif %}" data-uid="{{ u.id }}">
-              <span class="status-dot {% if u.online %}green{% else %}red{% endif %}"></span>
-              <span class="member-avatar" style="background:{{ u.avatar_color }}">{{ u.nickname | avatarText }}</span>
-              <a href="/user/{{ u.id }}" class="member-name">{{ u.nickname }}</a>
-              <span class="member-level" data-exp="exp: {{ u.exp | default(0) }}">Lv.{{ u.level }}</span>
-              {% if u.is_owner %}
-                <span class="badge owner">所有者</span>
-              {% elif u.role == 'root' %}
-                <span class="badge root">管理员</span>
-              {% endif %}
-              {% if u.is_mod %}<span class="badge mod">MOD</span>{% endif %}
-              {% if can_mute and not u.is_owner %}
-                <div class="member-actions">
-                  <button type="button" onclick="muteMember('{{ u.id }}')" title="禁言">🔇</button>
-                </div>
-              {% endif %}
-            </div>
-          {% endfor %}
-        {% else %}
-          <p class="empty">暂无成员</p>
-        {% endif %}
+        {% include "_member_list.html" %}
       </div>
       <div class="member-footer">在线 {{ online_count | default(0) }} / {{ total_count | default(0) }}</div>
     </section>

@@ -4,9 +4,8 @@
   <div class="mydomain-header">
     <h1>我的域</h1>
     <div class="mydomain-actions">
-      <a href="/search" class="create-domain-btn"
-         style="background:#fff;color:#1890ff !important;
-                border:1px solid #1890ff;margin-right:8px;">
+      <a href="/search" class="create-domain-btn secondary"
+         style="margin-right:8px;">
         🔍 消息搜索
       </a>
       <a href="/create/domain" class="create-domain-btn">+ 新建域</a>
@@ -17,13 +16,13 @@
       {% for d in domains %}
         <a class="domain-card" href="/domain/{{ d.name }}/home">
           <h3>{{ d.display }}</h3>
-          <p>{{ d.announcement }}</p>
+          <p>{{ d.announcement or '暂无公告' }}</p>
           {% if d.is_owner %}<span class="badge root">我创建的</span>{% endif %}
         </a>
       {% endfor %}
     </div>
   {% else %}
-    <p class="empty">你还没有加入任何域</p>
+    <p class="empty">你还没有加入任何域，去 <a href="/search">搜索</a> 找找看</p>
   {% endif %}
 </div>
 {% endblock %}

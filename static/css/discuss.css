@@ -252,3 +252,7 @@
 .message .msg-content code { background: #f0f0f0; padding: 2px 5px;
   border-radius: 3px; font-family: Consolas, "Courier New", monospace;
   font-size: 13px; }
+
+/* 长昵称省略 */
+.msg-nick { max-width: 160px; overflow: hidden;
+  text-overflow: ellipsis; white-space: nowrap; vertical-align: middle; }

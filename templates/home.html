@@ -52,11 +52,11 @@
         {% endfor %}
         {% if discussions.length > 5 %}
           <a href="/domain/{{ domain_name }}/discuss" class="discussion-more">
-            还有 {{ discussions.length - 5 }} 个讨论... 查看全部
+            还有 {{ discussions.length - 5 }} 个讨论… 查看全部
           </a>
         {% endif %}
       {% else %}
-        <p class="empty">暂无讨论</p>
+        <p class="empty">暂无讨论，点击上方「讨论」进入后新建</p>
       {% endif %}
     </section>
 
@@ -95,7 +95,7 @@
           </div>
         {% endif %}
       {% else %}
-        <p class="empty">暂无成员</p>
+        <p class="empty">暂无成员，等待管理员邀请</p>
       {% endif %}
     </div>
     <div class="online-count">在线 {{ online_count | default(0) }} / {{ total_count | default(0) }}</div>

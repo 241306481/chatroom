@@ -46,6 +46,10 @@
     <button type="submit">搜索</button>
   </form>
 
+  {% if not searched %}
+    <p class="hint">输入关键词开始搜索</p>
+  {% endif %}
+
   {% if advanced %}
     <div class="search-advanced-hint">
       高级语法：from:uid · in:discuss · domain:dn · before:YYYY-MM-DD · after:YYYY-MM-DD · 关键词空格分隔为 AND

@@ -152,4 +152,10 @@
   color: #888; margin-bottom: 4px; }
 .search-result-loc { margin-left: auto; color: #1890ff; }
 .search-result-content { font-size: 14px; line-height: 1.5;
-  word-wrap: break-word; }
+  word-wrap: break-word;
+  display: -webkit-box; -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical; overflow: hidden; }
+
+/* 长昵称省略 */
+.user-name { min-width: 0; overflow: hidden;
+  text-overflow: ellipsis; white-space: nowrap; max-width: 160px; }

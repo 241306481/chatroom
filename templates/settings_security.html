@@ -18,7 +18,8 @@
   <h2 style="margin:24px 0 8px;">会话管理</h2>
   <p class="hint">退出所有设备上的登录会话</p>
   <form method="POST" action="/settings/security/logout_all">
-    <button type="submit" style="background:#ff4d4f;padding:8px 16px;color:#fff;border:none;border-radius:4px;cursor:pointer;">退出所有会话</button>
+    <button type="submit" style="background:#ff4d4f;padding:8px 16px;color:#fff;border:none;border-radius:4px;cursor:pointer;"
+            data-confirm="确定退出所有设备上的会话？你将需要在每台设备重新登录。">退出所有会话</button>
   </form>
 </div>
 {% endblock %}

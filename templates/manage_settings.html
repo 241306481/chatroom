@@ -5,7 +5,7 @@
   <p class="hint">仅拥有系统管理权限的用户可访问</p>
   <form method="POST" action="/manage/settings" class="form-stack">
     <label>站点名称
-      <input type="text" name="site_name" value="{{ config.site_name or '离线聊天室' }}">
+      <input type="text" name="site_name" value="{{ config.site_name or '聊天室' }}">
     </label>
     <label>站点公告（首页顶部显示）
       <textarea name="site_announcement" rows="3">{{ config.site_announcement or '' }}</textarea>

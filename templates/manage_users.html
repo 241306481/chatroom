@@ -19,7 +19,7 @@
       </thead>
       <tbody>
         {% for u in users %}
-          <tr data-uid="{{ u.id }}" {% if u.banned %}style="background:#fff1f0;"{% endif %}>
+          <tr data-uid="{{ u.id }}" {% if u.banned %}class="row-banned"{% endif %}>
             <td>
               <span class="user-avatar-lg" style="background:{{ u.avatar_color }}">{{ u.nickname | avatarText }}</span>
             </td>
@@ -64,7 +64,7 @@
             </td>
             <td>
               {% if u.is_superuser %}
-                <span style="color:#aaa;font-size:12px;">超管不可操作</span>
+                <span style="color:#aaa;font-size:12px;">超级管理员不可操作</span>
               {% else %}
                 {% if u.banned %}
                   <form method="POST" action="/manage/users/ban" style="display:inline">
@@ -79,6 +79,7 @@
                     <input type="hidden" name="user_id" value="{{ u.id }}">
                     <input type="text" name="reason" placeholder="原因"
                            style="width:80px;padding:4px;font-size:12px;">
+                    <span style="font-size:11px;color:#888;">留空=永久</span>
                     <input type="datetime-local" name="until_local"
                            style="font-size:12px;width:150px;">
                     <button type="submit" class="file-action-btn danger"

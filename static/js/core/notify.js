@@ -49,6 +49,17 @@ window.showNotification = function (opts) {
 };
 
 // ============================================================
+// 通用轻提示（表单提交成功等）
+// ============================================================
+window.showToast = function (msg) {
+    var t = document.createElement('div');
+    t.className = 'toast';
+    t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(function () { t.remove(); }, 3000);
+};
+
+// ============================================================
 // 未读徽章 +1
 // ============================================================
 window.bumpUnreadBadge = function () {

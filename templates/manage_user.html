@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block content %}
 <div class="page-container">
-  <h1>用户管理 · {{ domain_name }}</h1>
+  <h1>成员管理 · {{ domain_name }}</h1>
   {% if is_system_domain %}
     <p class="hint">⚠ 系统域成员不可被踢出</p>
   {% endif %}
@@ -60,7 +60,10 @@
                   <form method="POST" action="/domain/{{ domain_name }}/manage/user" style="display:inline">
                     <input type="hidden" name="action" value="mute">
                     <input type="hidden" name="user_id" value="{{ u.id }}">
-                    <input type="number" name="minutes" value="60" min="1" style="width:60px;">
+                    <label style="display:inline-flex;align-items:center;gap:4px;">
+                      <input type="number" name="minutes" value="60" min="1" style="width:60px;">
+                      <span style="font-size:12px;color:#666;">分钟</span>
+                    </label>
                     <button type="submit">禁言</button>
                   </form>
                 {% endif %}
@@ -76,14 +79,17 @@
                   <form method="POST" action="/domain/{{ domain_name }}/manage/user" style="display:inline">
                     <input type="hidden" name="action" value="kick">
                     <input type="hidden" name="user_id" value="{{ u.id }}">
-                    <button type="submit" data-confirm="确定踢出该成员？">踢出</button>
+                    <button type="submit" class="file-action-btn danger"
+                            data-confirm="确定踢出该成员？">踢出</button>
                   </form>
                   <form method="POST" action="/domain/{{ domain_name }}/manage/user" class="ban-form">
                     <input type="hidden" name="action" value="ban">
                     <input type="hidden" name="user_id" value="{{ u.id }}">
                     <input type="text" name="reason" placeholder="原因" class="ban-reason">
+                    <span style="font-size:11px;color:#888;">留空=永久</span>
                     <input type="datetime-local" name="until_local" class="ban-until" title="留空 = 永久">
-                    <button type="submit" data-confirm="确定封禁该用户加入此域？">封禁</button>
+                    <button type="submit" class="file-action-btn danger"
+                            data-confirm="确定封禁该用户加入此域？">封禁</button>
                   </form>
                 {% endif %}
               {% endif %}

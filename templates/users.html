@@ -46,11 +46,11 @@
                 {% elif u.role == 'root' %}
                   <span class="badge root">管理员</span>
                 {% elif u.role == 'guest' %}
-                  <span style="color:#999;">访客</span>
+                  <span class="role-guest">访客</span>
                 {% elif u.role == 'default' %}
-                  <span style="color:#333;">成员</span>
+                  <span class="role-member">成员</span>
                 {% else %}
-                  <span style="color:#333;">{{ u.role }}</span>
+                  <span class="role-member">{{ u.role }}</span>
                 {% endif %}
               </td>
               <td><span class="user-level" data-exp="exp: {{ u.exp | default(0) }}">Lv.{{ u.level }}</span></td>
@@ -66,7 +66,11 @@
       </tbody>
     </table>
   {% else %}
-    <p class="empty">暂无用户</p>
+    {% if is_domain_view %}
+      <p class="empty">暂无成员</p>
+    {% else %}
+      <p class="empty">暂无用户</p>
+    {% endif %}
   {% endif %}
 
   <div class="list-filter-bar">

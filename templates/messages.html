@@ -34,7 +34,7 @@
            class="dm-conv {% if c.other == target %}active{% endif %}"
            data-uid="{{ c.other }}">
           <span class="avatar-circle" style="background:{{ c.avatar_color }}">{{ c.nickname | avatarText }}</span>
-          <span>{{ c.nickname }}</span>
+          <span class="dm-conv-nick">{{ c.nickname }}</span>
           {% if c.unread > 0 %}<span class="badge-unread">{{ c.unread }}</span>{% endif %}
         </a>
       {% endfor %}
@@ -72,6 +72,11 @@
               </div>
             </div>
           {% endfor %}
+        {% else %}
+          <div class="dm-empty-hint">
+            <div style="font-size:48px;margin-bottom:12px;">💬</div>
+            <p>还没有私信，发条消息打个招呼吧</p>
+          </div>
         {% endif %}
         </div>
       </div>
@@ -96,7 +101,7 @@
         </div>
       {% endif %}
     {% else %}
-      <div class="dm-empty">选择左侧会话开始聊天，或点上方"新增会话"</div>
+      <div class="dm-empty">选择左侧会话开始聊天，或点上方「新增会话」</div>
     {% endif %}
   </section>
 </div>

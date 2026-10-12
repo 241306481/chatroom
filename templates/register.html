@@ -35,3 +35,21 @@
   </div>
 </div>
 {% endblock %}
+
+{% block scripts %}
+<script src="/static/js/core/dom.js"></script>
+<script src="/static/js/core/modal.js"></script>
+<script src="/static/js/core/notify.js"></script>
+<script>
+(function () {
+  var p = new URL(location.href).searchParams;
+  var err = p.get('error');
+  var rt = p.get('return_to');
+  if (rt) {
+    var hidden = document.querySelector('input[name="return_to"]');
+    if (hidden) hidden.value = rt;
+  }
+  if (err && window.showAlert) window.showAlert(err);
+})();
+</script>
+{% endblock %}

@@ -10,9 +10,10 @@
       {% elif u.role == 'root' %}
         <span class="badge root">管理员</span>
       {% endif %}
-      {% if can_mute and not u.is_owner %}
-        <div class="member-actions">
-          <button type="button" onclick="muteMember('{{ u.id }}')" title="禁言">🔇</button>
+      {% if u.is_mod %}<span class="badge mod">MOD</span>{% endif %}
+      {% if not u.is_owner %}
+        <div class="member-actions" data-member-actions>
+          <button type="button" onclick="muteMember('{{ u.id }}')" title="禁言" aria-label="禁言">🔇</button>
         </div>
       {% endif %}
     </div>

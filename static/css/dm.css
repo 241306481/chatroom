@@ -165,3 +165,12 @@
 .dm-me .dm-bubble pre { background: rgba(0, 0, 0, 0.18); color: #fff; }
 .dm-me .dm-bubble pre code { background: none; color: #fff; }
 .dm-me .dm-bubble code { background: rgba(0, 0, 0, 0.18); color: #fff; }
+
+/* 空私信提示 */
+.dm-empty-hint { padding: 60px 20px; text-align: center; color: #aaa; }
+.dm-empty-hint p { font-size: 14px; }
+html[data-theme="dark"] .dm-empty-hint { color: #666; }
+
+/* 会话昵称省略 */
+.dm-conv .dm-conv-nick { min-width: 0; overflow: hidden;
+  text-overflow: ellipsis; white-space: nowrap; }
