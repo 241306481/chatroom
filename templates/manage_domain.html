@@ -24,16 +24,20 @@
       <h3>用户管理</h3>
       <p>分配角色、禁言、踢出</p>
     </a>
+    {% if can_join %}
     <a href="/domain/{{ domain_name }}/manage/join" class="manage-entry">
       <h3>加入设置</h3>
       <p>开放加入 / 审批 / 关闭</p>
     </a>
+    {% endif %}
+    {% if can_applications %}
     <a href="/domain/{{ domain_name }}/manage/applications" class="manage-entry">
       <h3>加入申请
         {% if pending_count > 0 %}<span class="badge-unread">{{ pending_count }}</span>{% endif %}
       </h3>
       <p>审批用户的加入申请</p>
     </a>
+    {% endif %}
     {% if domain.owner_id == (current_user.id or '') or (nav and nav.is_superuser) %}
       <a href="/domain/{{ domain_name }}/manage/transfer" class="manage-entry"
          style="border-left-color:#faad14;">
@@ -45,7 +49,7 @@
       <h3>返回域主页</h3>
       <p>查看域内容</p>
     </a>
-    {% if domain_name != "system" %}
+    {% if can_delete and domain_name != "system" %}
       <a href="/domain/{{ domain_name }}/manage/delete" class="manage-entry" style="border-left-color:#ff4d4f;">
         <h3 style="color:#ff4d4f;">删除域</h3>
         <p>不可恢复，谨慎操作</p>

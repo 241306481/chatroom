@@ -45,5 +45,9 @@
   text-decoration: none; font-size: 14px; transition: background 0.12s; }
 .user-dropdown a:hover { background: #f0f7ff; color: #1890ff; }
 .dropdown-divider { height: 1px; background: #eee; margin: 4px 0; }
-.logout-link { color: #ff4d4f !important; }
+/* 退出登录是表单按钮，需与同级 <a> 对齐 */
+.logout-form { margin: 0; }
+.logout-link { display: block; width: 100%; text-align: left; padding: 8px 16px;
+  border: 0; background: none; font: inherit; font-size: 14px; cursor: pointer;
+  color: #ff4d4f !important; transition: background 0.12s; }
 .logout-link:hover { background: #fff1f0 !important; }
