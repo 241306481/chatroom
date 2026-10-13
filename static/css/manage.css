@@ -63,6 +63,6 @@
 
 /* 次要按钮（消息搜索入口） */
 .create-domain-btn.secondary {
-  background: #fff; color: #1890ff; border: 1px solid #1890ff; }
+  background: #fff; color: #1890ff !important; border: 1px solid #1890ff; }
 html[data-theme="dark"] .create-domain-btn.secondary {
-  background: #2a2a2a; color: #4da3ff; border-color: #4da3ff; }
+  background: #2a2a2a; color: #4da3ff !important; border-color: #4da3ff; }

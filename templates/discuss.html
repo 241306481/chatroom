@@ -242,4 +242,11 @@ window.deleteCurrentDiscussion = function () {
       .catch(() => alert('删除失败'));
   };
 </script>
+<script>
+  window.__MESSAGES__ = {{ messages | dump | safe }};
+  window.__MESSAGES_TOTAL__ = {{ messages_total | default(0) }};
+  window.__MESSAGES_OFFSET__ = {{ messages_offset | default(0) }};
+  window.__MESSAGES_LIMIT__ = {{ messages_limit | default(100) }};
+  window.__MESSAGES_VIEW__ = 'discuss';
+</script>
 {% endblock %}

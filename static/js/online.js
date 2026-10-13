@@ -70,14 +70,20 @@ window.updateAllOnlineCounts = function () {
     const DOMAIN = window.__DOMAIN__ || '';
     if (!DOMAIN) return;
     if (document.getElementById('messageList')) return; // 讨论页有专属 WS
+    // 未登录不连 WS：服务端 upgrade 阶段会直接 destroy，
+    // 不加这道守卫会导致 onclose → connect 的无限重连。
+    if (!window.MY_UID) return;
 
     const WS_PROTOCOL = window.__WS_PROTOCOL__ || 'ws';
     const wsUrl = WS_PROTOCOL + '://' + location.host + '/ws/status/' + encodeURIComponent(DOMAIN);
     let socket = null, reconnectTimer = null;
+    let failCount = 0;
+    const MAX_FAILS = 3;
 
     function connect() {
         socket = new WebSocket(wsUrl);
         socket.onopen = () => {
+            failCount = 0;
             if (reconnectTimer) { clearTimeout(reconnectTimer); reconnectTimer = null; }
         };
         socket.onmessage = ev => {
@@ -100,7 +106,11 @@ window.updateAllOnlineCounts = function () {
                 }
             }
         };
-        socket.onclose = () => { reconnectTimer = setTimeout(connect, 3000); };
+        socket.onclose = () => {
+            if (failCount >= MAX_FAILS) return;
+            failCount++;
+            reconnectTimer = setTimeout(connect, 3000);
+        };
         socket.onerror = () => {};
     }
     connect();

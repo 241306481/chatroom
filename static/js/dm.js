@@ -14,6 +14,7 @@
     function isDmAtBottom() {
         const l = document.getElementById('dmList');
         if (!l) return true;
+        // column-reverse：scrollTop = 0 是底部，向上滚为负值
         return Math.abs(l.scrollTop) <= 60;
     }
 
@@ -202,45 +203,30 @@
         return false;
     };
 
-    function appendDM(msg, isMe) {
+function appendDM(msg, isMe) {
         const list = document.getElementById('dmList');
         if (!list) return;
         const inner = list.querySelector('.dm-list-inner') || list;
-        const div = document.createElement('div');
-        div.className = 'dm-msg ' + (isMe ? 'dm-me' : 'dm-other');
-        const contentHtml = window.renderContent
-            ? window.renderContent(msg.content)
-            : esc(msg.content);
-        const rawAttr = window.escAttr ? window.escAttr(msg.content) : esc(msg.content);
-        const nick = msg.from_nickname || '?';
-        const color = msg.from_avatar_color || '#888';
-        const firstChar = nick[0] || '?';
-        div.innerHTML =
-            '<div class="dm-avatar-wrap">'
-              + '<span class="dm-avatar" style="background:' + esc(color) + '">'
-              + esc(firstChar)
-              + '</span>'
-            + '</div>'
-            + '<div class="dm-msg-body">'
-              + '<div class="dm-msg-header">'
-                + '<span class="dm-nick">' + esc(nick) + '</span>'
-                + '<span class="dm-time">' + esc(msg.created_at) + '</span>'
-                + '<button type="button" class="msg-mini-btn" '
-                + 'onclick="toggleSource(this)" title="查看源码">📄</button>'
-              + '</div>'
-              + '<div class="dm-bubble" data-raw="' + rawAttr + '">'
-                + contentHtml
-              + '</div>'
-            + '</div>';
+
+        // 插入前先取：用户是否本来看在底部（column-reverse：scrollTop 接近 0）
+        const wasAtBottom = Math.abs(list.scrollTop) <= 60;
+
+        const div = window.ChatRender && window.ChatRender.buildDMMessageEl
+            ? window.ChatRender.buildDMMessageEl(Object.assign({}, msg, { is_me: !!isMe }))
+            : null;
+        if (!div) return;
+        // column-reverse：插到 DOM 开头 = 视觉底部
         inner.insertBefore(div, inner.firstElementChild);
+
+        // 仅当用户本来就在底部时才置底；否则保持视口位置，让 banner 提示
+        if (wasAtBottom) {
+            list.scrollTop = 0;
+        }
     }
     const ta = document.getElementById('dmInput');
     if (ta) ta.addEventListener('keydown', e => {
         if (e.ctrlKey && e.key === 'Enter') sendDM();
     });
-    const list = document.getElementById('dmList');
-    if (list) list.scrollTop = 0;
-
     // 页面初始化：渲染历史气泡 + 清除当前会话未读
     function renderHistory() {
         document.querySelectorAll('.dm-bubble[data-raw]').forEach(function (el) {

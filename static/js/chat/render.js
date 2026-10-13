@@ -177,6 +177,39 @@
         return div;
     }
 
+    // ---------- 私信消息构建（虚拟滚动用） ----------
+    function buildDMMessageEl(msg) {
+        const isMe = !!msg.is_me;
+        const div = document.createElement('div');
+        div.className = 'dm-msg ' + (isMe ? 'dm-me' : 'dm-other');
+        div.dataset.id = msg.id;
+        const contentHtml = window.renderContent
+            ? window.renderContent(msg.content)
+            : esc(msg.content);
+        const rawAttr = window.escAttr ? window.escAttr(msg.content) : esc(msg.content);
+        const nick = msg.nickname || msg.from_nickname || '?';
+        const color = msg.avatar_color || msg.from_avatar_color || '#888';
+        const firstChar = nick[0] || '?';
+        div.innerHTML =
+            '<div class="dm-avatar-wrap">'
+              + '<span class="dm-avatar" style="background:' + esc(color) + '">'
+                + esc(firstChar)
+              + '</span>'
+            + '</div>'
+            + '<div class="dm-msg-body">'
+              + '<div class="dm-msg-header">'
+                + '<span class="dm-nick">' + esc(nick) + '</span>'
+                + '<span class="dm-time">' + esc(msg.created_at) + '</span>'
+                + '<button type="button" class="msg-mini-btn" '
+                + 'onclick="toggleSource(this)" title="查看源码">📄</button>'
+              + '</div>'
+              + '<div class="dm-bubble" data-raw="' + rawAttr + '">'
+                + contentHtml
+              + '</div>'
+            + '</div>';
+        return div;
+    }
+
     function appendMessage(msg) {
         const list = document.getElementById('messageList');
         if (!list) return;
@@ -406,6 +439,7 @@
         appendMessage,
         prependMessage,
         buildMessageEl,
+        buildDMMessageEl,
         removeMessage,
         applyDelete,
         updatePinned,

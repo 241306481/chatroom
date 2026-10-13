@@ -54,12 +54,14 @@
             const R = window.ChatRender;
 
             switch (data.type) {
-                case 'new_message':
+                case 'new_message': {
+                    const atBottom = R.isAtBottom();
                     R.appendMessage(data.message);
-                    if (window.MY_UID && data.message.user_id !== window.MY_UID) {
-                        if (!R.isAtBottom()) R.showNewMsgBanner(1);
+                    if (window.MY_UID && data.message.user_id !== window.MY_UID && !atBottom) {
+                        R.showNewMsgBanner(1);
                     }
                     break;
+                }
                 case 'message_deleted':
                     R.applyDelete(data.message_id);
                     break;
@@ -107,48 +109,6 @@
 
     connect();
 
-    // ---------- 触顶加载更老消息 ----------
-    (function bindLoadMore() {
-        const list = document.getElementById('messageList');
-        if (!list) return;
-        const dataEl = list;
-        const initialOffset = parseInt(dataEl.dataset.offset || '0', 10) || 0;
-        const initialLimit = parseInt(dataEl.dataset.limit || '100', 10) || 100;
-        let total = parseInt(dataEl.dataset.total || '0', 10) || 0;
-        const PAGE = 50;
-        let loading = false;
-        let loadedCount = initialOffset + initialLimit;
-        if (total && loadedCount >= total) return;
-
-        function loadMore() {
-            if (loading) return;
-            if (total && loadedCount >= total) return;
-            loading = true;
-            const url = '/domain/' + encodeURIComponent(DOMAIN)
-                + '/discuss/' + encodeURIComponent(DISCUSS)
-                + '/messages?offset=' + loadedCount + '&limit=' + PAGE;
-            fetch(url).then(function (r) { return r.json(); }).then(function (res) {
-                if (!res || !res.ok) { loading = false; return; }
-                if (typeof res.total === 'number' && res.total > total) {
-                    total = res.total;
-                }
-                const msgs = res.messages || [];
-                msgs.forEach(function (m) {
-                    window.ChatRender.prependMessage(m);
-                });
-                loadedCount += msgs.length;
-                if (res.has_more === false) total = loadedCount;
-                loading = false;
-            }).catch(function () { loading = false; });
-        }
-
-        list.addEventListener('scroll', function () {
-            const distanceFromTop = -list.scrollTop;
-            const maxScroll = list.scrollHeight - list.clientHeight;
-            if (maxScroll - distanceFromTop < 300) loadMore();
-        }, { passive: true });
-    })();
-
     // ---------- 初始渲染 ----------
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', () => window.ChatRender.renderAllHistory());
@@ -164,27 +124,116 @@
         });
     }
 
-    // ---------- 滚动到底 ----------
-    const l = document.getElementById('messageList');
-    if (l) l.scrollTop = 0;
-
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', () => {
-            const list = document.getElementById('messageList');
-            if (list) list.scrollTop = 0;
-        });
-    }
-
     (function jumpToHash() {
         const h = location.hash;
         if (!h || !h.startsWith('#msg-')) return;
         const id = h.substring(5);
-        const el = document.querySelector('.message[data-id="' + id + '"]');
-        if (!el) return;
-        setTimeout(() => {
-            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            el.classList.add('highlight');
-            setTimeout(() => el.classList.remove('highlight'), 2000);
-        }, 300);
+
+        function tryScroll(attempts) {
+            const el = document.querySelector('.message[data-id="' + id + '"]');
+            if (el) {
+                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                el.classList.add('highlight');
+                setTimeout(() => el.classList.remove('highlight'), 2000);
+                return;
+            }
+            if (attempts <= 0) return;
+            // 直接以 urgent 模式回溯（无延迟、无 loading 占位）
+            if (window.__chatLoadOlder) {
+                window.__chatLoadOlder(true);
+                // 视觉反馈：把视口推到内容最上方，让用户看到「正在往上翻找」
+                const list = document.getElementById('messageList');
+                if (list) list.scrollTop = -list.scrollHeight;
+            }
+            setTimeout(() => tryScroll(attempts - 1), 250);
+        }
+        setTimeout(() => tryScroll(30), 200);
+    })();
+
+    // ============================================================
+    // 分片加载更老消息（column-reverse）
+    // ============================================================
+    (function bindLoadOlder() {
+        const list = document.getElementById('messageList');
+        if (!list) return;
+
+        let loading = false;
+        let hasMoreOlder = true;
+        // oldestLoaded = 服务端首屏跳过的条数 + 首屏返回条数
+        const initialOffset = parseInt(list.dataset.offset || '0', 10) || 0;
+        const initialLimit = parseInt(list.dataset.limit || '100', 10) || 100;
+        const total = parseInt(list.dataset.total || '0', 10) || 0;
+        let oldestLoaded = initialOffset + initialLimit;
+        if (total > 0 && oldestLoaded >= total) hasMoreOlder = false;
+
+        function showLoading() {
+            const inner = list.querySelector('.message-list-inner') || list;
+            if (inner.querySelector('.loading-older')) return;
+            const el = document.createElement('div');
+            el.className = 'loading-older';
+            el.textContent = '正在加载…';
+            inner.appendChild(el);
+        }
+
+        function hideLoading() {
+            const inner = list.querySelector('.message-list-inner') || list;
+            const el = inner.querySelector('.loading-older');
+            if (el) el.remove();
+        }
+
+        function loadMore(urgent) {
+            if (loading) return;
+            if (!hasMoreOlder) return;
+
+            const dn = window.__DOMAIN__;
+            const disc = window.__DISCUSS__;
+            if (!dn || !disc) return;
+
+            // urgent 模式（hash 定位）：跳过 loading 占位和延迟
+            if (!urgent) showLoading();
+            loading = true;
+
+            const url = '/domain/' + encodeURIComponent(dn)
+                + '/discuss/' + encodeURIComponent(disc)
+                + '/messages?offset=' + oldestLoaded + '&limit=50';
+
+            const delay = urgent ? 0 : 500;
+
+            setTimeout(() => {
+                fetch(url).then((r) => r.json()).then((res) => {
+                    if (!urgent) hideLoading();
+                    loading = false;
+                    if (!res.ok || !res.messages || !res.messages.length) {
+                        hasMoreOlder = false;
+                        return;
+                    }
+                    // column-reverse：appendChild 到 inner 末尾 = 视觉更上方
+                    res.messages.forEach((m) => {
+                        if (window.ChatRender && window.ChatRender.prependMessage) {
+                            window.ChatRender.prependMessage(m);
+                        }
+                    });
+                    oldestLoaded += res.messages.length;
+                    if (res.messages.length < 50 || oldestLoaded >= total) {
+                        hasMoreOlder = false;
+                    }
+                }).catch(() => {
+                    if (!urgent) hideLoading();
+                    loading = false;
+                });
+            }, delay);
+        }
+
+        // 供 hash 定位以 urgent 模式触发（闭包状态与 scroll 触发共享）
+        window.__chatLoadOlder = loadMore;
+
+        list.addEventListener('scroll', function () {
+            // column-reverse 下：scrollTop = 0 是底部，负数是向上滚
+            const distanceFromTop = -(list.scrollTop);
+            const maxScroll = list.scrollHeight - list.clientHeight;
+            if (maxScroll - distanceFromTop < 300) {
+                loadMore();
+            }
+        }, { passive: true });
     })();
 })();

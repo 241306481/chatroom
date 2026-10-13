@@ -40,6 +40,11 @@
   margin-bottom: auto; }
 .dm-msg { display: flex; gap: 10px; margin-bottom: 16px;
   align-items: flex-start; }
+/* 内存优化：离屏元素跳过渲染（contain-intrinsic-size 同 discuss.css） */
+.dm-msg {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 80px;
+}
 .dm-msg.dm-me { flex-direction: row-reverse; }
 
 .dm-avatar-wrap { flex-shrink: 0; }
@@ -174,3 +179,8 @@ html[data-theme="dark"] .dm-empty-hint { color: #666; }
 /* 会话昵称省略 */
 .dm-conv .dm-conv-nick { min-width: 0; overflow: hidden;
   text-overflow: ellipsis; white-space: nowrap; }
+
+/* 回溯加载占位 */
+.loading-older { padding: 12px; text-align: center;
+  color: #999; font-size: 13px; }
+html[data-theme="dark"] .loading-older { color: #666; }

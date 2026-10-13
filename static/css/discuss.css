@@ -34,6 +34,13 @@
   display: flex; flex-direction: column-reverse;
   margin-bottom: auto; }
 .message { display: flex; gap: 10px; margin-bottom: 16px; }
+/* 内存优化：离屏元素跳过渲染。
+   contain-intrinsic-size 用 auto 关键字：首次测量真实高度，之后按记忆值占位，
+   避免滚动条长度随内容高度剧变。 */
+.message {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 100px;
+}
 .message.pinned { background: #fffbe6; border-radius: 6px; padding: 8px;
   border-left: 3px solid #faad14; }
 .message.system-msg .msg-nick { color: #1890ff; font-weight: 600; }
@@ -171,10 +178,16 @@
 .reply-banner button { background: transparent; border: none; cursor: pointer;
   color: #888; font-size: 16px; padding: 0 4px; line-height: 1; }
 .reply-banner button:hover { color: #ff4d4f; }
-.message.highlight { animation: msgHighlight 1.5s ease-out; }
+.message.highlight { animation: msgHighlight 1.5s ease-out; color: #333; }
+html[data-theme="dark"] .message.highlight { color: #e0e0e0; }
 @keyframes msgHighlight {
   0%   { background: #fffbe6; }
   100% { background: transparent; } }
+
+/* 回溯加载占位 */
+.loading-older { padding: 12px; text-align: center;
+  color: #999; font-size: 13px; }
+html[data-theme="dark"] .loading-older { color: #666; }
 
 /* 表情 */
 .msg-reactions { display: flex; gap: 4px; margin-top: 6px; flex-wrap: wrap; }

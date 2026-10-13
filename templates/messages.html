@@ -55,7 +55,8 @@
         <div class="dm-list-inner">
         {% if messages and messages.length %}
           {% for m in messages | reverse %}
-            <div class="dm-msg {% if m.is_me %}dm-me{% else %}dm-other{% endif %}">
+            <div class="dm-msg {% if m.is_me %}dm-me{% else %}dm-other{% endif %}"
+                 data-id="{{ m.id }}">
               <div class="dm-avatar-wrap">
                 <span class="dm-avatar" style="background:{{ m.avatar_color or '#888' }}">
                   {{ m.nickname | avatarText }}
@@ -104,6 +105,15 @@
       <div class="dm-empty">选择左侧会话开始聊天，或点上方「新增会话」</div>
     {% endif %}
   </section>
+<script>
+(function () {
+    window.__MESSAGES__ = {{ messages | dump | safe }};
+    window.__MESSAGES_TOTAL__ = {{ messages_total | default(0) }};
+    window.__MESSAGES_OFFSET__ = {{ messages_offset | default(0) }};
+    window.__MESSAGES_LIMIT__ = {{ messages_limit | default(200) }};
+    window.__MESSAGES_VIEW__ = 'dm';
+})();
+</script>
 </div>
 </div>
 

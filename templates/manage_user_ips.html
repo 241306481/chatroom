@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-container">
+  <h1>用户最近 IP</h1>
+  <p class="hint">记录每个用户最近 10 次登录使用的 IP，方便溯源与封禁。</p>
+
+  {% if users and users.length %}
+    <table class="user-table">
+      <thead>
+        <tr>
+          <th style="width:90px;">UID</th>
+          <th style="width:180px;">昵称</th>
+          <th>最近 IP（最新在前）</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for u in users %}
+          <tr>
+            <td>{{ u.id }}</td>
+            <td><a href="/user/{{ u.id }}">{{ u.nickname }}</a></td>
+            <td>
+              {% for r in u.ips %}
+                <div style="font-size:12px;margin-bottom:4px;">
+                  <code>{{ r.ip }}</code>
+                  <span style="color:#999;margin-left:8px;">{{ r.at }}</span>
+                  <form method="POST" action="/manage/ip_bans" style="display:inline;margin-left:8px;">
+                    <input type="hidden" name="action" value="add">
+                    <input type="hidden" name="rule" value="{{ r.ip }}">
+                    <input type="hidden" name="reason" value="封禁用户 {{ u.nickname }}">
+                    <button type="submit" class="mini-btn"
+                            data-confirm="确定封禁 IP {{ r.ip }}？该 IP 之后的所有请求都会被拦截。">封禁</button>
+                  </form>
+                </div>
+              {% endfor %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="empty">暂无记录。用户登录后会自动记录其 IP。</p>
+  {% endif %}
+
+  <p style="margin-top:24px;"><a href="/manage/ip_bans">← 返回 IP 封禁</a></p>
+</div>
+{% endblock %}

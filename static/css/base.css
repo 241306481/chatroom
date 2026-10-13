@@ -401,9 +401,11 @@ html[data-theme="dark"] .announcement-item.system-ann {
 html[data-theme="dark"] .announcement-meta { color: #888; }
 
 /* 登录 / 注册页 */
-html[data-theme="dark"] .topbar-nav .nav-login-btn,
-html[data-theme="dark"] .topbar-nav .nav-register-btn {
+html[data-theme="dark"] .topbar-nav .nav-login-btn {
   color: #4da3ff; border-color: #4da3ff;
+}
+html[data-theme="dark"] .topbar-nav .nav-register-btn {
+  background: #1890ff; color: #fff; border-color: #1890ff;
 }
 html[data-theme="dark"] .login-box h1,
 html[data-theme="dark"] .login-form label { color: #e0e0e0; }
@@ -870,3 +872,56 @@ html[data-theme="dark"] .role-guest { color: #888; }
   display: inline-block; }
 html[data-theme="dark"] .btn-secondary {
   background: #2a2a2a; color: #4da3ff; border-color: #4da3ff; }
+
+/* ============================================================
+   深色模式 P1 补齐
+   ============================================================ */
+
+/* ---- 悬停态（补 base.css 未覆盖的） ---- */
+html[data-theme="dark"] .logo:hover { color: #40a9ff; }
+html[data-theme="dark"] .discussion-card:hover { background: #1e3a5f; }
+html[data-theme="dark"] .manage-entry:hover { background: #1e3a5f; }
+html[data-theme="dark"] .manage-row:hover { background: #1e3a5f; }
+html[data-theme="dark"] .domain-card:hover { background: #1e3a5f; }
+html[data-theme="dark"] .user-item:hover { background: #1e3a5f; }
+html[data-theme="dark"] .sidebar-users .user-item:hover { background: #1e3a5f; }
+html[data-theme="dark"] .member-name:hover { color: #4da3ff; }
+html[data-theme="dark"] .member-actions button:hover { background: #333; color: #e0e0e0; }
+html[data-theme="dark"] .msg-actions button:hover { background: #3a1a1a; color: #ff7875; }
+html[data-theme="dark"] .msg-reply-btn:hover { background: #1e3a5f; color: #4da3ff; }
+html[data-theme="dark"] .msg-mini-btn:hover { color: #4da3ff; }
+html[data-theme="dark"] .discuss-header-title:hover { background: #1e3a5f; color: #4da3ff; }
+html[data-theme="dark"] .inline-search-input:focus { border-color: #4da3ff; }
+html[data-theme="dark"] .list-filter-input:focus { border-color: #4da3ff; }
+html[data-theme="dark"] .dm-user-link:hover { background: #333; }
+html[data-theme="dark"] .notification-card:hover { background: #333; }
+
+/* ---- 边框与分割线 ---- */
+html[data-theme="dark"] .file-info-bar { border-bottom-color: #3a3a3a; color: #888; }
+html[data-theme="dark"] .role-table td { border-bottom-color: #2a2a2a; color: #e0e0e0; }
+html[data-theme="dark"] .user-table th { border-bottom-color: #3a3a3a; }
+html[data-theme="dark"] .perm-matrix th { border-bottom-color: #3a3a3a; }
+
+/* ---- 输入框聚焦光晕 ---- */
+html[data-theme="dark"] input:focus,
+html[data-theme="dark"] textarea:focus,
+html[data-theme="dark"] select:focus {
+  border-color: #4da3ff;
+  box-shadow: 0 0 0 2px rgba(77, 163, 255, 0.15);
+}
+
+/* ---- 通知卡片左侧强调条 ----
+   深色区的 border-color 简写会把 border-left 一并改成灰色，需单独恢复 */
+html[data-theme="dark"] .notification-card { border-left-color: #4da3ff; }
+
+/* ---- 占位符（通用） ---- */
+html[data-theme="dark"] ::placeholder { color: #666; }
+
+/* ---- 上传进度内部 ---- */
+html[data-theme="dark"] .progress-info { color: #b0b0b0; }
+html[data-theme="dark"] .progress-queue-item {
+  background: #2a2a2a; color: #b0b0b0;
+}
+
+/* ---- 文件图标 ---- */
+html[data-theme="dark"] .file-icon-cell { opacity: 0.6; }
