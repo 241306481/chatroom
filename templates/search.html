@@ -36,24 +36,25 @@
         </select>
       </label>
 
-      <label class="checkbox-row">
-        <input type="checkbox" name="mode" value="advanced"
-               {% if advanced %}checked{% endif %}>
-        高级模式
-      </label>
-    </div>
+      </div>
+
+    <details class="search-help">
+      <summary>🔍 高级搜索语法</summary>
+      <div class="search-help-content">
+        <code>from:昵称或UID</code> — 按发送者过滤<br>
+        <code>in:讨论ID</code> — 在指定讨论内搜索<br>
+        <code>domain:域名</code> — 在指定域内搜索<br>
+        <code>before:YYYY-MM-DD</code> — 早于该日期<br>
+        <code>after:YYYY-MM-DD</code> — 晚于该日期<br>
+        多个条件空格分隔（AND），例：<code>from:2 in:general before:2024-06-01</code>
+      </div>
+    </details>
 
     <button type="submit">搜索</button>
   </form>
 
   {% if not searched %}
     <p class="hint">输入关键词开始搜索</p>
-  {% endif %}
-
-  {% if advanced %}
-    <div class="search-advanced-hint">
-      高级语法：from:uid · in:discuss · domain:dn · before:YYYY-MM-DD · after:YYYY-MM-DD · 关键词空格分隔为 AND
-    </div>
   {% endif %}
 
   {% if searched %}
