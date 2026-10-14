@@ -209,7 +209,10 @@ window.toggleSource = function (btn) {
     if (el.dataset.mode === 'source') {
         const copyBtn = el.querySelector('.source-copy-btn');
         if (copyBtn) copyBtn.remove();
-        el.innerHTML = window.renderContent ? window.renderContent(raw) : raw;
+        el.innerHTML = window.renderContent
+            ? window.renderContent(raw)
+            // 兜底分支同样必须转义：raw 是消息正文（用户可控）
+            : esc(raw).replace(/\n/g, '<br>');
         el.dataset.mode = 'render';
         btn.textContent = '📄';
         btn.title = '查看源码';

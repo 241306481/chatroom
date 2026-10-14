@@ -41,7 +41,7 @@
             </div>
             <span class="meta">{{ d.count }} 条</span>
           </a>
-          {% if can_edit_discuss and d.id != 'general' %}
+          {% if can_delete_discuss and d.id != 'general' %}
             <button type="button" class="discuss-del-btn"
                     data-disc="{{ d.id }}"
                     onclick="deleteListItem(this);"

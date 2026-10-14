@@ -31,6 +31,14 @@
         }
 
         input.addEventListener('input', apply);
+        // 搜索结果是某一刻的快照，但消息列表随后仍会被改动：
+        // ChatRender.appendMessage（WS 新消息）与 prependMessage（回溯加载）
+        // 都会增删节点。只绑定 input 的话，最后一次按键之后到达的消息
+        // 永远不会被高亮，而计数器还停留在旧数字上，屏幕与计数自相矛盾。
+        // 导出重扫入口，由 chat/socket.js 在列表变更后调用。
+        window.__chatSearchReapply = function () {
+            if ((input.value || '').trim()) apply();
+        };
         if (closeBtn) {
             closeBtn.addEventListener('click', function () {
                 input.value = '';

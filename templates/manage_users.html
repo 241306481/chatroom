@@ -21,7 +21,7 @@
         {% for u in users %}
           <tr data-uid="{{ u.id }}" {% if u.banned %}class="row-banned"{% endif %}>
             <td>
-              <span class="user-avatar-lg" style="background:{{ u.avatar_color }}">{{ u.nickname | avatarText }}</span>
+              <span class="user-avatar-lg" style="background:{{ u.avatar_color | avatarColor }}">{{ u.nickname | avatarText }}</span>
             </td>
             <td>
               {{ u.nickname }}

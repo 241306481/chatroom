@@ -70,6 +70,10 @@
                     if (window.MY_UID && data.message.user_id !== window.MY_UID && !atBottom) {
                         R.showNewMsgBanner(1);
                     }
+                    // 列表变了，行内搜索的快照与计数必须重算
+                    if (typeof window.__chatSearchReapply === 'function') {
+                        window.__chatSearchReapply();
+                    }
                     break;
                 }
                 case 'message_deleted':
@@ -223,6 +227,10 @@
                             window.ChatRender.prependMessage(m);
                         }
                     });
+                    // 回溯加载同样改变了列表，行内搜索需要重算
+                    if (typeof window.__chatSearchReapply === 'function') {
+                        window.__chatSearchReapply();
+                    }
                     oldestLoaded += res.messages.length;
                     if (res.messages.length < 50 || oldestLoaded >= total) {
                         hasMoreOlder = false;

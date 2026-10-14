@@ -75,10 +75,10 @@ function handleAction(action, el, ta, refresh) {
             if (!url) return;
             const s = ta.selectionStart, e = ta.selectionEnd;
             const sel = ta.value.substring(s, e) || '文字';
-            ta.value = ta.value.substring(0, s)
-                + '[' + sel + '](' + url + ')'
-                + ta.value.substring(e);
-            ta.focus();
+            // 必须走 U.insertAt：直接给 ta.value 赋值会把选区折叠到整个文档末尾，
+            // 于是光标跳到最末尾，紧接着点下一个工具栏按钮就会改错文本。
+            // insertAt 会把光标还原到插入内容之后。
+            U.insertAt(ta, '[' + sel + '](' + url + ') ');
             refresh();
         });
     } else if (action === 'image-link') {

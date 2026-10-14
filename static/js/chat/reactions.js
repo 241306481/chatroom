@@ -13,22 +13,39 @@
     };
 
     // ---------- 弹出选择器 ----------
+    // 关闭必须同时摘掉 picker 和 document 上的捕获阶段监听器。
+    // 此前 close 只在它自己体内注销，而 picker 有三条移除路径
+    // （点 emoji、第 20 行换一条消息时的清扫、第 18 行的再次点击），
+    // 都会留下一个持有已分离 DOM 子树的 document 监听器，
+    // 之后每次点击都会触发它，直到某次「点击外部」恰好把它注销。
     window.toggleReactionPicker = function (msgId, btn) {
         const existId = 'reaction-picker-' + msgId;
         const existing = document.getElementById(existId);
         if (existing) { existing.remove(); return; }
-        document.querySelectorAll('.reaction-picker').forEach(el => el.remove());
 
         const picker = document.createElement('div');
         picker.id = existId;
         picker.className = 'reaction-picker';
+
+        let close = null;
+        const teardown = function () {
+            if (close) { document.removeEventListener('click', close, true); close = null; }
+            if (picker.parentNode) picker.remove();
+        };
+        // 每次只保留一个选择器；先清扫其余的（连同它们各自的监听器）
+        const openPickers = document.querySelectorAll('.reaction-picker');
+        for (const el of openPickers) {
+            if (el !== picker && el.__teardown) el.__teardown();
+            el.remove();
+        }
+
         REACTION_EMOJIS.forEach(function (e) {
             const b = document.createElement('button');
             b.type = 'button';
             b.textContent = e;
             b.addEventListener('click', function () {
                 window.sendReaction(msgId, e);
-                picker.remove();
+                teardown();
             });
             picker.appendChild(b);
         });
@@ -54,11 +71,11 @@
         picker.style.top = top + 'px';
 
         // 点击外部关闭
+        picker.__teardown = teardown;
         setTimeout(function () {
-            const close = function (ev) {
+            close = function (ev) {
                 if (!picker.contains(ev.target) && ev.target !== btn) {
-                    picker.remove();
-                    document.removeEventListener('click', close, true);
+                    teardown();
                 }
             };
             document.addEventListener('click', close, true);

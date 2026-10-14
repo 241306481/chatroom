@@ -20,7 +20,7 @@
               <span class="discuss-id"
                     data-old-id="{{ d.id }}"
                     data-value="{{ d.id }}"
-                    {% if d.id != 'general' %}onclick="inlineEditId(this);"{% endif %}>
+                    {% if can_edit_discuss and d.id != 'general' %}onclick="inlineEditId(this);"{% endif %}>
                 #{{ d.id }}
               </span>
             </td>
@@ -28,12 +28,12 @@
               <span class="discuss-title {% if not d.title %}empty{% endif %}"
                     data-id="{{ d.id }}"
                     data-value="{{ d.title }}"
-                    onclick="inlineEditTitle(this);">{{ d.title or '（无标题）' }}</span>
+                    {% if can_edit_discuss %}onclick="inlineEditTitle(this);"{% endif %}>{{ d.title or '（无标题）' }}</span>
             </td>
             <td>{{ d.count }}</td>
             <td>
               <a href="/domain/{{ domain_name }}/discuss/{{ d.id }}" class="file-action-btn">进入</a>
-              {% if d.id != "general" %}
+              {% if can_delete_discuss and d.id != "general" %}
                 <form method="POST" action="/domain/{{ domain_name }}/manage/discussions"
                       style="display:inline">
                   <input type="hidden" name="action" value="delete">
@@ -51,6 +51,7 @@
     <p class="empty">暂无讨论</p>
   {% endif %}
 
+  {% if can_create_discuss %}
   <h2 style="margin-top:24px;">新建讨论</h2>
   <form method="POST" action="/domain/{{ domain_name }}/manage/discussions" class="form-stack">
     <input type="hidden" name="action" value="create">
@@ -60,6 +61,7 @@
     <label>标题（可选）<input type="text" name="title"></label>
     <button type="submit">创建讨论</button>
   </form>
+  {% endif %}
 
   <p style="margin-top:24px;"><a href="/domain/{{ domain_name }}/manage">← 返回域管理</a></p>
 </div>

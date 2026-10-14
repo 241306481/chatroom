@@ -3,7 +3,7 @@
 <div class="page-container">
   <h1>
     <a href="/user/{{ target.id }}" class="user-link" style="display:inline-flex;">
-      <span class="user-avatar" style="background:{{ target.avatar_color }}">{{ target.nickname | avatarText }}</span>
+      <span class="user-avatar" style="background:{{ target.avatar_color | avatarColor }}">{{ target.nickname | avatarText }}</span>
       <span>{{ target.nickname }}</span>
     </a>
     · {% if mode == 'following' %}关注{% else %}粉丝{% endif %}
@@ -29,7 +29,7 @@
             </td>
             <td>
               <a href="/user/{{ u.id }}" class="user-link">
-                <span class="user-avatar" style="background:{{ u.avatar_color }}">{{ u.nickname | avatarText }}</span>
+                <span class="user-avatar" style="background:{{ u.avatar_color | avatarColor }}">{{ u.nickname | avatarText }}</span>
                 <span>{{ u.nickname }}</span>
               </a>
             </td>

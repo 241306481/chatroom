@@ -49,8 +49,18 @@
 </div>
 <script>
 (function () {
-  var err = new URL(location.href).searchParams.get('error');
-  if (err && window.showAlert) window.showAlert(err);
+  // showAlert 由 base.html 在内容块之后才引入的
+  // core/modal.js 提供，同步执行时它还不存在，?error= 会被静默吞掉。
+  // 等待 DOMContentLoaded（与 manage_transfer.html 一致）。
+  function check() {
+    var err = new URL(location.href).searchParams.get('error');
+    if (err && window.showAlert) window.showAlert(err);
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', check);
+  } else {
+    check();
+  }
 })();
 </script>
 {% endblock %}

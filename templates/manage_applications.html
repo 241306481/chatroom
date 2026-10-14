@@ -31,8 +31,20 @@
 </div>
 <script>
 (function () {
-  var err = new URL(location.href).searchParams.get('error');
-  if (err && window.showAlert) window.showAlert(err);
+  // 本模板继承 base.html，而 showAlert 定义在 base.html 第 184 行加载的
+  // core/modal.js 里——它在 内容块（第 111 行）之后才被引入。
+  // 在这里同步执行时 window.showAlert 还是 undefined，守卫短路，
+  // ?error= 被静默吞掉（例如「该用户已被封禁」根本不会提示）。
+  // 必须等 DOMContentLoaded，与 manage_transfer.html 保持一致。
+  function check() {
+    var err = new URL(location.href).searchParams.get('error');
+    if (err && window.showAlert) window.showAlert(err);
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', check);
+  } else {
+    check();
+  }
 })();
 </script>
 {% endblock %}

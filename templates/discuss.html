@@ -60,7 +60,7 @@
         {% for msg in messages | reverse %}
           <div class="message {% if msg.pinned %}pinned{% endif %} {% if msg.is_system %}system-msg{% endif %}"
                data-id="{{ msg.id }}" {% if msg.reply_to %}data-reply-to="{{ msg.reply_to }}"{% endif %} id="msg-{{ msg.id }}">
-            <div class="msg-avatar" style="background:{{ msg.avatar_color }}">{{ msg.nickname | avatarText }}</div>
+            <div class="msg-avatar" style="background:{{ msg.avatar_color | avatarColor }}">{{ msg.nickname | avatarText }}</div>
             <div class="msg-body">
               <div class="msg-header">
                 {% if msg.pinned %}<span class="pin-icon">📌</span>{% endif %}

@@ -22,7 +22,10 @@ window.EditorUtils = {
     togglePrefix(ta, prefix) {
         const s = ta.selectionStart, e = ta.selectionEnd;
         const v = ta.value;
-        let ls = v.lastIndexOf('\n', s - 1) + 1;
+        // s === 0 时不能写成 v.lastIndexOf('\n', s - 1)：负的 fromIndex 会被
+        // 钳到 0，于是当文本正好以 '\n' 开头时它返回 0、ls 变成 1，
+        // 前缀（#/-> /- /1. ）会被加到第二行，而光标其实在第一行。
+        const ls = s === 0 ? 0 : v.lastIndexOf('\n', s - 1) + 1;
         let le = v.indexOf('\n', e);
         if (le === -1) le = v.length;
         const block = v.substring(ls, le);

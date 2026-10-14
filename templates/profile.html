@@ -3,7 +3,7 @@
 {% block content %}
 <div class="page-container">
   <div class="profile-header">
-    <div class="profile-avatar" style="background:{{ target.avatar_color }}">{{ target.nickname | avatarText }}</div>
+    <div class="profile-avatar" style="background:{{ target.avatar_color | avatarColor }}">{{ target.nickname | avatarText }}</div>
     <div class="profile-info">
       <h1>{{ target.nickname }}</h1>
       <div class="uid">UID: {{ target.id }}</div>
