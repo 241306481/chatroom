@@ -22,7 +22,7 @@
 <script defer src="/static/katex/contrib/auto-render.min.js"></script>
 <script src="/static/markdown/marked.min.js"></script>
 </head>
-<body data-domain="{{ domain_name }}" {% if target %}data-dm-target="{{ target }}"{% endif %}>
+<body data-domain="{{ domain_name }}" {% if dm_target %}data-dm-target="{{ dm_target }}"{% endif %}>
 <header class="topbar">
   <div class="topbar-left">
     <a href="/home" class="logo">💬 {{ site_name or "聊天室" }}</a>
@@ -114,15 +114,17 @@
 <div id="notificationContainer"></div>
 
 <script>
-  window.__WS_PROTOCOL__ = {{ (ws_protocol or 'ws') | dump | safe }};
-  window.__DOMAIN__ = {{ (domain_name or '') | dump | safe }};
-  window.__DISCUSS__ = {{ (discuss_name or '') | dump | safe }};
-  window.__CURRENT_UID__ = {{ (current_user.id if current_user and current_user.id else '') | dump | safe }};
-  window.__UNREAD_COUNT__ = {{ (nav.unread_count if nav and nav.unread_count else 0) | dump | safe }};
+  window.__WS_PROTOCOL__ = {{ (ws_protocol or 'ws') | jsdump }};
+  window.__DOMAIN__ = {{ (domain_name or '') | jsdump }};
+  window.__DISCUSS__ = {{ (discuss_name or '') | jsdump }};
+  window.__CURRENT_UID__ = {{ (current_user.id if current_user and current_user.id else '') | jsdump }};
+  window.__UNREAD_COUNT__ = {{ (nav.unread_count if nav and nav.unread_count else 0) | jsdump }};
   window.__CAN_PIN__ = {{ 'true' if can_pin else 'false' }};
   window.__CAN_MUTE__ = {{ 'true' if can_mute else 'false' }};
   window.__CAN_DELETE_ANY__ = {{ 'true' if can_delete_any else 'false' }};
   window.__CAN_ADD_REACTION__ = {{ 'true' if can_add_reaction else 'false' }};
+  window.__CAN_REVOKE_OWN__ = {{ 'true' if can_revoke_own else 'false' }};
+  window.__CAN_REVOKE_ANY__ = {{ 'true' if can_revoke_any else 'false' }};
 </script>
 <script>
   (function () {

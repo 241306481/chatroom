@@ -15,7 +15,7 @@ window.showNotification = function (opts) {
     var color = opts.color || '#1890ff';
     var avatarText = opts.avatar != null ? String(opts.avatar) : (title || '?')[0];
     card.innerHTML =
-        '<div class="notification-avatar" style="background:' + color + '">' +
+        '<div class="notification-avatar">' +
             esc(avatarText) +
         '</div>' +
         '<div class="notification-body">' +
@@ -23,6 +23,12 @@ window.showNotification = function (opts) {
             '<div class="notification-content">' + esc(opts.content || '') + '</div>' +
         '</div>' +
         '<button class="notification-close" type="button">×</button>';
+    // 背景色用 style 接口设置，不参与 innerHTML 拼接：
+    // color 来自私信负载里的 avatar_color，是持久化的用户可控字段，
+    // 拼进双引号属性里一个 " 就能闭合属性注入事件处理器。
+    // esc() 只处理 & < >，挡不住属性闭合。
+    var avatar = card.querySelector('.notification-avatar');
+    if (avatar) avatar.style.background = color;
 
     if (opts.onClick) {
         card.addEventListener('click', function (e) {

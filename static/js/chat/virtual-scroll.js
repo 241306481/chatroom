@@ -30,6 +30,7 @@
         container: null,
         inner: null,
         stickToBottom: true,   // 用户是否处于「跟随最新」状态
+        grewAtTop: false,      // 本次渲染是否在顶部（更旧的一侧）新增了内容
         loadingOlder: false,
         viewMode: 'discuss',
         buildEl: null,
@@ -42,16 +43,21 @@
 
     // ---------- 基础查询 ----------
 
+    // 容器是 flex-direction: column-reverse（见 static/css/discuss.css），
+    // 因此 scrollTop === 0 就是底部（最新一条），向上滚为负值。
+    // 与 chat/render.js 和 chat/socket.js 使用同一套约定。
+    // 旧写法 (scrollHeight - scrollTop - clientHeight) <= 60 在这里恒为 false，
+    // 会导致 stickToBottom 永远锁不上。
     function isAtBottom() {
         const c = state.container;
         if (!c) return true;
-        return (c.scrollHeight - c.scrollTop - c.clientHeight) <= 60;
+        return Math.abs(c.scrollTop) <= 60;
     }
 
     function scrollToBottom() {
         const c = state.container;
         if (!c) return;
-        c.scrollTop = c.scrollHeight;
+        c.scrollTop = 0;
     }
 
     function indexOfId(id) {
@@ -152,8 +158,8 @@ function indexAtY(y) {
             }
 
             // 处于跟随底部状态，或用户本来就在底部 60px 内 → stick
-            const atBottom = (container.scrollHeight - container.scrollTop
-                - container.clientHeight) <= 60;
+            // column-reverse：scrollTop = 0 是底部，向上滚为负值
+            const atBottom = Math.abs(container.scrollTop) <= 60;
             state.stickToBottom = state.stickToBottom || atBottom;
 
             const prevH = container.scrollHeight;
@@ -162,12 +168,16 @@ function indexAtY(y) {
             _renderVisibleImpl();
 
             // 滚动补偿只在这里做一次（_renderVisibleImpl 内不再重复补偿）
+            const grew = container.scrollHeight - prevH;
             if (state.stickToBottom) {
-                container.scrollTop = container.scrollHeight;
-            } else {
-                const delta = container.scrollHeight - prevH;
-                if (delta !== 0) container.scrollTop = prevTop + delta;
+                scrollToBottom();
+            } else if (state.grewAtTop && grew !== 0) {
+                // 只有「顶部新增」（回溯加载）需要补偿，而且是朝相反方向：
+                // column-reverse 下内容变高在视觉顶部，scrollTop 只会更负，
+                // 用 prevTop + grew 会把用户往最新消息的方向拽走。
+                container.scrollTop = prevTop - grew;
             }
+            state.grewAtTop = false;
         } finally {
             state.rendering = false;
         }
@@ -247,8 +257,7 @@ function indexAtY(y) {
         renderVisible();
         if (state.stickToBottom) {
             requestAnimationFrame(function () {
-                const c = state.container;
-                if (c) c.scrollTop = c.scrollHeight;
+                scrollToBottom();
             });
         }
     }
@@ -269,15 +278,22 @@ function indexAtY(y) {
         // 内存窗口上限：回溯加载同样要受 MEMORY_LIMIT 约束。
         // 从最老一端裁剪——新加载的这些正是用户正在往上翻的内容，
         // 不能反过来裁剪底部（否则会把用户眼前的最新消息删掉）。
+        //
+        // 注意：这里绝对不能回退 oldestLoaded。offset 的语义是
+        // 「已从最新一条起加载了多少条」（服务端 loadMessageRange 就是按这个
+        // 数从最新往回数），只会单调变大。被淘汰的条目确实需要重新拉取，
+        // 但那正是把 offset 原样再发一次就会拿回来的内容；
+        // 一旦在这里减回去，下一次 loadOlder() 会请求刚刚被淘汰的同一页，
+        // 于是永远卡在同一处、无限重复拉取。
         while (state.messages.length > MEMORY_LIMIT) {
             state.messages.shift();
             state.heights.shift();
-            state.oldestLoaded--;
-            if (state.oldestLoaded < 0) state.oldestLoaded = 0;
         }
         state._lastIdsKey = null;
 
-        // 回溯加载：临时禁用 stick，让外层 renderVisible 走高度差补偿分支，
+        // 回溯加载：新增内容在视觉顶部，需要滚动锚定补偿。
+        state.grewAtTop = true;
+        // 临时禁用 stick，让外层 renderVisible 走高度差补偿分支，
         // 而不是强制滚到底。仍走统一入口，保留 rendering 递归锁。
         const wasStick = state.stickToBottom;
         state.stickToBottom = false;
@@ -450,23 +466,31 @@ function indexAtY(y) {
         state.heights = state.messages.map(function () { return 0; });
         state.total = window.__MESSAGES_TOTAL__ || state.messages.length;
         state.oldestLoaded = (window.__MESSAGES_OFFSET__ || 0) + state.messages.length;
-        state.newestLoaded = state.total;
+        // newestLoaded 同样是「已从最新端加载的条数」，必须用已加载条数，
+        // 不能用服务端给的 total：否则只持有一页(100 条)时每收到一条新消息，
+        // appendMessage 里的 total 就会被顶高一条，hasMoreOlder 永远为真，
+        // 一直发出注定返回空结果的 /messages 请求。
+        state.newestLoaded = state.messages.length;
         state.hasMoreOlder = state.oldestLoaded < state.total;
         state._lastIdsKey = null;
 
         // 滚动到顶部时回溯加载更老的消息
         let scrollScheduled = false;
         container.addEventListener('scroll', function () {
-            // 依据当前滚动位置更新「跟随底部」状态
-            state.stickToBottom =
-                (container.scrollHeight - container.scrollTop
-                    - container.clientHeight) <= 60;
+            // column-reverse 下 scrollTop = 0 是底部，负数是向上滚（见 chat/socket.js）
+            state.stickToBottom = Math.abs(container.scrollTop) <= 60;
 
             if (scrollScheduled) return;
             scrollScheduled = true;
             requestAnimationFrame(function () {
                 scrollScheduled = false;
-                if (container.scrollTop < TOP_THRESHOLD + 100) loadOlder();
+                // 「距顶部还有多远」要用负值换算，再和可滚动总距离比较；
+                // 旧写法 container.scrollTop < TOP_THRESHOLD + 100 在
+                // column-reverse 下恒成立（scrollTop 永远 <= 0），
+                // 等于每次滚动都触发回溯加载。
+                const distanceFromTop = -container.scrollTop;
+                const maxScroll = container.scrollHeight - container.clientHeight;
+                if (maxScroll - distanceFromTop < TOP_THRESHOLD) loadOlder();
                 scheduleRender();
             });
         }, { passive: true });

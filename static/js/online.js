@@ -97,7 +97,10 @@ window.updateAllOnlineCounts = function () {
                     if (typeof data.html === 'string' && data.html) {
                         list.innerHTML = data.html;
                     }
-                    if (window.__CAN_MUTE__ !== true && window.__CAN_MUTE__ !== 'true') {
+                    // 与 chat/socket.js 共用同一段权限过滤，避免两处实现漂移
+                    if (typeof window.applyMemberPermissions === 'function') {
+                        window.applyMemberPermissions();
+                    } else if (window.__CAN_MUTE__ !== true && window.__CAN_MUTE__ !== 'true') {
                         list.querySelectorAll('.member-actions').forEach(el => el.remove());
                     }
                     if (typeof window.updateAllOnlineCounts === 'function') {

@@ -109,7 +109,7 @@
   window.addEventListener('DOMContentLoaded', function () {
     initUpload({
       inputId: 'fileInput',
-      uploadUrl: '/domain/{{ domain_name }}/files/upload',
+      uploadUrl: {{ ('/domain/' + domain_name + '/files/upload') | jsdump }},
       maxMb: {{ max_file_size_mb | default(50) }}
     });
   });

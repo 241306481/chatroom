@@ -160,6 +160,20 @@ window.renderContent = function (text) {
     wrap.appendChild(container);
     return wrap.innerHTML;
 
+    // URL 协议白名单。判定前必须先剥掉浏览器在解析 URL 时同样会忽略的
+    // 控制字符与空白：href="java&#10;script:alert(1)" 在浏览器里就是活的
+    // javascript: 协议，但 getAttribute 读回来是 "java\nscript:..."，
+    // 直接用原串做 /^javascript:/ 匹配会被绕过。
+    const DANGEROUS_SCHEME_RE = /^(?:javascript|data|vbscript):/i;
+    const URL_ATTRS = ['href', 'src', 'xlink:href', 'action', 'formaction',
+        'srcset', 'poster', 'data', 'background', 'cite'];
+
+    function normalizeUrlForSchemeCheck(value) {
+        // 剥掉控制字符、空白、BOM 与行分隔符（写成转义序列，源文件保持纯 ASCII）
+        return String(value == null ? '' : value)
+            .replace(/[\u0000-\u0020\u00a0\u2028\u2029\ufeff]/g, '');
+    }
+
     function sanitize(root) {
         root.querySelectorAll('script, iframe, object, embed, link, meta, style, base, form')
             .forEach(n => n.remove());
@@ -168,8 +182,8 @@ window.renderContent = function (text) {
                 const name = attr.name.toLowerCase();
                 const value = String(attr.value || '');
                 if (name.startsWith('on')) { el.removeAttribute(attr.name); continue; }
-                if ((name === 'href' || name === 'src' || name === 'xlink:href')
-                    && /^\s*(javascript|data|vbscript):/i.test(value)) {
+                if (URL_ATTRS.indexOf(name) >= 0
+                    && DANGEROUS_SCHEME_RE.test(normalizeUrlForSchemeCheck(value))) {
                     el.removeAttribute(attr.name);
                 }
             }

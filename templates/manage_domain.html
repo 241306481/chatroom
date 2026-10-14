@@ -4,26 +4,36 @@
   <h1>管理域 · {{ domain.display_name or domain_name }}</h1>
   <p class="hint">域名 {{ domain_name }} · {{ domain.members | length }} 位成员</p>
   <div class="manage-entries">
+    {% if can_edit %}
     <a href="/domain/{{ domain_name }}/manage/edit" class="manage-entry">
       <h3>编辑域设置</h3>
       <p>修改显示名、公告等</p>
     </a>
+    {% endif %}
+    {% if can_discussions %}
     <a href="/domain/{{ domain_name }}/manage/discussions" class="manage-entry">
       <h3>讨论管理</h3>
       <p>新建、删除讨论</p>
     </a>
+    {% endif %}
+    {% if can_role %}
     <a href="/domain/{{ domain_name }}/manage/role" class="manage-entry">
       <h3>角色管理</h3>
       <p>创建自定义角色</p>
     </a>
+    {% endif %}
+    {% if can_permission %}
     <a href="/domain/{{ domain_name }}/manage/permission" class="manage-entry">
       <h3>权限管理</h3>
       <p>勾选各角色的权限</p>
     </a>
+    {% endif %}
+    {% if can_manage_users %}
     <a href="/domain/{{ domain_name }}/manage/user" class="manage-entry">
       <h3>用户管理</h3>
       <p>分配角色、禁言、踢出</p>
     </a>
+    {% endif %}
     {% if can_join %}
     <a href="/domain/{{ domain_name }}/manage/join" class="manage-entry">
       <h3>加入设置</h3>

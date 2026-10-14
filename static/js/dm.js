@@ -136,11 +136,26 @@
                 const a = document.createElement('a');
                 a.className = 'dm-search-item';
                 a.href = '/messages?target=' + encodeURIComponent(u.id);
-                a.innerHTML =
-                    '<span class="avatar-circle" style="background:' + u.avatar_color + '">'
-                    + (u.nickname || '?')[0] + '</span>'
-                    + '<span>' + u.nickname + '</span>'
-                    + '<span class="dm-search-uid">UID ' + u.id + '</span>';
+
+                const av = document.createElement('span');
+                av.className = 'avatar-circle';
+                // 颜色走 style 属性接口，不做字符串拼接：
+                // 昵称/颜色是用户可控的，拼进 style="..." 就能用 " 闭合属性
+                av.style.background = u.avatar_color || '#888';
+                av.textContent = (u.nickname || '?')[0];
+
+                const nick = document.createElement('span');
+                // 昵称允许 < > " 等字符（validateNickname 只挡保留词/数字开头/
+                // 控制字符/反斜杠），必须用 textContent，不能拼 innerHTML
+                nick.textContent = u.nickname || '?';
+
+                const uid = document.createElement('span');
+                uid.className = 'dm-search-uid';
+                uid.textContent = 'UID ' + u.id;
+
+                a.appendChild(av);
+                a.appendChild(nick);
+                a.appendChild(uid);
                 list.appendChild(a);
             });
         }
@@ -178,11 +193,22 @@
                 const a = document.createElement('a');
                 a.className = 'dm-search-item';
                 a.href = '/messages?target=' + encodeURIComponent(u.id);
-                a.innerHTML =
-                    '<span class="avatar-circle" style="background:' + u.avatar_color + '">'
-                    + (u.nickname || '?')[0] + '</span>'
-                    + '<span>' + u.nickname + '</span>'
-                    + '<span class="dm-search-uid">UID ' + u.id + '</span>';
+
+                const av = document.createElement('span');
+                av.className = 'avatar-circle';
+                av.style.background = u.avatar_color || '#888';
+                av.textContent = (u.nickname || '?')[0];
+
+                const nick = document.createElement('span');
+                nick.textContent = u.nickname || '?';
+
+                const uid = document.createElement('span');
+                uid.className = 'dm-search-uid';
+                uid.textContent = 'UID ' + u.id;
+
+                a.appendChild(av);
+                a.appendChild(nick);
+                a.appendChild(uid);
                 list.appendChild(a);
             });
         }

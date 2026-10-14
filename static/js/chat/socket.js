@@ -24,15 +24,25 @@
         },
     };
 
+    // 首屏的成员列表是服务端渲染的，members_update 之前就已经带着禁言按钮；
+    // 之前这段清理只挂在 members_update 分支上，导致没有任何成员变动时
+    // 普通成员在页面上始终看得到（甚至对自己）🔇，点下去才吃 403。
+    // 提取成函数并在页面加载时也执行一次。
+    function applyMemberPermissions() {
+        const list = document.getElementById('memberList');
+        if (!list) return;
+        if (window.__CAN_MUTE__ === true || window.__CAN_MUTE__ === 'true') return;
+        list.querySelectorAll('.member-actions').forEach(el => el.remove());
+    }
+    window.applyMemberPermissions = applyMemberPermissions;
+
     function applyMembersUpdate(data) {
         const list = document.getElementById('memberList');
         if (!list) return;
         if (typeof data.html === 'string' && data.html) {
             list.innerHTML = data.html;
         }
-        if (window.__CAN_MUTE__ !== true && window.__CAN_MUTE__ !== 'true') {
-            list.querySelectorAll('.member-actions').forEach(el => el.remove());
-        }
+        applyMemberPermissions();
         if (typeof window.updateAllOnlineCounts === 'function') {
             window.updateAllOnlineCounts();
         }
@@ -236,4 +246,10 @@
             }
         }, { passive: true });
     })();
+    // 首屏也要应用一次权限过滤（见 applyMemberPermissions 的说明）
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', window.applyMemberPermissions);
+    } else {
+        window.applyMemberPermissions();
+    }
 })();

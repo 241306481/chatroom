@@ -41,7 +41,7 @@
             <td>
               {% if u.system_role == 'root' %}
                 <span style="color:#f5222d;font-weight:600;">超级管理员</span>
-              {% else %}
+              {% elif can_set_role %}
                 <form method="POST" action="/manage/users/role" style="display:inline;">
                   <input type="hidden" name="user_id" value="{{ u.id }}">
                   <select name="role" onchange="this.form.submit()">
@@ -54,6 +54,8 @@
                     {% endfor %}
                   </select>
                 </form>
+              {% else %}
+                <span style="color:#888;">{{ u.system_role }}</span>
               {% endif %}
             </td>
             <td style="font-size:12px;color:#888;">

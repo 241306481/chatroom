@@ -84,16 +84,20 @@
     }
 
     // ---------- 追加 / 移除消息 ----------
-    function buildMessageEl(msg) {
-        const safeColor = function (c) {
-            const s = String(c || '');
-            if (/^#[0-9a-fA-F]{3,8}$/.test(s)) return s;
-            if (/^hsl\(\s*-?\d+(\.\d+)?\s*,\s*\d+(\.\d+)?%\s*,\s*\d+(\.\d+)?%\s*\)$/.test(s)) return s;
-            if (/^rgba?\([0-9,\s.]+\)$/.test(s)) return s;
-            if (/^[a-zA-Z]{3,20}$/.test(s)) return s;
-            return '#888';
-        };
 
+    // 头像色是持久化的用户可控字段（console 的 profile 命令可原样写入），
+    // 不能直接拼进 style="..."：esc() 只处理 & < >，一个 " 就能闭合属性。
+    // 提到模块作用域，供讨论消息与私信消息两个构建器共用。
+    function safeColor(c) {
+        const s = String(c || '');
+        if (/^#[0-9a-fA-F]{3,8}$/.test(s)) return s;
+        if (/^hsl\(\s*-?\d+(\.\d+)?\s*,\s*\d+(\.\d+)?%\s*,\s*\d+(\.\d+)?%\s*\)$/.test(s)) return s;
+        if (/^rgba?\([0-9,\s.]+\)$/.test(s)) return s;
+        if (/^[a-zA-Z]{3,20}$/.test(s)) return s;
+        return '#888';
+    }
+
+    function buildMessageEl(msg) {
         const escSingle = function (s) {
             return String(s == null ? '' : s)
                 .replace(/\\/g, '\\\\')
@@ -138,7 +142,14 @@
                            <span class="reply-quote-content">${esc(msg.reply_info.content)}</span>
                        </div>`)
             : '';
-        const revokeBtn = !revoked && (isOwn || window.__CAN_REVOKE_ANY__ === true)
+        // 撤回是 own/any 分离的双检操作，两个标志都必须存在：
+        // 之前只有 __CAN_REVOKE_ANY__ 且从未被服务端下发，
+        // 结果是「有权限的版主看不到撤回按钮」「没权限的人反而看到按钮、
+        // 点下去被服务端拒绝」。现由 base.html 下发 __CAN_REVOKE_OWN__ /
+        // __CAN_REVOKE_ANY__，与服务端渲染历史消息时用的判据保持一致。
+        const revokeBtn = !revoked && (isOwn
+            ? window.__CAN_REVOKE_OWN__ === true
+            : window.__CAN_REVOKE_ANY__ === true)
             ? `<button type="button" onclick="revokeMessage('${mid}')" title="撤回">↩️</button>`
             : '';
         const sourceBtn = !revoked
@@ -188,7 +199,7 @@
             : esc(msg.content);
         const rawAttr = window.escAttr ? window.escAttr(msg.content) : esc(msg.content);
         const nick = msg.nickname || msg.from_nickname || '?';
-        const color = msg.avatar_color || msg.from_avatar_color || '#888';
+        const color = safeColor(msg.avatar_color || msg.from_avatar_color);
         const firstChar = nick[0] || '?';
         div.innerHTML =
             '<div class="dm-avatar-wrap">'

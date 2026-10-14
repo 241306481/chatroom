@@ -86,8 +86,8 @@
 </div>
 
 <script>
-  window.__SEARCH_DOMAINS__ = {{ domains | dump | safe }};
-  window.__SEARCH_DISCUSS__ = {{ discFilter | dump | safe }};
+  window.__SEARCH_DOMAINS__ = {{ domains | jsdump }};
+  window.__SEARCH_DISCUSS__ = {{ discFilter | jsdump }};
 </script>
 <script>
   (function () {

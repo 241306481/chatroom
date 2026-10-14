@@ -72,7 +72,8 @@
                           onclick="setReplyTo('{{ msg.id }}', this)"
                           title="回复" aria-label="回复">↩️</button>
                 {% endif %}
-                {% if can_add_reaction or can_delete_any or msg.user_id == current_user.id or can_pin %}
+                {% if can_add_reaction or can_delete_any or msg.user_id == current_user.id or can_pin
+                      or nav.can_revoke_own or nav.can_revoke_any %}
                   <div class="msg-actions">
                     {% if not msg.revoked %}
                       <button type="button" onclick="toggleSource(this)"
@@ -215,14 +216,14 @@
 </div>
 
 <script>
-  window.__MENTION_CANDIDATES__ = [
+window.__MENTION_CANDIDATES__ = [
     {% for u in all_members %}
-      { id: '{{ u.id }}', nickname: '{{ u.nickname }}' }{% if not loop.last %},{% endif %}
+      { id: {{ u.id | jsdump }}, nickname: {{ u.nickname | jsdump }} }{% if not loop.last %},{% endif %}
     {% endfor %}
   ];
   window.__MENTION_NAMES__ = {
     {% for u in all_members %}
-      '{{ u.id }}': '{{ u.nickname }}'{% if not loop.last %},{% endif %}
+      {{ u.id | jsdump }}: {{ u.nickname | jsdump }}{% if not loop.last %},{% endif %}
     {% endfor %}
   };
 window.deleteCurrentDiscussion = function () {
@@ -243,7 +244,7 @@ window.deleteCurrentDiscussion = function () {
   };
 </script>
 <script>
-  window.__MESSAGES__ = {{ messages | dump | safe }};
+  window.__MESSAGES__ = {{ messages | jsdump }};
   window.__MESSAGES_TOTAL__ = {{ messages_total | default(0) }};
   window.__MESSAGES_OFFSET__ = {{ messages_offset | default(0) }};
   window.__MESSAGES_LIMIT__ = {{ messages_limit | default(100) }};

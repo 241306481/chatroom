@@ -11,7 +11,7 @@
             onsubmit="return submitDMPolicy(this)">
         <label><input type="radio" name="dm_policy" value="everyone" {% if cur == 'everyone' %}checked{% endif %}> 所有人（拉黑的用户除外）</label>
         <label><input type="radio" name="dm_policy" value="mutual" {% if cur == 'mutual' %}checked{% endif %}> 互相关注的人与管理员</label>
-        <label><input type="radio" name="dm_policy" value="following" {% if cur == 'following' %}checked{% endif %}> 我关注的人与管理员</label>
+        <label><input type="radio" name="dm_policy" value="following" {% if cur == 'following' %}checked{% endif %}> 关注我的人与管理员</label>
         <label><input type="radio" name="dm_policy" value="admin" {% if cur == 'admin' %}checked{% endif %}> 仅管理员</label>
         <button type="submit">保存</button>
       </form>
@@ -25,7 +25,7 @@
     </div>
 
     <script>
-      window.__DM_USERS__ = {{ all_users | dump | safe }};
+      window.__DM_USERS__ = {{ all_users | jsdump }};
     </script>
 
     {% if conversations and conversations.length %}
@@ -107,7 +107,7 @@
   </section>
 <script>
 (function () {
-    window.__MESSAGES__ = {{ messages | dump | safe }};
+    window.__MESSAGES__ = {{ messages | jsdump }};
     window.__MESSAGES_TOTAL__ = {{ messages_total | default(0) }};
     window.__MESSAGES_OFFSET__ = {{ messages_offset | default(0) }};
     window.__MESSAGES_LIMIT__ = {{ messages_limit | default(200) }};

@@ -41,16 +41,36 @@ window.initUpload = function (opts) {
         if (rejected.length > 0) {
             progressFilename.textContent = rejected.length + ' 个文件超限已跳过，上传其余 ' + accepted.length + ' 个';
         }
+        failedCount = 0;   // 每次新的一批上传重新计数
         uploadSequential(accepted, 0);
         this.value = '';
     });
 
+    // 失败计数：{ok:false} 的响应此前只是把队列里那一项标成 ❌，
+    // 但队列照样一路跑到底并走进「全部上传完成 / 100%」+ 自动刷新，
+    // 等于告诉用户上传成功了，实际一个文件都没存下来。
+    var failedCount = 0;
+
+    function finishAll(files) {
+        var okCount = files.length - failedCount;
+        if (failedCount > 0) {
+            progressFilename.textContent = '完成 ' + okCount + '/' + files.length + '，' + failedCount + ' 个失败';
+            progressPercent.textContent = Math.round(okCount / files.length * 100) + '%';
+            progressFill.style.width = (okCount / files.length * 100) + '%';
+            window.showAlert(failedCount + ' 个文件上传失败，详见下方队列');
+            // 仍有成功项时刷新，让新文件出现；全部失败时不刷新，避免无谓跳页
+            if (okCount > 0) setTimeout(function () { location.reload(); }, 1500);
+            return;
+        }
+        progressFilename.textContent = '全部上传完成';
+        progressPercent.textContent = '100%';
+        progressFill.style.width = '100%';
+        setTimeout(function () { location.reload(); }, 800);
+    }
+
     function uploadSequential(files, index) {
         if (index >= files.length) {
-            progressFilename.textContent = '全部上传完成';
-            progressPercent.textContent = '100%';
-            progressFill.style.width = '100%';
-            setTimeout(function () { location.reload(); }, 800);
+            finishAll(files);
             return;
         }
         var f = files[index];
@@ -69,14 +89,18 @@ window.initUpload = function (opts) {
             }
         };
         xhr.onload = function () {
+            var ok = false;
             try {
                 var res = JSON.parse(xhr.responseText);
+                ok = !!res.ok;
                 if (res.ok) { if (queueItem) queueItem.querySelector('.queue-status').textContent = '✅'; }
                 else if (queueItem) queueItem.querySelector('.queue-status').textContent = '❌ ' + (res.error || '失败');
             } catch (e) { if (queueItem) queueItem.querySelector('.queue-status').textContent = '❌ 响应异常'; }
+            if (!ok) failedCount++;
             uploadSequential(files, index + 1);
         };
         xhr.onerror = function () {
+            failedCount++;
             if (queueItem) queueItem.querySelector('.queue-status').textContent = '❌ 网络错误';
             uploadSequential(files, index + 1);
         };

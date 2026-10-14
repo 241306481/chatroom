@@ -9,6 +9,11 @@ window.inlineEdit = function (el, opts) {
     const originalText = el.textContent;
     const originalValue = opts.value !== undefined ? opts.value : originalText.trim();
     const emptyText = opts.emptyText || '（空）';
+    // 恢复时必须用 originalText（元素原本显示的文本），不能用 originalValue。
+    // 两者未必相等：inlineEditId 传入的是 data-old-id（不含 "#"），
+    // 而调用方渲染的是 "#{{ d.id }}"。此前按 Esc 或直接点走都会把
+    // originalValue 写回去，元素上的 "#" 前缀被永久抹掉。
+    const hadEmptyClass = el.classList.contains('empty');
 
     const input = document.createElement('input');
     input.type = 'text';
@@ -31,13 +36,14 @@ window.inlineEdit = function (el, opts) {
         delete el.dataset.editing;
 
         if (!save || newValue === originalValue) {
-            el.textContent = originalValue || emptyText;
-            el.classList.toggle('empty', !originalValue);
+            el.textContent = originalText;
+            el.classList.toggle('empty', hadEmptyClass);
             return;
         }
         if (opts.pattern && !new RegExp('^' + opts.pattern + '$').test(newValue)) {
             window.showAlert(opts.patternError || '格式不正确');
-            el.textContent = originalValue || emptyText;
+            el.textContent = originalText;
+            el.classList.toggle('empty', hadEmptyClass);
             return;
         }
         el.textContent = '保存中...';
@@ -49,8 +55,8 @@ window.inlineEdit = function (el, opts) {
                 el.dataset.value = newValue;
                 el.classList.toggle('empty', !newValue);
             } else {
-                el.textContent = originalValue || emptyText;
-                el.classList.toggle('empty', !originalValue);
+                el.textContent = originalText;
+                el.classList.toggle('empty', hadEmptyClass);
                 if (err) window.showAlert(err);
             }
         });
