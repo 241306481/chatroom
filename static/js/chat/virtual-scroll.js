@@ -44,14 +44,33 @@
     // ---------- 基础查询 ----------
 
     // 容器是 flex-direction: column-reverse（见 static/css/discuss.css），
-    // 因此 scrollTop === 0 就是底部（最新一条），向上滚为负值。
-    // 与 chat/render.js 和 chat/socket.js 使用同一套约定。
-    // 旧写法 (scrollHeight - scrollTop - clientHeight) <= 60 在这里恒为 false，
-    // 会导致 stickToBottom 永远锁不上。
+    // scrollTop === 0 就是底部（最新一条），向上滚远离 0。
+    //
+    // ★ 符号必须抹平：column-reverse 溢出到 start 边时，CSSOM 规范规定
+    //   scrollTop 为**负值**（现代 Chrome / Firefox / Safari 都如此），
+    //   但旧版 Safari 曾返回**正值**。若直接写 -scrollTop 当「距顶部多远」，
+    //   在那些浏览器上 distanceFromTop 会恒为负，
+    //   于是 maxScroll - distanceFromTop 永远 >= TOP_THRESHOLD，
+    //   回溯加载**永远不触发** —— 而且不报错，只是无限滚动静默失效。
+    // 因此所有距离判断一律先取绝对值。
+    function offsetFromBottom() {
+        const c = state.container;
+        if (!c) return 0;
+        return Math.abs(c.scrollTop);
+    }
+
+    // 距「内容最上端」还有多少像素可滚。
+    function distanceFromTop() {
+        const c = state.container;
+        if (!c) return 0;
+        const maxScroll = c.scrollHeight - c.clientHeight;
+        return maxScroll - offsetFromBottom();
+    }
+
     function isAtBottom() {
         const c = state.container;
         if (!c) return true;
-        return Math.abs(c.scrollTop) <= 60;
+        return offsetFromBottom() <= 60;
     }
 
     function scrollToBottom() {
@@ -96,10 +115,19 @@ function indexAtY(y) {
         return n - 1;
     }
 
-    // 实测已渲染节点的高度并回写
+    // 实测已渲染节点的高度并回写。
+    //
+    // ★ 只测真正在视口内的节点：CSS 已对 .message 启用
+    //   content-visibility: auto + contain-intrinsic-size: auto 100px，
+    //   离屏元素会跳过布局，此时 offsetHeight 返回的是 100px 占位值而非真实高度。
+    //   若把占位值写进 heights[]，offsetOf/indexAtY 的偏移表会被彻底污染，
+    //   滚动位置开始漂移，且越滚越偏。
     function measure() {
         const inner = state.inner;
         if (!inner) return;
+        const c = state.container;
+        let cRect = null;
+        if (c) cRect = c.getBoundingClientRect();
         const kids = inner.children;
         for (let i = 0; i < kids.length; i++) {
             const el = kids[i];
@@ -107,6 +135,11 @@ function indexAtY(y) {
             if (!id) continue;
             const idx = indexOfId(id);
             if (idx < 0) continue;
+            if (cRect) {
+                const r = el.getBoundingClientRect();
+                // 完全在视口外 → 跳过，不采信占位高度
+                if (r.bottom < cRect.top || r.top > cRect.bottom) continue;
+            }
             const h = el.offsetHeight;
             if (h > 0) state.heights[idx] = h;
         }
@@ -131,11 +164,12 @@ function indexAtY(y) {
         const bottomStart = Math.max(0, total - BOTTOM_FIXED);
         for (let i = bottomStart; i < total; i++) ids.add(state.messages[i].id);
 
-        // 视口窗口
+        // 视口窗口（符号无关：offsetFromBottom 是距底部像素数，向上滚时它单调增大）
         const c = state.container;
         if (c && total > 0) {
-            const top = Math.max(0, c.scrollTop - state.container.clientHeight);
-            const bottom = c.scrollTop + c.clientHeight * 2;
+            const fromBottom = offsetFromBottom();
+            const top = Math.max(0, fromBottom - c.clientHeight);
+            const bottom = fromBottom + c.clientHeight * 2;
             let start = indexAtY(top);
             let end = indexAtY(bottom);
             start = Math.max(0, start - VIEWPORT_BUFFER);
@@ -158,12 +192,11 @@ function indexAtY(y) {
             }
 
             // 处于跟随底部状态，或用户本来就在底部 60px 内 → stick
-            // column-reverse：scrollTop = 0 是底部，向上滚为负值
-            const atBottom = Math.abs(container.scrollTop) <= 60;
+            const atBottom = isAtBottom();
             state.stickToBottom = state.stickToBottom || atBottom;
 
             const prevH = container.scrollHeight;
-            const prevTop = container.scrollTop;
+            const prevTop = offsetFromBottom();   // 与符号无关
 
             _renderVisibleImpl();
 
@@ -172,10 +205,13 @@ function indexAtY(y) {
             if (state.stickToBottom) {
                 scrollToBottom();
             } else if (state.grewAtTop && grew !== 0) {
-                // 只有「顶部新增」（回溯加载）需要补偿，而且是朝相反方向：
-                // column-reverse 下内容变高在视觉顶部，scrollTop 只会更负，
-                // 用 prevTop + grew 会把用户往最新消息的方向拽走。
-                container.scrollTop = prevTop - grew;
+                // 只有「顶部新增」（回溯加载）需要补偿。
+                // 依赖浏览器的 CSS scroll anchoring 会与这里重复补偿：
+                // Chrome/Firefox 会自动修正、我们又手动改一次 = 跳动两倍；
+                // 而 Safari 至今不支持 overflow-anchor，只能靠自己。
+                // 因此 .message-list 上已设 overflow-anchor: none，
+                // 统一走手动补偿，三种浏览器行为才一致。
+                setOffsetFromBottom(container, prevTop + grew);
             }
             state.grewAtTop = false;
         } finally {

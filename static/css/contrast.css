@@ -1,0 +1,140 @@
+/* ===== contrast.css 4/6：登录注册 403/404 页面样式，以及文字过暗的对比度覆盖（原 base.css 第 516-654 行）===== */
+/* ============================================================
+   登录 / 注册 / 403 / 404（base_simple 页面）
+   ============================================================ */
+html[data-theme="dark"] .login-page { background: var(--bg-primary); }
+html[data-theme="dark"] .login-box {
+  background: #242424; color: #e0e0e0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+html[data-theme="dark"] .login-box h1 { color: #e0e0e0; }
+html[data-theme="dark"] .login-form label { color: #e0e0e0; }
+html[data-theme="dark"] .login-form input {
+  background: #1f1f1f; color: #e0e0e0; border-color: #3a3a3a;
+}
+html[data-theme="dark"] .login-form input:focus {
+  border-color: #4da3ff; box-shadow: 0 0 0 2px rgba(77, 163, 255, 0.2);
+}
+html[data-theme="dark"] .login-form button {
+  background: #1890ff;
+}
+html[data-theme="dark"] .login-form button:hover { background: #40a9ff; }
+html[data-theme="dark"] .login-switch { color: #888; }
+html[data-theme="dark"] .login-switch a { color: #4da3ff; }
+html[data-theme="dark"] .error-page h1 { color: #4da3ff; }
+html[data-theme="dark"] .error-page p { color: #b0b0b0; }
+html[data-theme="dark"] .error-page a {
+  background: #1890ff; color: #fff;
+}
+
+/* ============================================================
+   文字过暗：#333 / #555 / #666 / #888 / #999 / #aaa / #bbb 覆盖
+   ============================================================ */
+/* 顶栏 */
+html[data-theme="dark"] .topbar-nav > a { color: #b0b0b0; }
+html[data-theme="dark"] .logo { color: #4da3ff; }
+html[data-theme="dark"] .caret { color: #888; }
+html[data-theme="dark"] .user-name-label { color: #e0e0e0; }
+html[data-theme="dark"] .dropdown-nick { color: #e0e0e0; }
+html[data-theme="dark"] .dropdown-uid { color: #888; }
+
+/* 布局 / 通用 */
+html[data-theme="dark"] .disc-item,
+html[data-theme="dark"] .disc-title-inline,
+html[data-theme="dark"] .announcement-meta { color: #b0b0b0; }
+html[data-theme="dark"] .disc-count { color: #888; }
+html[data-theme="dark"] .user-level,
+html[data-theme="dark"] .member-level { color: #888; }
+html[data-theme="dark"] .empty,
+html[data-theme="dark"] .file-empty,
+html[data-theme="dark"] .dm-empty,
+html[data-theme="dark"] .dm-search-empty { color: #888; }
+html[data-theme="dark"] .dm-policy-hint {
+  background: #2a2a2a; color: #b0b0b0;
+}
+
+/* 讨论区 */
+html[data-theme="dark"] .sidebar-discussions h3 { color: #b0b0b0; }
+html[data-theme="dark"] .discuss-header-title { color: #b0b0b0; }
+html[data-theme="dark"] .discuss-header-title.empty,
+html[data-theme="dark"] .discuss-title.empty { color: #888; }
+html[data-theme="dark"] .discuss-title { color: #b0b0b0; }
+html[data-theme="dark"] .discuss-id,
+html[data-theme="dark"] .msg-nick,
+html[data-theme="dark"] .pinned-nick,
+html[data-theme="dark"] .member-name { color: #e0e0e0; }
+html[data-theme="dark"] .discuss-row .meta { color: #999; }
+html[data-theme="dark"] .msg-header,
+html[data-theme="dark"] .msg-time,
+html[data-theme="dark"] .pinned-time,
+html[data-theme="dark"] .pinned-meta,
+html[data-theme="dark"] .msg-reply-preview,
+html[data-theme="dark"] .member-actions button,
+html[data-theme="dark"] .input-disabled,
+html[data-theme="dark"] .msg-mini-btn { color: #b0b0b0; }
+html[data-theme="dark"] .msg-revoked,
+html[data-theme="dark"] .msg-reply-quote-revoked .reply-quote-content { color: #999; }
+html[data-theme="dark"] .mention-link.mention-silent { color: #999; }
+html[data-theme="dark"] .reply-quote-content { color: #b0b0b0; }
+
+/* 编辑器 */
+html[data-theme="dark"] .md-editor-toolbar-item { color: #b0b0b0; }
+html[data-theme="dark"] .md-editor-textarea,
+html[data-theme="dark"] .md-editor-preview,
+html[data-theme="dark"] .md-editor-textarea::placeholder { color: #e0e0e0; }
+html[data-theme="dark"] .md-editor-menu,
+html[data-theme="dark"] .md-editor-table-shape-info,
+html[data-theme="dark"] .md-editor-counter { color: #999; }
+html[data-theme="dark"] .mention-picker-item { color: #e0e0e0; }
+html[data-theme="dark"] .mention-picker-item:hover { color: #e0e0e0; }
+
+/* 文件 */
+html[data-theme="dark"] .file-table-head,
+html[data-theme="dark"] .file-info { color: #b0b0b0; }
+html[data-theme="dark"] .file-name-cell,
+html[data-theme="dark"] .file-name-cell .file-name-editable { color: #e0e0e0; }
+html[data-theme="dark"] .file-name-editable { color: #e0e0e0; }
+html[data-theme="dark"] .file-meta,
+html[data-theme="dark"] .file-action-btn { color: #b0b0b0; }
+html[data-theme="dark"] .progress-queue-item .queue-status { color: #999; }
+
+/* 个人资料 / 搜索 / 列表 */
+html[data-theme="dark"] .profile-info .uid,
+html[data-theme="dark"] .list-filter-count { color: #999; }
+html[data-theme="dark"] .profile-stats strong { color: #e0e0e0; }
+html[data-theme="dark"] .search-results-info { color: #b0b0b0; }
+html[data-theme="dark"] .btn-cancel { background: #2a2a2a; color: #b0b0b0; }
+html[data-theme="dark"] .btn-cancel:hover {
+  background: #333; color: #e0e0e0; border-color: #555;
+}
+html[data-theme="dark"] .btn-following {
+  background: #2a2a2a; color: #b0b0b0;
+}
+
+/* 管理页 */
+html[data-theme="dark"] .manage-row .meta { color: #999; }
+html[data-theme="dark"] .manage-entry p,
+html[data-theme="dark"] .domain-card p,
+html[data-theme="dark"] .discuss-row .meta { color: #b0b0b0; }
+
+/* 弹窗 / 通知 */
+html[data-theme="dark"] .modal-title { color: #e0e0e0; }
+html[data-theme="dark"] .modal-message { color: #b0b0b0; }
+html[data-theme="dark"] .modal-input,
+html[data-theme="dark"] .modal-btn { color: #e0e0e0; }
+html[data-theme="dark"] .notification-close { color: #999; }
+html[data-theme="dark"] .notification-close:hover { color: #e0e0e0; }
+
+/* 私信文字 */
+html[data-theme="dark"] .dm-conv,
+html[data-theme="dark"] .dm-search-item { color: #e0e0e0; }
+html[data-theme="dark"] .dm-nick { color: #e0e0e0; }
+html[data-theme="dark"] .dm-msg-header,
+html[data-theme="dark"] .dm-time,
+html[data-theme="dark"] .dm-search-item .dm-search-uid,
+html[data-theme="dark"] .dm-input-disabled { color: #999; }
+html[data-theme="dark"] .dm-settings > summary { color: #e0e0e0; }
+html[data-theme="dark"] .dm-settings-form label { color: #b0b0b0; }
+html[data-theme="dark"] .dm-bubble .source-copy-btn,
+html[data-theme="dark"] .msg-mini-btn { color: #b0b0b0; }
+

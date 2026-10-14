@@ -7,7 +7,7 @@ if (fs.existsSync(DATA)) fs.rmSync(DATA, { recursive: true, force: true });
 
 const storage = require('D:/chatroom/lib/storage');
 const auth = require('D:/chatroom/lib/auth');
-const { PRIV, PERM, hasPriv } = require('D:/chatroom/lib/permissions');
+const { PRIV, hasPriv } = require('D:/chatroom/lib/permissions');
 const { checkDual } = require('D:/chatroom/lib/auth/privilege');
 
 const results = [];
@@ -45,9 +45,14 @@ check('★ 域管理员也不能置顶（全局关闭开关必须生效）', () 
     assert.ok(denied, '域管理员仍然可以置顶 —— 全局 kill-switch 对特权用户失效');
 });
 check('★ WebSocket 侧行为一致（不得比 HTTP 更宽松）', () => {
-    const src = fs.readFileSync('D:/chatroom/lib/websocket/discuss.js', 'utf8');
+    // WS 侧的闸门已抽到 discuss-guard.js（discuss.js 只保留消息/连接处理）
+    const src = fs.readFileSync('D:/chatroom/lib/websocket/discuss-guard.js', 'utf8');
     assert.ok(/PRIV_EXEMPT_GROUPS\.has\(conf\.priv && conf\.priv\.group\)/.test(src),
         'WS 侧仍未按组收窄 skipPriv');
+    // 且 discuss.js 必须真正用上它，不能留一份死副本
+    const main = fs.readFileSync('D:/chatroom/lib/websocket/discuss.js', 'utf8');
+    assert.ok(/require\('\.\/discuss-guard'\)/.test(main), 'discuss.js 未引用 discuss-guard');
+    assert.ok(!/PRIV_EXEMPT_GROUPS\.has/.test(main), 'discuss.js 仍留有本地副本');
 });
 check('域设置组仍然豁免（系统角色 member 的 privs.domain=0，域所有者仍能管自己的域）', () => {
     const u = storage.loadUser(adminId);          // 系统角色 member → privs.domain 应为 0

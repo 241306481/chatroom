@@ -17,7 +17,7 @@
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const { execFileSync } = require('child_process');
+const { execFileSync, spawnSync } = require('child_process');
 
 const ROOT = path.join(__dirname, '..');
 const CERT = path.join(ROOT, 'cert.pem');
@@ -70,25 +70,57 @@ function findOpenssl() {
     return null;
 }
 
-function viaPowerShell() {
-    const ps = `
-$ErrorActionPreference = 'Stop'
-$ips = @(${lanIps().map(ip => "'" + ip + "'").join(',')})
-$san = @('DNS:localhost','IP:127.0.0.1') + ($ips | ForEach-Object { "IP:$_" })
-$tmp = Join-Path $env:TEMP ("chatroom-cert-" + [guid]::NewGuid().ToString("N"))
-New-Item -ItemType Directory -Path $tmp | Out-Null
-$c = New-SelfSignedCertificate -Type SSLServerAuthentication -Subject "CN=chatroom.local" `
-        + `-CertStoreLocation Cert:\\CurrentUser\\My -NotAfter (Get-Date).AddDays(${DAYS}) `
-        + `-DnsName @($san) -TextExtension @("2.5.29.17={text}asn=OID:1.3.6.1.5.5.7.3.1")
-$pfx = Join-Path $tmp "cert.pfx"
-Export-PfxCertificate -Cert $c -FilePath $pfx -Password (ConvertTo-SecureString -String "chatroom" -Force -AsPlainText) | Out-Null
-$null = & certutil -user -password chatroom -exportPEM $pfx (Join-Path $tmp "pem") 2>$null
-Get-ChildItem (Join-Path $tmp "pem") | Out-Null
-Write-Output "TMPDIR=$tmp"
-`;
-    execFileSync('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', ps],
-        { stdio: 'inherit', shell: true });
-    return null;   // 后续处理交给人工/增强版脚本
+// openssl 的部分子命令把结果写到 stdout、部分写到 stderr，
+// 跨版本不一致，所以两边一起收。用 spawnSync 才能拿到 stderr。
+function opensslOut(bin, args) {
+    const r = spawnSync(bin, args, { encoding: 'utf8' });
+    if (r.error) return '';
+    return String(r.stdout || '') + String(r.stderr || '');
+}
+
+// 生成后把关键信息摊开：自签名证书浏览器一定会拦截，
+// 用户需要的是「怎么让它别再拦」以及「怎么确认没被掉包」。
+function reportCert(bin, san) {
+    const { X509Certificate } = require('crypto');
+    let x;
+    try {
+        x = new X509Certificate(fs.readFileSync(CERT));
+    } catch (e) {
+        console.log('（证书已生成，但无法解析：' + e.message + '）');
+        return;
+    }
+    console.log('\n---- 证书信息 ----');
+    console.log('  Subject   :', x.subject);
+    console.log('  Issuer    :', x.issuer);
+    console.log('  有效期    :', x.validFrom, '→', x.validTo);
+    try {
+        console.log('  SAN       :', x.subjectAltName || san);
+    } catch (e) { /* 忽略 */ }
+    try {
+        console.log('  SHA-256   :', x.fingerprint256);
+    } catch (e) { /* 旧版本 Node 无此属性，忽略 */ }
+    try {
+        console.log('  openssl   :', opensslOut(bin, ['x509', '-fingerprint', '-sha256', '-noout', '-in', CERT]).trim());
+    } catch (e) { /* 忽略 */ }
+}
+
+function printTrustSteps() {
+    console.log('\n---- 让浏览器信任这张证书（否则每次访问都会告警）----');
+    const p = os.platform();
+    if (p === 'win32') {
+        console.log('  命令行：');
+        console.log('    certutil -addstore -user Root cert.pem');
+        console.log('  图形界面：双击 cert.pem → 安装证书 → 本地计算机 → 受信任的根证书颁发机构');
+    } else if (p === 'darwin') {
+        console.log('  钥匙串访问 → 导入 cert.pem → 双击导入项 → 信任 → 始终信任');
+        console.log('  或：sudo security add-trusted-cert -d -r trustRoot \\');
+        console.log('        -k /Library/Keychains/System.keychain cert.pem');
+    } else {
+        console.log('  sudo cp cert.pem /usr/local/share/ca-certificates/chatroom.crt');
+        console.log('  sudo update-ca-certificates');
+        console.log('  （Debian/Ubuntu；RHEL 系用 update-ca-trust extract）');
+    }
+    console.log('  注意：只在自己信任的机器上这么做，且别把这张证书用于公网。');
 }
 
 console.log('== 生成自签名证书 ==');
@@ -101,9 +133,19 @@ if (fs.existsSync(CERT) && fs.existsSync(KEY)) {
 const oss = findOpenssl();
 if (oss) {
     const san = viaOpenssl(oss);
+    // 私钥以明文保存在项目根，POSIX 上收紧到仅属主可读。
+    // Windows 靠 NTFS ACL，改 mode 无意义，跳过。
+    if (os.platform() !== 'win32') {
+        try { fs.chmodSync(KEY, 0o600); } catch (e) {
+            console.log('（chmod 600 key.pem 失败：' + e.message + '）');
+        }
+    }
     console.log('\n已生成：cert.pem, key.pem   (openssl: ' + oss + ')');
-    console.log('SAN:', san);
-    console.log('重启服务即可自动启用 HTTPS/WSS。');
+    console.log('路径：', ROOT);
+    reportCert(oss, san);
+    printTrustSteps();
+    console.log('\n重启服务即可自动启用 HTTPS/WSS。');
+    console.log('启动自检会显示剩余有效期，到期前请重新运行 npm run cert。');
     process.exit(0);
 }
 

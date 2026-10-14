@@ -16,7 +16,7 @@ const proc = spawn(process.execPath, ['server.js'],
 proc.stdout.on('data', () => {});
 const srvErr = [];
 proc.stderr.on('data', d => srvErr.push(String(d)));
-const sleep = ms => new Promise(r => setTimeout(r, ms));
+const { sleep, waitForServer, clearTlsArtifacts } = require('./_helpers');
 
 const results = [];
 const check = async (n, f) => {
@@ -75,27 +75,9 @@ function waitFor(ws, pred, ms = 10000) {
     });
 }
 
-// 等待端口真正就绪（固定 sleep 在连续跑多个套件时会偶发 socket hang up）
-async function waitForServer(port, ms = 20000) {
-    const net = require('net');
-    const t0 = Date.now();
-    while (Date.now() - t0 < ms) {
-        const ok = await new Promise(res => {
-            const s = net.connect({ host: '127.0.0.1', port }, () => { s.end(); res(true); });
-            s.on('error', () => res(false));
-        });
-        if (ok) return true;
-        await sleep(150);
-    }
-    throw new Error('server did not start on port ' + port);
-}
-
 // 本套件测纯 HTTP 部署路径；若残留证书，server.js 会自动切到 HTTPS，
 // 导致下面的明文请求被直接重置（socket hang up）。
-for (const f of ['cert.pem', 'key.pem']) {
-    const p = 'D:/chatroom/' + f;
-    if (fs.existsSync(p)) fs.rmSync(p);
-}
+clearTlsArtifacts('D:/chatroom');
 
 (async () => {
     await waitForServer(PORT);

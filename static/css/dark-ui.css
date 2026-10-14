@@ -1,0 +1,254 @@
+/* ===== dark-ui.css 3/6：深色模式主体：文件 / 成员 / 管理页 / 表单 / 搜索 / 弹窗 / 登录 / 代码块（原 base.css 第 263-515 行）===== */
+/* 文件列表 */
+html[data-theme="dark"] .file-table th {
+  background: #242424; color: #b0b0b0; border-bottom-color: #3a3a3a;
+}
+html[data-theme="dark"] .file-table td {
+  border-bottom-color: #2a2a2a; color: #e0e0e0;
+}
+html[data-theme="dark"] .file-table tr:hover td { background: #1e3a5f; }
+html[data-theme="dark"] .file-name-cell .file-name-editable { color: #e0e0e0; }
+html[data-theme="dark"] .file-name-cell .file-name-editable:hover {
+  background: #1e3a5f; color: #4da3ff;
+}
+html[data-theme="dark"] .file-action-btn {
+  background: #2a2a2a; color: #e0e0e0; border-color: #3a3a3a;
+}
+html[data-theme="dark"] .file-action-btn:hover {
+  background: #1e3a5f; border-color: #4da3ff; color: #4da3ff;
+}
+
+/* 用户/成员列表 */
+html[data-theme="dark"] .user-table th { background: #242424; color: #b0b0b0; }
+html[data-theme="dark"] .user-table td { color: #e0e0e0; border-bottom-color: #2a2a2a; }
+html[data-theme="dark"] .user-table tr:hover td { background: #1e3a5f; }
+html[data-theme="dark"] .user-link { color: #e0e0e0; }
+html[data-theme="dark"] .user-link:hover { color: #4da3ff; }
+html[data-theme="dark"] .list-filter-input {
+  background: #1f1f1f; color: #e0e0e0; border-color: #3a3a3a;
+}
+
+/* 管理页 */
+html[data-theme="dark"] .manage-entry,
+html[data-theme="dark"] .manage-row,
+html[data-theme="dark"] .domain-card,
+html[data-theme="dark"] .discuss-row {
+  background: #2a2a2a; color: #e0e0e0;
+}
+html[data-theme="dark"] .manage-entry:hover,
+html[data-theme="dark"] .manage-row:hover,
+html[data-theme="dark"] .domain-card:hover,
+html[data-theme="dark"] .discuss-row:hover {
+  background: #1e3a5f;
+}
+html[data-theme="dark"] .perm-matrix th { background: #242424; }
+html[data-theme="dark"] .perm-matrix td { border-bottom-color: #2a2a2a; }
+html[data-theme="dark"] .perm-matrix .group-row {
+  background: #1e3a5f; color: #4da3ff;
+}
+html[data-theme="dark"] .role-table td,
+html[data-theme="dark"] .role-table th { color: #e0e0e0;
+  border-bottom-color: #2a2a2a; }
+html[data-theme="dark"] .role-table code {
+  background: #2a2a2a; color: #e0e0e0;
+}
+
+/* 表单 */
+html[data-theme="dark"] .form-stack > label > input,
+html[data-theme="dark"] .form-stack > label > textarea,
+html[data-theme="dark"] .form-stack > input,
+html[data-theme="dark"] .form-stack > textarea {
+  background: #1f1f1f; color: #e0e0e0; border-color: #3a3a3a;
+}
+html[data-theme="dark"] .inline-create-form input[type="text"],
+html[data-theme="dark"] .inline-create-box {
+  background: #1f1f1f; color: #e0e0e0; border-color: #3a3a3a;
+}
+html[data-theme="dark"] .login-page { background: var(--bg-primary); }
+html[data-theme="dark"] .login-box {
+  background: var(--bg-card); color: var(--text-primary);
+}
+html[data-theme="dark"] .login-form input {
+  background: #1f1f1f; color: #e0e0e0; border-color: #3a3a3a;
+}
+
+/* 搜索 */
+html[data-theme="dark"] .search-input {
+  background: #1f1f1f; color: #e0e0e0; border-color: #3a3a3a;
+}
+html[data-theme="dark"] .search-options select {
+  background: #1f1f1f; color: #e0e0e0; border-color: #3a3a3a;
+}
+html[data-theme="dark"] .search-result {
+  background: #2a2a2a; color: #e0e0e0;
+}
+html[data-theme="dark"] .search-result:hover { background: #1e3a5f; }
+
+/* 弹窗 */
+html[data-theme="dark"] .modal-box {
+  background: #2a2a2a; color: #e0e0e0;
+}
+html[data-theme="dark"] .modal-message { color: #e0e0e0; }
+html[data-theme="dark"] .modal-input {
+  background: #1f1f1f; color: #e0e0e0; border-color: #3a3a3a;
+}
+html[data-theme="dark"] .modal-btn {
+  background: #2a2a2a; color: #e0e0e0; border-color: #3a3a3a;
+}
+html[data-theme="dark"] .modal-btn:hover { background: #333; }
+
+/* 通知卡片 */
+html[data-theme="dark"] .notification-card {
+  background: #2a2a2a; border-color: #3a3a3a;
+}
+html[data-theme="dark"] .notification-title { color: #e0e0e0; }
+html[data-theme="dark"] .notification-content { color: #b0b0b0; }
+
+/* 公式 */
+html[data-theme="dark"] .katex { color: #e0e0e0; }
+
+/* 主题切换按钮 */
+.theme-toggle { background: transparent; border: none; cursor: pointer;
+  font-size: 18px; padding: 4px 10px; border-radius: 6px;
+  color: #666; margin-left: 4px; transition: background 0.15s; }
+.theme-toggle:hover { background: #f0f0f0; }
+html[data-theme="dark"] .theme-toggle { color: #e0e0e0; }
+html[data-theme="dark"] .theme-toggle:hover { background: #333; }
+
+/* 首页讨论/文件卡片 */
+html[data-theme="dark"] .discussion-card,
+html[data-theme="dark"] .discussion-more,
+html[data-theme="dark"] .disc-item,
+html[data-theme="dark"] .disc-item-title {
+  background: #2a2a2a; color: #e0e0e0;
+}
+html[data-theme="dark"] .discussion-card:hover,
+html[data-theme="dark"] .discussion-more:hover {
+  background: #1e3a5f;
+}
+html[data-theme="dark"] .disc-name,
+html[data-theme="dark"] .disc-count,
+html[data-theme="dark"] .disc-title-inline {
+  color: #b0b0b0;
+}
+html[data-theme="dark"] .announcement-item {
+  background: #2a2410; color: #e0e0e0;
+}
+html[data-theme="dark"] .announcement-item.system-ann {
+  background: #1e3a5f;
+}
+html[data-theme="dark"] .announcement-meta { color: #888; }
+
+/* 登录 / 注册页 */
+html[data-theme="dark"] .topbar-nav .nav-login-btn {
+  color: #4da3ff; border-color: #4da3ff;
+}
+html[data-theme="dark"] .topbar-nav .nav-register-btn {
+  background: #1890ff; color: #fff; border-color: #1890ff;
+}
+html[data-theme="dark"] .login-box h1,
+html[data-theme="dark"] .login-form label { color: #e0e0e0; }
+html[data-theme="dark"] .login-form input {
+  background: #1f1f1f; color: #e0e0e0; border-color: #3a3a3a;
+}
+html[data-theme="dark"] .login-form input:focus {
+  border-color: #4da3ff;
+}
+html[data-theme="dark"] .login-switch { color: #888; }
+html[data-theme="dark"] .login-switch a { color: #4da3ff; }
+
+/* 403 / 404 页 */
+html[data-theme="dark"] .error-page h1 { color: #4da3ff; }
+html[data-theme="dark"] .error-page p { color: #b0b0b0; }
+html[data-theme="dark"] .error-page a {
+  background: #1890ff; color: #fff;
+}
+
+/* 全局标题 / 正文颜色 */
+html[data-theme="dark"] h1,
+html[data-theme="dark"] h2,
+html[data-theme="dark"] h3,
+html[data-theme="dark"] h4,
+html[data-theme="dark"] h5 {
+  color: #e0e0e0;
+}
+html[data-theme="dark"] .hint { color: #999; }
+html[data-theme="dark"] .empty { color: #666; }
+html[data-theme="dark"] a { color: #4da3ff; }
+html[data-theme="dark"] p { color: #e0e0e0; }
+html[data-theme="dark"] strong { color: #e0e0e0; }
+html[data-theme="dark"] small { color: #888; }
+
+/* 渲染模式代码块 */
+html[data-theme="dark"] .msg-content pre,
+html[data-theme="dark"] .announcement-content pre,
+html[data-theme="dark"] .pinned-content pre {
+  background: #0d1117 !important;
+  color: #e6edf3 !important;
+}
+html[data-theme="dark"] .msg-content pre code,
+html[data-theme="dark"] .announcement-content pre code,
+html[data-theme="dark"] .pinned-content pre code {
+  background: none !important;
+  color: #e6edf3 !important;
+}
+html[data-theme="dark"] .msg-content code {
+  background: #2a2a2a !important;
+  color: #e6edf3 !important;
+}
+
+/* 私信：对方消息的代码块：深色底 + 浅色字 */
+html[data-theme="dark"] .dm-other .dm-bubble pre {
+  background: #0d1117 !important;
+  color: #e6edf3 !important;
+}
+html[data-theme="dark"] .dm-other .dm-bubble pre code {
+  background: none !important;
+  color: #e6edf3 !important;
+}
+html[data-theme="dark"] .dm-other .dm-bubble code {
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: #e6edf3 !important;
+}
+
+/* 私信：自己消息的代码块：深蓝滤镜（与蓝气泡呼应），不是纯黑 */
+html[data-theme="dark"] .dm-me .dm-bubble pre {
+  background: rgba(0, 0, 0, 0.18) !important;
+  color: #fff !important;
+}
+html[data-theme="dark"] .dm-me .dm-bubble pre code {
+  background: none !important;
+  color: #fff !important;
+}
+html[data-theme="dark"] .dm-me .dm-bubble code {
+  background: rgba(0, 0, 0, 0.18) !important;
+  color: #fff !important;
+}
+
+/* 源码模式（查看源码） */
+html[data-theme="dark"] .msg-content[data-mode="source"],
+html[data-theme="dark"] .dm-bubble[data-mode="source"],
+html[data-theme="dark"] .pinned-content[data-mode="source"] {
+  background: #0d1117 !important;
+  color: #e6edf3 !important;
+  font-family: Consolas, "Courier New", monospace;
+}
+/* 自己消息例外：见下方修复 */
+
+/* 编辑器预览代码块 */
+html[data-theme="dark"] .md-editor-preview pre {
+  background: #0d1117 !important; color: #e6edf3 !important;
+}
+html[data-theme="dark"] .md-editor-preview code {
+  background: #2a2a2a !important; color: #e6edf3 !important;
+}
+html[data-theme="dark"] .md-editor-preview pre code {
+  background: none !important;
+}
+
+/* 私信：自己消息的源码模式例外（必须排在上面的源码模式规则之后） */
+html[data-theme="dark"] .dm-me .dm-bubble[data-mode="source"] {
+  background: #177ddc !important;
+  color: #fff !important;
+}
+

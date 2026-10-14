@@ -15,13 +15,33 @@ const SUITES = [
     'r-exp.test.js',
     'r-editor.test.js',
     'r-auth.test.js',
+    'r-route-safety.test.js',
     'r-tls.test.js',
     'r-console.test.js',
+    'r-console-cmds.test.js',
+    'r-css-split.test.js',
     'r-log.test.js',
 ];
 
+// ============================================================
+// 第一道关：编码守卫
+// ============================================================
+// 放在最前面：中文被写坏时，源码通常仍能通过语法检查、
+// 测试也常常全绿，只是注释和文案悄悄变成了乱码。
+// 先把这种损坏拦下来，再去跑那些「看起来一切正常」的回归。
+const encoding = require('./check-encoding').run();
+if (encoding.problems.length) {
+    console.error('编码检查未通过：');
+    for (const p of encoding.problems) console.error('  ' + p);
+    console.error('\n中文很可能已被按错误代码页读写损坏。');
+    console.error('请用 Node fs(..., "utf8") 或编辑器的编辑 API 修复，');
+    console.error('详见 CONTRIBUTING.md 的「文件读写约束」。');
+    process.exit(1);
+}
+console.log(`encoding                OK (${encoding.count} files, no BOM / U+FFFD)`);
+
 // r-tls 会生成证书并清理；一旦残留，server.js 会自动切到 HTTPS，
-// 导致其它按明文 HTTP 跑��套件出现 socket hang up。这里兜底清理。
+// 导致其它按明文 HTTP 跑的套件出现 socket hang up。这里兜底清理。
 for (const f of ['cert.pem', 'key.pem']) {
     const p = path.join(ROOT, f);
     if (fs.existsSync(p)) { try { fs.rmSync(p); } catch (e) {} }

@@ -1,0 +1,154 @@
+/* ===== dark-polish.css 6/6：深色模式补漏（P0 组）与 P1 补齐（原 base.css 第 776-928 行）===== */
+/* ============================================================
+   深色模式补漏（P0 组）
+   ============================================================ */
+
+/* ---- 5.1 浮层类 ---- */
+html[data-theme="dark"] .reaction-picker {
+  background: #2a2a2a; border-color: #3a3a3a;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5); }
+html[data-theme="dark"] .reaction-picker button:hover { background: #1e3a5f; }
+
+html[data-theme="dark"] .mention-picker {
+  background: #2a2a2a; border-color: #3a3a3a;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5); }
+html[data-theme="dark"] .mention-picker-item { color: #e0e0e0; }
+html[data-theme="dark"] .mention-picker-item:hover,
+html[data-theme="dark"] .mention-picker-item.active {
+  background: #1e3a5f; color: #4da3ff; }
+
+html[data-theme="dark"] .upload-progress {
+  background: #242424; border-color: #3a3a3a; }
+html[data-theme="dark"] .progress-bar { background: #3a3a3a; }
+
+/* ---- 5.2 引用块与消息高亮 ---- */
+html[data-theme="dark"] .msg-reply-quote {
+  background: #2a2a2a; border-left-color: #555; }
+html[data-theme="dark"] .msg-reply-quote:hover {
+  background: #1e3a5f; border-left-color: #4da3ff; }
+html[data-theme="dark"] .reply-quote-nick { color: #4da3ff; }
+html[data-theme="dark"] .reply-quote-content { color: #b0b0b0; }
+
+html[data-theme="dark"] .message.pinned {
+  background: #2a2410; border-left-color: #8c6a12; }
+html[data-theme="dark"] .pinned-item.system-pin {
+  background: #1e3a5f; border-left-color: #4da3ff; }
+html[data-theme="dark"] .message.inline-search-hit {
+  background: #2a2410; box-shadow: inset 3px 0 0 #8c6a12; }
+@keyframes msgHighlightDark {
+  0% { background: #2a2410; }
+  100% { background: transparent; }
+}
+html[data-theme="dark"] .message.highlight {
+  animation-name: msgHighlightDark; }
+
+/* ---- 5.3 表情药丸 ---- */
+html[data-theme="dark"] .reaction-btn {
+  background: #2a2a2a; border-color: #3a3a3a; color: #b0b0b0; }
+html[data-theme="dark"] .reaction-btn:hover { background: #333; }
+html[data-theme="dark"] .reaction-btn.mine {
+  background: #1e3a5f; border-color: #4da3ff; color: #4da3ff; }
+
+/* ---- 5.4 代码块复制按钮 ---- */
+html[data-theme="dark"] pre .code-copy-btn,
+html[data-theme="dark"] .source-copy-btn {
+  background: #2a2a2a; color: #b0b0b0; border-color: #3a3a3a; }
+html[data-theme="dark"] pre .code-copy-btn:hover,
+html[data-theme="dark"] .source-copy-btn:hover {
+  background: #1e3a5f; color: #4da3ff; }
+
+/* ---- 5.5 弹窗、输入禁用、管理按钮 ---- */
+html[data-theme="dark"] .modal-header { color: #e0e0e0; }
+html[data-theme="dark"] .dm-input-disabled {
+  background: #2a2a2a; border-color: #3a3a3a; color: #b0b0b0; }
+html[data-theme="dark"] .mini-btn,
+html[data-theme="dark"] .ban-form button {
+  background: #2a2a2a; color: #e0e0e0; border-color: #3a3a3a; }
+html[data-theme="dark"] .ban-form .ban-reason,
+html[data-theme="dark"] .ban-form .ban-until {
+  background: #1f1f1f; color: #e0e0e0; border-color: #3a3a3a; }
+
+/* ---- 5.6 搜索与编辑器预览 ---- */
+html[data-theme="dark"] .search-advanced-hint {
+  background: #1e3a5f; color: #4da3ff; }
+html[data-theme="dark"] .search-options label { color: #b0b0b0; }
+html[data-theme="dark"] .md-editor-preview table th,
+html[data-theme="dark"] .md-editor-preview table td {
+  border-color: #3a3a3a; }
+html[data-theme="dark"] .dm-bubble blockquote {
+  border-left-color: rgba(255, 255, 255, 0.3); }
+html[data-theme="dark"] .dm-bubble table th,
+html[data-theme="dark"] .dm-bubble table td {
+  border-color: rgba(255, 255, 255, 0.3); }
+html[data-theme="dark"] .md-editor-table-shape-col {
+  background: #2a2a2a; border-color: #555; }
+html[data-theme="dark"] .online-count,
+html[data-theme="dark"] .member-footer { border-top-color: #3a3a3a; }
+
+/* ---- 5.7 内联样式改用的语义类 ---- */
+html[data-theme="dark"] .row-banned { background: #3a1a1a !important; }
+.role-member { color: #333; }
+.role-guest { color: #999; }
+html[data-theme="dark"] .role-member { color: #e0e0e0; }
+html[data-theme="dark"] .role-guest { color: #888; }
+
+/* 错误页次要按钮 */
+.btn-secondary { padding: 10px 24px; background: #fff; color: #1890ff;
+  border: 1px solid #1890ff; border-radius: 6px; text-decoration: none;
+  display: inline-block; }
+html[data-theme="dark"] .btn-secondary {
+  background: #2a2a2a; color: #4da3ff; border-color: #4da3ff; }
+
+/* ============================================================
+   深色模式 P1 补齐
+   ============================================================ */
+
+/* ---- 悬停态（补 base.css 未覆盖的） ---- */
+html[data-theme="dark"] .logo:hover { color: #40a9ff; }
+html[data-theme="dark"] .discussion-card:hover { background: #1e3a5f; }
+html[data-theme="dark"] .manage-entry:hover { background: #1e3a5f; }
+html[data-theme="dark"] .manage-row:hover { background: #1e3a5f; }
+html[data-theme="dark"] .domain-card:hover { background: #1e3a5f; }
+html[data-theme="dark"] .user-item:hover { background: #1e3a5f; }
+html[data-theme="dark"] .sidebar-users .user-item:hover { background: #1e3a5f; }
+html[data-theme="dark"] .member-name:hover { color: #4da3ff; }
+html[data-theme="dark"] .member-actions button:hover { background: #333; color: #e0e0e0; }
+html[data-theme="dark"] .msg-actions button:hover { background: #3a1a1a; color: #ff7875; }
+html[data-theme="dark"] .msg-reply-btn:hover { background: #1e3a5f; color: #4da3ff; }
+html[data-theme="dark"] .msg-mini-btn:hover { color: #4da3ff; }
+html[data-theme="dark"] .discuss-header-title:hover { background: #1e3a5f; color: #4da3ff; }
+html[data-theme="dark"] .inline-search-input:focus { border-color: #4da3ff; }
+html[data-theme="dark"] .list-filter-input:focus { border-color: #4da3ff; }
+html[data-theme="dark"] .dm-user-link:hover { background: #333; }
+html[data-theme="dark"] .notification-card:hover { background: #333; }
+
+/* ---- 边框与分割线 ---- */
+html[data-theme="dark"] .file-info-bar { border-bottom-color: #3a3a3a; color: #888; }
+html[data-theme="dark"] .role-table td { border-bottom-color: #2a2a2a; color: #e0e0e0; }
+html[data-theme="dark"] .user-table th { border-bottom-color: #3a3a3a; }
+html[data-theme="dark"] .perm-matrix th { border-bottom-color: #3a3a3a; }
+
+/* ---- 输入框聚焦光晕 ---- */
+html[data-theme="dark"] input:focus,
+html[data-theme="dark"] textarea:focus,
+html[data-theme="dark"] select:focus {
+  border-color: #4da3ff;
+  box-shadow: 0 0 0 2px rgba(77, 163, 255, 0.15);
+}
+
+/* ---- 通知卡片左侧强调条 ----
+   深色区的 border-color 简写会把 border-left 一并改成灰色，需单独恢复 */
+html[data-theme="dark"] .notification-card { border-left-color: #4da3ff; }
+
+/* ---- 占位符（通用） ---- */
+html[data-theme="dark"] ::placeholder { color: #666; }
+
+/* ---- 上传进度内部 ---- */
+html[data-theme="dark"] .progress-info { color: #b0b0b0; }
+html[data-theme="dark"] .progress-queue-item {
+  background: #2a2a2a; color: #b0b0b0;
+}
+
+/* ---- 文件图标 ---- */
+html[data-theme="dark"] .file-icon-cell { opacity: 0.6; }
+

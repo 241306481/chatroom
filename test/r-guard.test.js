@@ -7,7 +7,6 @@ if (fs.existsSync(DATA)) fs.rmSync(DATA, { recursive: true, force: true });
 
 const storage = require('D:/chatroom/lib/storage');
 const auth = require('D:/chatroom/lib/auth');
-const { PRIV, PERM, hasPriv } = require('D:/chatroom/lib/permissions');
 const { checkDual } = require('D:/chatroom/lib/auth/privilege');
 
 const results = [];
@@ -95,6 +94,47 @@ check('r1: 文件 ID 拒绝 __proto__', () => {
     const uf = require('D:/chatroom/lib/storage/user-files');
     assert.throws(() => uf.setUserFileVisibility(memberId, '__proto__', 'public'));
     assert.strictEqual({}.visibility, undefined);
+});
+check('r1: safeFileId 为唯一实现，用户/域文件共用', () => {
+    const { safeFileId } = require('D:/chatroom/lib/storage/fs-utils');
+    // 路径穿越 + 原型污染，两类都必须挡
+    for (const id of ['__proto__', 'constructor', 'prototype', '..', '.', 'a/b', 'a\\b', 'a\0b', '']) {
+        assert.strictEqual(safeFileId(id), null, '放行了危险 id: ' + JSON.stringify(id));
+    }
+    assert.strictEqual(safeFileId('abc123'), 'abc123');
+    // 两边都必须用同一份，不能各写一份后分叉
+    for (const f of ['domain-files.js', 'user-files.js']) {
+        const src = fs.readFileSync('D:/chatroom/lib/storage/' + f, 'utf8');
+        assert.ok(/require\('\.\/fs-utils'\)/.test(src), f + ' 未引用 fs-utils');
+        assert.ok(!/UNSAFE_ID_RE\s*=/.test(src), f + ' 仍有本地副本，应收敛到 fs-utils');
+    }
+});
+check('r1: requireSystemAdmin 三态正确（抽到 manage/_helpers 后回归）', () => {
+    const { requireSystemAdmin } = require('D:/chatroom/lib/routes/manage/_helpers');
+    const { UnauthorizedError } = require('D:/chatroom/lib/auth/privilege');
+    const stub = () => ({ headers: {}, writeHead() {}, end() {} });
+    // 超管放行、普通成员走 403、匿名抛 UnauthorizedError（由 router 转 302）
+    assert.strictEqual(requireSystemAdmin(ROOT, stub()), true, '超管被拒');
+    assert.strictEqual(requireSystemAdmin(MEMBER, stub()), false, '普通成员未被拒');
+    assert.throws(() => requireSystemAdmin(null, stub()), UnauthorizedError, '匿名未抛 401');
+    assert.throws(() => requireSystemAdmin(undefined, stub()), UnauthorizedError);
+    // 两处调用点都必须用共享实现
+    for (const f of ['ip-bans.js', 'system-roles.js']) {
+        const src = fs.readFileSync('D:/chatroom/lib/routes/manage/' + f, 'utf8');
+        assert.ok(/require\('\.\/_helpers'\)/.test(src), f + ' 未引用 manage/_helpers');
+        assert.ok(!/function requireSystemAdmin/.test(src), f + ' 仍有本地副本');
+    }
+    // render403 必须来自 lib/template.js —— 上轮真实踩过的坑
+    const h = fs.readFileSync('D:/chatroom/lib/routes/manage/_helpers.js', 'utf8');
+    assert.ok(/require\('\.\.\/\.\.\/template'\)/.test(h), 'render403 来源不对');
+    assert.strictEqual(typeof require('D:/chatroom/lib/template').render403, 'function');
+});
+check('formatSize 为唯一实现，控制台与网页共用同一函数', () => {
+    const { formatSize } = require('D:/chatroom/lib/format');
+    assert.strictEqual(require('D:/chatroom/lib/routes/_helpers').formatSize, formatSize);
+    assert.strictEqual(require('D:/chatroom/lib/console/ui').formatSize, formatSize);
+    assert.strictEqual(formatSize(1536), '1.5 KB');
+    assert.strictEqual(formatSize(null), '—');
 });
 check('r2: 社交操作不会为不存在的 uid 建目录', () => {
     const social = require('D:/chatroom/lib/storage/social');
@@ -185,8 +225,40 @@ check('优雅关闭：关闭 HTTP + 断开 WS + 有超时兜底', () => {
     const src = fs.readFileSync('D:/chatroom/server.js', 'utf8');
     assert.ok(/SIGTERM/.test(src) && /SIGINT/.test(src), '缺少信号处理');
     assert.ok(/server\.close/.test(src), '未关闭 HTTP');
-    assert.ok(/registry/.test(src) && /ws\.close\(1001/.test(src), '未断开 WebSocket');
+    assert.ok(/closeIdleConnections/.test(src), '未放掉空闲 keep-alive');
+    assert.ok(/closeAllConnections/.test(src), '未强制收尾剩余连接');
+    assert.ok(/logger\.close\(\)/.test(src), '未等日志落盘');
     assert.ok(/setTimeout/.test(src) && /强制退出/.test(src), '缺少超时兜底');
+    // 超时定时器不能 unref，否则关停会静默 exit(0)、永远打印不出诊断
+    assert.ok(!/force\.unref/.test(src), '超时兜底被 unref 了');
+    // 关停不应再去翻 websocket/registry 的内部结构
+    assert.ok(!/require\('\.\/lib\/websocket\/registry'\)/.test(src),
+        'server.js 仍在直接操作 registry（分层倒置）');
+});
+check('WebSocket 模块暴露 shutdown，且关停时摘掉 upgrade 监听', () => {
+    const src = fs.readFileSync('D:/chatroom/lib/websocket/index.js', 'utf8');
+    assert.ok(/removeListener\('upgrade'/.test(src), '未摘掉 upgrade 监听');
+    assert.ok(/ws\.close\(1001/.test(src), '未广播 1001 关闭帧');
+    assert.ok(/return\s*\{\s*wss/.test(src), 'setup 未返回 { wss, ... }');
+});
+check('logger 提供 close()，关停时日志不会丢最后一批', () => {
+    assert.strictEqual(typeof require('D:/chatroom/lib/logger').close, 'function',
+        'logger 未导出 close()');
+});
+check('启动自检新增：时区 / JSON 完整性 / 端口预检 / 证书有效期', () => {
+    const src = fs.readFileSync('D:/chatroom/lib/startup-check.js', 'utf8');
+    assert.ok(/resolvedOptions\(\)\.timeZone/.test(src), '无时区检查');
+    assert.ok(/JSON\.parse/.test(src), '无 JSON 完整性检查');
+    assert.ok(/EADDRINUSE/.test(src), '无端口占用预检');
+    assert.ok(/X509Certificate/.test(src) && /validTo/.test(src), '无证书有效期检查');
+    assert.ok(/isTTY/.test(src) && /NO_COLOR/.test(src), '无 TTY/NO_COLOR 检测');
+});
+check('gen-cert 无死代码，且输出指纹与信任步骤', () => {
+    const src = fs.readFileSync('D:/chatroom/scripts/gen-cert.js', 'utf8');
+    assert.ok(!/function viaPowerShell/.test(src), 'viaPowerShell 死代码未删除');
+    assert.ok(/fingerprint/.test(src), '未输出指纹');
+    assert.ok(/printTrustSteps/.test(src), '未输出信任步骤');
+    assert.ok(/chmodSync\(KEY, 0o600\)/.test(src), '未收紧 key.pem 权限');
 });
 check('依赖无已知漏洞（npm audit 报告）', () => {
     const r = require('child_process').spawnSync('npm.cmd',
