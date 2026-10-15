@@ -1,4 +1,4 @@
-// [回归 7] 日志：logs/ 下产生文件，且不超过阈值
+// 回归 7 日志
 const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
@@ -16,7 +16,7 @@ const check = (n, f) => { try { f(); results.push(['PASS', n]); } catch (e) { re
 const logger = require('../../lib/logger');
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
-// 部分检查需要等待 WriteStream flush
+// 等 flush
 const asyncChecks = [];
 const checkAsync = (n, f) => { asyncChecks.push([n, f]); };
 
@@ -48,7 +48,7 @@ check('★ 超过阈值后产生轮转文件，且任一文件都不超过阈值
     const files = fs.readdirSync(LOGS);
     const rotated = files.filter(f => /\.\d+\.log$/.test(f));
     assert.ok(rotated.length >= 1, '未发生轮转: ' + files.join(','));
-    // 阈值 8192；单行约 340 字节，允许一行以内的溢出
+    // 允许一行溢出
     for (const f of files) {
         const size = fs.statSync(path.join(LOGS, f)).size;
         assert.ok(size <= 8192 + 512, `${f} 达到 ${size} 字节，超出阈值`);
@@ -68,7 +68,7 @@ check('日志注入防护仍然生效（不会因轮转改动而失效）', asyn
     const files = fs.readdirSync(LOGS);
     let body = '';
     for (const f of files) body += fs.readFileSync(path.join(LOGS, f), 'utf8');
-    // 不应出现被当成新的一行的伪造日志
+    // 禁伪造日志
     assert.ok(!/^.*\n\d{2}:\d{2}:\d{2} 1\.2\.3\.4 200 POST/m.test(body),
         '换行注入仍然有效');
 });

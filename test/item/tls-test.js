@@ -1,4 +1,4 @@
-// [回归] TLS/HTTPS：证书生成 → 加载 → Secure Cookie → WSS
+// 回归 TLS
 const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
@@ -41,7 +41,7 @@ function httpsPost(p, body) {
 (async () => {
     if (fs.existsSync(DATA)) fs.rmSync(DATA, { recursive: true, force: true });
 
-    // ---- 生成证书 ----
+    // 生成证书
     await check('★ npm run cert 可生成 cert.pem / key.pem', async () => {
         fs.rmSync(CERT, { force: true }); fs.rmSync(KEY, { force: true });
         const r = spawnSync(process.execPath, [path.join(ROOT, 'test/tools/gen-cert.js')],
@@ -67,7 +67,7 @@ function httpsPost(p, body) {
         assert.ok(/IP Address:127\.0\.0\.1/.test(san), 'SAN 缺 127.0.0.1: ' + san);
     });
 
-    // ---- 启动 HTTPS ----
+    // 启动 HTTPS
     if (fs.existsSync(DATA)) fs.rmSync(DATA, { recursive: true, force: true });
     const proc = spawn(process.execPath, ['server.js'], { cwd: ROOT, env: { ...process.env, PORT } });
     let boot = '';

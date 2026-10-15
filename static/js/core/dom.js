@@ -52,7 +52,7 @@ document.addEventListener('click', function (e) {
     window.copyToClipboard(code ? code.textContent : pre.textContent, btn);
 });
 
-// 内容渲染：Markdown 解析 → DOM 上渲染 LaTeX
+// MD + LaTeX
 window.renderContent = function (text) {
     if (text == null) return '';
     text = String(text);
@@ -65,7 +65,7 @@ window.renderContent = function (text) {
             return '<!--MENTION_' + idx + '-->';
         });
 
-// 2. Markdown 解析（breaks: false 保证公式内换行不被 <br> 破坏）
+// MD 解析
     let html;
     if (typeof marked !== 'undefined') {
         try {
@@ -78,7 +78,7 @@ window.renderContent = function (text) {
         html = esc(processed).replace(/\n/g, '<br>');
     }
 
-// 3. 用 template 元素承载（离线构建，不触发资源加载）
+// 用 template
     const tpl = document.createElement('template');
     tpl.innerHTML = html;
     const container = tpl.content;
@@ -104,10 +104,10 @@ window.renderContent = function (text) {
         });
     })(container);
 
-// 5. sanitize
+// 转义
     sanitize(container);
 
-// 6. KaTeX auto-render（在 sanitize 后的 DOM 上，跳过 pre/code）
+// KaTeX 渲染
     if (window.renderMathInElement) {
         try {
             renderMathInElement(container, {
@@ -129,7 +129,7 @@ window.renderContent = function (text) {
         }
     }
 
-// 7. 代码块复制按钮（仅渲染节点，点击由文档级委托处理）
+// 复制按钮
     container.querySelectorAll('pre').forEach(function (pre) {
         if (pre.querySelector('.code-copy-btn')) return;
         const btn = document.createElement('button');
@@ -140,7 +140,7 @@ window.renderContent = function (text) {
         pre.appendChild(btn);
     });
 
-// 8. 用临时容器取 innerHTML（template 的 content 没有 innerHTML 属性）
+// 临时容器取 HTML
     const wrap = document.createElement('div');
     wrap.appendChild(container);
     return wrap.innerHTML;
@@ -150,7 +150,7 @@ window.renderContent = function (text) {
         'srcset', 'poster', 'data', 'background', 'cite'];
 
     function normalizeUrlForSchemeCheck(value) {
-        // 剥掉控制字符、空白、BOM 与行分隔符（写成转义序列，源文件保持纯 ASCII）
+        // 剥控制字符并转义
         return String(value == null ? '' : value)
             .replace(/[\u0000-\u0020\u00a0\u2028\u2029\ufeff]/g, '');
     }
@@ -172,7 +172,7 @@ window.renderContent = function (text) {
     }
 };
 
-// 源码 / 渲染切换（供模板内联 onclick 调用）
+// 源码/渲染切换
 window.toggleSource = function (btn) {
     const wrap = btn.closest('.msg-body')
               || btn.closest('.dm-msg')
@@ -190,7 +190,7 @@ window.toggleSource = function (btn) {
         if (copyBtn) copyBtn.remove();
         el.innerHTML = window.renderContent
             ? window.renderContent(raw)
-            // 兜底分支同样必须转义：raw 是消息正文（用户可控）
+            // 兜底分支须转义
             : esc(raw).replace(/\n/g, '<br>');
         el.dataset.mode = 'render';
         btn.textContent = '📄';

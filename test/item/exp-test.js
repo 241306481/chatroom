@@ -1,4 +1,4 @@
-// [回归] exp 立即落盘 + 通知不延迟/不合并
+// 回归 exp
 const path = require('path');
 const assert = require('assert');
 const fs = require('fs');
@@ -44,7 +44,7 @@ check('源码中不再存在 5 秒定时器/跨请求缓冲', () => {
     assert.ok(!/const pending = new Map/.test(src), 'pending 缓冲未移除');
 });
 check('通知在 addExp 调用内同步发出（不延迟 5 秒）', () => {
-    // 用系统私信记录佐证：addExp 返回后立即查，通知应当已经落库
+    // 查私信佐证落盘
     const uid2 = storage.createUser('expuser2', 'pw123456');
     auth.grantRole('system', uid2, 'default');
     auth.addExp('system', uid2, 5);           // 0 -> 1，应立即发「升到了 Lv.1」

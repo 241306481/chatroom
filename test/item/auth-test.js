@@ -1,4 +1,4 @@
-// [回归 3/4/6] IP 封禁断开 WS / 时区友好的封禁时间 / 触屏用户菜单
+// 回归 3/4/6
 const assert = require('assert');
 const http = require('http');
 const fs = require('fs');
@@ -104,7 +104,7 @@ clearTlsArtifacts(ROOT);
         assert.strictEqual(ban.until, '2099-06-01T12:00:00Z', '落库值未规范化: ' + ban.until);
     });
 
-    // #3 IP 封禁后 WS 必须断开
+    // IP 封禁断 WS
     await check('#3 正常情况下 WS 可建立', async () => {
         const w = new WebSocket(`ws://127.0.0.1:${PORT}/ws/discuss/system/general`,
             { headers: { Cookie: B } });
@@ -146,9 +146,9 @@ clearTlsArtifacts(ROOT);
         assert.strictEqual(ipb.matchRule('10.0.0.1', '192.168.5.*'), false);
     });
 
-    // #4 时区：域内封禁的到期时间
+    // 封禁时间时区
     await check('#4 datetime-local 无秒值在 IP 封禁管理链路同样被接受', () => {
-        // 此时 IP 已封，HTTP 一律 403；改为直接验证存储层解析链路
+        // IP 已封，改验存储
         const ipb = require('../../lib/storage/ip-bans');
         assert.doesNotThrow(() => {
             ipb.addBan('9.9.9.9', { until: '2099-06-01T12:00' });
@@ -158,7 +158,7 @@ clearTlsArtifacts(ROOT);
         ipb.removeByRule('9.9.9.9');
     });
 
-    // #6 触屏：点用户菜单能展开
+    // 触屏菜单
     await check('#6 菜单点击可切换展开（不再直接跳走）', () => {
         const src = fs.readFileSync(path.join(ROOT, 'static/js/core/menu.js'), 'utf8');
         assert.ok(/classList\.toggle\('show'\)/.test(src), '按钮未切换菜单');
@@ -174,7 +174,7 @@ clearTlsArtifacts(ROOT);
         assert.ok(tpl.includes('href="/user/{{ current_user.id }}"'), '缺少个人资料链接');
     });
     await check('#6 移动端视口可渲染（无 JS 报错依赖）', () => {
-        // IP 封禁已生效，此处只做静态契约断言，不发请求
+        // 只做静态断言
         const tpl = fs.readFileSync(path.join(ROOT, 'templates/base.html'), 'utf8');
         assert.ok(/name="viewport"/.test(tpl), '缺少 viewport meta');
         assert.ok(tpl.includes('userMenuBtn') && tpl.includes('userDropdown'),

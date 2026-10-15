@@ -53,7 +53,7 @@ window.initUpload = function (opts) {
             progressPercent.textContent = Math.round(okCount / files.length * 100) + '%';
             progressFill.style.width = (okCount / files.length * 100) + '%';
             window.showAlert(failedCount + ' 个文件上传失败，详见下方队列');
-            // 仍有成功项时刷新，让新文件出现；全部失败时不刷新，避免无谓跳页
+            // 部分成功才刷新
             if (okCount > 0) setTimeout(function () { location.reload(); }, 1500);
             return;
         }

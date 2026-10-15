@@ -1,4 +1,4 @@
-// 内联弹窗（替代原生 alert / confirm / prompt）
+// 内联弹窗
 (function () {
     let root = null;
 
@@ -135,7 +135,7 @@
         return open(Object.assign({ type: 'prompt', message: message, value: value }, opts || {}));
     };
 
-// 全局 data-confirm 拦截
+// confirm 拦截
     document.addEventListener('click', function (e) {
         const el = e.target && e.target.closest ? e.target.closest('[data-confirm]') : null;
         if (!el) return;

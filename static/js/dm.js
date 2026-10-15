@@ -1,4 +1,4 @@
-// 私信 WebSocket（含通知）
+// 私信 WS
 (function () {
     if (!window.MY_UID) return;
     const WS_PROTOCOL = window.__WS_PROTOCOL__ || 'ws';
@@ -12,7 +12,7 @@
     function isDmAtBottom() {
         const l = document.getElementById('dmList');
         if (!l) return true;
-        // column-reverse：scrollTop = 0 是底部，向上滚为负值
+        // 0 为底部
         return Math.abs(l.scrollTop) <= 60;
     }
 
@@ -228,14 +228,14 @@ function appendDM(msg, isMe) {
         if (!list) return;
         const inner = list.querySelector('.dm-list-inner') || list;
 
-        // 插入前先取：用户是否本来看在底部（column-reverse：scrollTop 接近 0）
+        // 插入前先判在底部
         const wasAtBottom = Math.abs(list.scrollTop) <= 60;
 
         const div = window.ChatRender && window.ChatRender.buildDMMessageEl
             ? window.ChatRender.buildDMMessageEl(Object.assign({}, msg, { is_me: !!isMe }))
             : null;
         if (!div) return;
-        // column-reverse：插到 DOM 开头 = 视觉底部
+        // 插开头即视觉底部
         inner.insertBefore(div, inner.firstElementChild);
 
         if (wasAtBottom) {
@@ -246,7 +246,7 @@ function appendDM(msg, isMe) {
     if (ta) ta.addEventListener('keydown', e => {
         if (e.ctrlKey && e.key === 'Enter') sendDM();
     });
-    // 页面初始化：渲染历史气泡 + 清除当前会话未读
+    // 渲染历史并清未读
     function renderHistory() {
         document.querySelectorAll('.dm-bubble[data-raw]').forEach(function (el) {
             if (el.dataset.rendered === '1') return;

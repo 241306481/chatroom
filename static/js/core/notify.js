@@ -48,7 +48,7 @@ window.showNotification = function (opts) {
     });
 };
 
-// 通用轻提示（表单提交成功等）
+// 通用轻提示
 window.showToast = function (msg) {
     var t = document.createElement('div');
     t.className = 'toast';

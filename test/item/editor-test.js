@@ -1,4 +1,4 @@
-// [回归 1] 编辑器 / 讨论区 / 私信 基础流程（端到端，真实 HTTP + WebSocket）
+// 回归 1 端到端
 const assert = require('assert');
 const http = require('http');
 const fs = require('fs');
@@ -86,7 +86,7 @@ clearTlsArtifacts(ROOT);
     const uidA = storage.findUserByNickname('alice99').id;
     const uidB = storage.findUserByNickname('bobby99').id;
 
-    // ---------------- 讨论区 ----------------
+    // 讨论区
     const wsA = await openRetry(() => new WebSocket(`ws://127.0.0.1:${PORT}/ws/discuss/system/general`,
         { headers: { Cookie: A } }));
     const wsB = await openRetry(() => new WebSocket(`ws://127.0.0.1:${PORT}/ws/discuss/system/general`,
@@ -160,7 +160,7 @@ clearTlsArtifacts(ROOT);
 
     wsA.close(); wsB.close();
 
-    // ---------------- 私信 ----------------
+    // 私信
     const dmA = await openRetry(() => new WebSocket(`ws://127.0.0.1:${PORT}/ws/dm`, { headers: { Cookie: A } }));
     const dmB = await openRetry(() => new WebSocket(`ws://127.0.0.1:${PORT}/ws/dm`, { headers: { Cookie: B } }));
 
@@ -198,7 +198,7 @@ clearTlsArtifacts(ROOT);
     });
     dmA.close(); dmB.close();
 
-    // ---------------- 编辑器（前端产物 + 模板契约） ----------------
+    // 编辑器契约
     await check('编辑器：模板与 JS 的选择器契约一致', () => {
         const tpl = fs.readFileSync(path.join(ROOT, 'templates/context_edit.html'), 'utf8');
         for (const sel of ['data-wrapper', 'data-resize', 'data-pane="edit"',

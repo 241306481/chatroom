@@ -1,4 +1,4 @@
-// Markdown 编辑器：纯文本操作工具
+// 纯文本工具
 window.EditorUtils = {
     surround(ta, before, after, placeholder) {
         const s = ta.selectionStart, e = ta.selectionEnd;

@@ -1,4 +1,4 @@
-// [回归 2] 权限：关掉 member 的「置顶」后，域管理员也不得置顶。
+// 回归 2 置顶
 const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
@@ -46,11 +46,11 @@ check('★ 域管理员也不能置顶（全局关闭开关必须生效）', () 
     assert.ok(denied, '域管理员仍然可以置顶 —— 全局 kill-switch 对特权用户失效');
 });
 check('★ WebSocket 侧行为一致（不得比 HTTP 更宽松）', () => {
-    // WS 侧的闸门已抽到 discuss-guard.js（discuss.js 只保留消息/连接处理）
+    // 闸门已抽出
     const src = fs.readFileSync(path.join(ROOT, 'lib/websocket/discuss-guard.js'), 'utf8');
     assert.ok(/PRIV_EXEMPT_GROUPS\.has\(conf\.priv && conf\.priv\.group\)/.test(src),
         'WS 侧仍未按组收窄 skipPriv');
-    // 且 discuss.js 必须真正用上它，不能留一份死副本
+    // 须真正用上
     const main = fs.readFileSync(path.join(ROOT, 'lib/websocket/discuss.js'), 'utf8');
     assert.ok(/require\('\.\/discuss-guard'\)/.test(main), 'discuss.js 未引用 discuss-guard');
     assert.ok(!/PRIV_EXEMPT_GROUPS\.has/.test(main), 'discuss.js 仍留有本地副本');

@@ -19,7 +19,7 @@
             if (hoverTimer) clearTimeout(hoverTimer);
             dropdown.classList.toggle('show');
         });
-        // 配合 stopPropagation，这里负责「点击外部关闭」
+        // 点击外部关闭
         dropdown.addEventListener('click', e => e.stopPropagation());
         document.addEventListener('click', (e) => {
             if (!wrapper.contains(e.target)) dropdown.classList.remove('show');

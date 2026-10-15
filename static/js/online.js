@@ -1,4 +1,4 @@
-// 在线状态（供讨论页 / 状态 WS 共用）
+// 在线状态
 window.__onlineUsers = new Set();
 
 window.setUserOnlineUI = function (el, online) {
@@ -61,7 +61,7 @@ window.updateAllOnlineCounts = function () {
     }
 };
 
-// 域级在线状态 WebSocket
+// 域级在线 WS
 (function () {
     const DOMAIN = window.__DOMAIN__ || '';
     if (!DOMAIN) return;
@@ -91,7 +91,7 @@ window.updateAllOnlineCounts = function () {
                     if (typeof data.html === 'string' && data.html) {
                         list.innerHTML = data.html;
                     }
-                    // 与 chat/socket.js 共用同一段权限过滤，避免两处实现漂移
+                    // 共用 socket
                     if (typeof window.applyMemberPermissions === 'function') {
                         window.applyMemberPermissions();
                     } else if (window.__CAN_MUTE__ !== true && window.__CAN_MUTE__ !== 'true') {

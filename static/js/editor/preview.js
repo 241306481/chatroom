@@ -1,4 +1,4 @@
-// 预览渲染 + 字数统计
+// 预览与字数
 window.EditorPreview = {
     attach({ root, ta, preview, counter, wrapper }) {
         function render() {

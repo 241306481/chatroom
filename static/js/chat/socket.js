@@ -1,4 +1,4 @@
-// 讨论页 WebSocket 连接
+// 讨论页 WS
 (function () {
     const WS_PROTOCOL = window.__WS_PROTOCOL__ || 'ws';
     const DOMAIN = window.__DOMAIN__ || '';
@@ -10,7 +10,7 @@
     let socket = null;
     let reconnectTimer = null;
 
-// 对外 API（供其他 chat 模块调用）
+// 对外 API
     window.ChatWS = {
         send(payload) {
             if (socket && socket.readyState === WebSocket.OPEN) {
@@ -64,7 +64,7 @@
                     if (window.MY_UID && data.message.user_id !== window.MY_UID && !atBottom) {
                         R.showNewMsgBanner(1);
                     }
-                    // 列表变了，行内搜索的快照与计数必须重算
+                    // 列表变则重算搜索
                     if (typeof window.__chatSearchReapply === 'function') {
                         window.__chatSearchReapply();
                     }
@@ -146,10 +146,10 @@
                 return;
             }
             if (attempts <= 0) return;
-            // 直接以 urgent 模式回溯（无延迟、无 loading 占位）
+            // urgent 无延迟
             if (window.__chatLoadOlder) {
                 window.__chatLoadOlder(true);
-                // 视觉反馈：把视口推到内容最上方，让用户看到「正在往上翻找」
+                // 推视口到顶作反馈
                 const list = document.getElementById('messageList');
                 if (list) list.scrollTop = -list.scrollHeight;
             }
@@ -158,14 +158,14 @@
         setTimeout(() => tryScroll(30), 200);
     })();
 
-    // 分片加载更老消息（column-reverse）
+    // 分片加载更旧消息
     (function bindLoadOlder() {
         const list = document.getElementById('messageList');
         if (!list) return;
 
         let loading = false;
         let hasMoreOlder = true;
-        // oldestLoaded = 服务端首屏跳过的条数 + 首屏返回条数
+        // oldest 计数
         const initialOffset = parseInt(list.dataset.offset || '0', 10) || 0;
         const initialLimit = parseInt(list.dataset.limit || '100', 10) || 100;
         const total = parseInt(list.dataset.total || '0', 10) || 0;
@@ -195,7 +195,7 @@
             const disc = window.__DISCUSS__;
             if (!dn || !disc) return;
 
-            // urgent 模式（hash 定位）：跳过 loading 占位和延迟
+            // 跳过占位
             if (!urgent) showLoading();
             loading = true;
 
@@ -218,7 +218,7 @@
                             window.ChatRender.prependMessage(m);
                         }
                     });
-                    // 回溯加载同样改变了列表，行内搜索需要重算
+                    // 回溯后重算搜索
                     if (typeof window.__chatSearchReapply === 'function') {
                         window.__chatSearchReapply();
                     }
@@ -233,12 +233,12 @@
             }, delay);
         }
 
-        // 供 hash 定位以 urgent 模式触发（闭包状态与 scroll 触发共享）
+        // 供 hash 触发
         window.__chatLoadOlder = loadMore;
 
         document.addEventListener('keydown', function (e) {
             if (e.key !== 'Home') return;
-            // 输入框聚焦时不拦截（让用户正常用 Home 移动光标）
+            // 输入框内不拦截
             const tag = (e.target && e.target.tagName) || '';
             if (tag === 'INPUT' || tag === 'TEXTAREA') return;
             e.preventDefault();
@@ -258,7 +258,7 @@
         });
 
         list.addEventListener('scroll', function () {
-            // column-reverse 下：scrollTop = 0 是底部，负数是向上滚
+            // 0 为底部
             const distanceFromTop = -(list.scrollTop);
             const maxScroll = list.scrollHeight - list.clientHeight;
             if (maxScroll - distanceFromTop < 300) {
@@ -266,7 +266,7 @@
             }
         }, { passive: true });
     })();
-    // 首屏也要应用一次权限过滤（见 applyMemberPermissions 的说明）
+    // 首屏也要过滤权限
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', window.applyMemberPermissions);
     } else {

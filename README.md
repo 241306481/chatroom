@@ -49,8 +49,6 @@ npm start
 | `npm run cert` | 生成自签证书（`cert.pem` / `key.pem`），之后启动自动走 HTTPS |
 | `npm run console` | 进入命令行管理控制台 |
 
-Windows 下也可以双击 `chatroom_console.bat` 打开控制台。
-
 ## 环境变量
 
 | 变量 | 默认值 | 说明 |

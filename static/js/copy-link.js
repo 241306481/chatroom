@@ -1,4 +1,4 @@
-// 复制文件查看链接（纯 URL，不带 /download）
+// 复制查看链接
 (function () {
     function fallbackCopy(text) {
         const t = document.createElement('textarea');

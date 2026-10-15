@@ -1,4 +1,4 @@
-// 表情反应：发送 + 选择器
+// 表情反应
 (function () {
 
     const REACTION_EMOJIS = ['👍', '👎', '❤️', '🎉', '😂', '😮', '😢', '🔥', '👀', '✅'];
@@ -24,7 +24,7 @@
             if (close) { document.removeEventListener('click', close, true); close = null; }
             if (picker.parentNode) picker.remove();
         };
-        // 每次只保留一个选择器；先清扫其余的（连同它们各自的监听器）
+        // 只留一个选择器
         const openPickers = document.querySelectorAll('.reaction-picker');
         for (const el of openPickers) {
             if (el !== picker && el.__teardown) el.__teardown();
@@ -43,7 +43,7 @@
         });
         document.body.appendChild(picker);
 
-        // 定位：优先显示在按钮下方，空间不足时显示在上方
+        // 下优先，不足则上
         const r = btn.getBoundingClientRect();
         const pw = picker.offsetWidth;
         const ph = picker.offsetHeight;

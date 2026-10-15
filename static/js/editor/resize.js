@@ -1,4 +1,4 @@
-// 编辑器尺寸拖拽（水平 + 垂直）
+// 编辑器拖拽
 window.EditorResize = {
     attach({ root, wrapper, resizeOp, paneEdit, panePreview, heightResize }) {
         function endDrag() {
@@ -6,7 +6,7 @@ window.EditorResize = {
             document.body.style.userSelect = '';
         }
 
-// 水平拖动（编辑区/预览区分割线）
+// 水平拖动
         if (resizeOp && paneEdit && panePreview) {
             let dragging = false;
             resizeOp.addEventListener('mousedown', e => {
@@ -32,7 +32,7 @@ window.EditorResize = {
             window.addEventListener('blur', stopH);
         }
 
-// 垂直拖动（改变编辑器总高度）
+// 垂直拖动
         if (heightResize) {
             let dragging = false;
             let startY = 0, startH = 0;

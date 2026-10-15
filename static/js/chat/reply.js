@@ -1,4 +1,4 @@
-// 回复状态 + 滚动定位
+// 回复与定位
 (function () {
 
     window.ChatReply = {

@@ -1,4 +1,4 @@
-// [回归] 特权用户能力未被收窄的 skipPriv 改动破坏 + 前几轮关键不变量
+// 回归 特权不变量
 const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
@@ -98,12 +98,12 @@ check('r1: 文件 ID 拒绝 __proto__', () => {
 });
 check('r1: safeFileId 为唯一实现，用户/域文件共用', () => {
     const { safeFileId } = require('../../lib/storage/fs-utils');
-    // 路径穿越 + 原型污染，两类都必须挡
+    // 穿越与原型污染
     for (const id of ['__proto__', 'constructor', 'prototype', '..', '.', 'a/b', 'a\\b', 'a\0b', '']) {
         assert.strictEqual(safeFileId(id), null, '放行了危险 id: ' + JSON.stringify(id));
     }
     assert.strictEqual(safeFileId('abc123'), 'abc123');
-    // 两边都必须用同一份，不能各写一份后分叉
+    // 两边同一份
     for (const f of ['domain-files.js', 'user-files.js']) {
         const src = fs.readFileSync(path.join(PROJ, 'lib/storage/') + f, 'utf8');
         assert.ok(/require\('\.\/fs-utils'\)/.test(src), f + ' 未引用 fs-utils');
@@ -114,12 +114,12 @@ check('r1: requireSystemAdmin 三态正确（抽到 manage/_helpers 后回归）
     const { requireSystemAdmin } = require('../../lib/routes/manage/_helpers');
     const { UnauthorizedError } = require('../../lib/auth/privilege');
     const stub = () => ({ headers: {}, writeHead() {}, end() {} });
-    // 超管放行、普通成员走 403、匿名抛 UnauthorizedError（由 router 转 302）
+    // 三态鉴权
     assert.strictEqual(requireSystemAdmin(ROOT, stub()), true, '超管被拒');
     assert.strictEqual(requireSystemAdmin(MEMBER, stub()), false, '普通成员未被拒');
     assert.throws(() => requireSystemAdmin(null, stub()), UnauthorizedError, '匿名未抛 401');
     assert.throws(() => requireSystemAdmin(undefined, stub()), UnauthorizedError);
-    // 两处调用点都必须用共享实现
+    // 共用共享实现
     for (const f of ['ip-bans.js', 'system-roles.js']) {
         const src = fs.readFileSync(path.join(PROJ, 'lib/routes/manage/') + f, 'utf8');
         assert.ok(/require\('\.\/_helpers'\)/.test(src), f + ' 未引用 manage/_helpers');
@@ -195,7 +195,7 @@ check('登录限流：连续失败后被拦截，成功后清零', () => {
     // 账号维度阈值是 8
     for (let i = 0; i < 8; i++) rl.noteFailure('victim', '10.1.1.1');
     assert.ok(rl.checkLoginAllowed('victim', '10.1.1.1'), '账号维度未拦截');
-    // 此时 IP 计数 8 < 30，尚未触发 IP 维度（由下一个用例覆盖）
+    // IP 维度未触发
     rl.noteSuccess('victim', '10.1.1.1');
     assert.strictEqual(rl.checkLoginAllowed('victim', '10.1.1.1'), null, '成功后未清零');
     assert.strictEqual(rl.checkLoginAllowed('other', '10.1.1.1'), null,
@@ -230,7 +230,7 @@ check('优雅关闭：关闭 HTTP + 断开 WS + 有超时兜底', () => {
     assert.ok(/logger\.close\(\)/.test(src), '未等日志落盘');
     assert.ok(/setTimeout/.test(src) && /强制退出/.test(src), '缺少超时兜底');
     assert.ok(!/force\.unref/.test(src), '超时兜底被 unref 了');
-    // 关停不应再去翻 websocket/registry 的内部结构
+    // 不翻内部结构
     assert.ok(!/require\('\.\/lib\/websocket\/registry'\)/.test(src),
         'server.js 仍在直接操作 registry（分层倒置）');
 });

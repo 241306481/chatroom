@@ -1,4 +1,4 @@
-// 工具栏 + 下拉菜单 + 键盘快捷键
+// 工具栏与快捷键
 window.EditorToolbar = {
     attach({ root, ta, refresh }) {
         const closeAll = () => window.EditorUtils.closeAll(root);
@@ -54,7 +54,7 @@ window.EditorToolbar = {
     },
 };
 
-// 单个 action 处理
+// 单个 action
 function handleAction(action, el, ta, refresh) {
     const U = window.EditorUtils;
 

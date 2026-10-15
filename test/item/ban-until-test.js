@@ -1,5 +1,5 @@
 'use strict';
-// [回归] 封禁到期时间（until）的校验、比较与无效数据治理
+// 回归 封禁时间
 const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
@@ -28,7 +28,7 @@ function mk(nick) {
     try { storage.createUser(nick, 'pw123456'); } catch (e) {}
     return storage.findUserByNickname(nick);
 }
-// 首个注册用户会被自动升为超管，不可封禁，先占位再绕过
+// 首个用户是超管
 mk('ban_t0');
 const u1 = mk('ban_t1');
 const u2 = mk('ban_t2');
@@ -52,7 +52,7 @@ function ensureMember(uid) {
 }
 
 (async () => {
-    // ---------------- 校验 ----------------
+    // 校验
     await check('normalizeUntil 拒绝「格式合法但日期不存在」的值', () => {
         for (const bad of ['2099-99-99T99:99', '2026-02-30T12:00', '2024-99-99T12:00', '9999-13-45T00:00:00']) {
             assert.strictEqual(normalizeUntil(bad), null, bad + ' 应被判非法');
@@ -75,7 +75,7 @@ function ensureMember(uid) {
         assert.strictEqual(isValidUntil('2099-99-99T99:99:00Z'), false);
     });
 
-    // ---------------- 比较 ----------------
+    // 比较
     await check('isUntilActive：字典序比较只在日期真实时成立', () => {
         assert.strictEqual(isUntilActive('', '2026-10-15T00:00:00Z'), true, '永久封禁应生效');
         assert.strictEqual(isUntilActive('2099-12-31T23:59:00Z', '2026-10-15T00:00:00Z'), true);
@@ -84,7 +84,7 @@ function ensureMember(uid) {
 
     await check('isUntilActive：非法值保守视为生效，不静默解封', () => {
         assert.strictEqual(isUntilActive('2099-99-99T99:99:00Z'), true);
-        // 这一条是修复的核心：旧实现对过去的非法日期会判「已过期」，等于悄悄放人
+        // 旧实现会悄悄放人
         assert.strictEqual(isUntilActive('2024-99-99T12:00:00Z'), true);
     });
 
@@ -93,7 +93,7 @@ function ensureMember(uid) {
         assert.strictEqual(isUntilActive('2000-01-01T00:00:00', '2026-10-15T00:00:00Z'), false);
     });
 
-    // ---------------- 写入路径 ----------------
+    // 写入路径
     await check('banUserGlobally 拒绝非法 until 且不留下任何写入', () => {
         assert.throws(() => bans.banUserGlobally(u2.id, 'x', '2099-99-99T99:99', '1'));
         const u = storage.loadUser(u2.id);
@@ -110,10 +110,10 @@ function ensureMember(uid) {
         assert.throws(() => bans.banUserInDomain('system', u2.id, 'x', '9999-99-99T99:99:00Z', { id: '1' }));
     });
 
-    // ---------------- 读取路径（核心修复）----------------
+    // 读取路径（核心修复）
     await check('读取端对非法 until 保守判为封禁（旧实现会静默解封）', () => {
         bans.banUserGlobally(u1.id, '注入', '2099-12-31T23:59', '1');
-        // 模拟历史数据 / 手工编辑：绕过 API 直接改 JSON
+        // 注入脏值
         poke(u1.id, { banned_until: '2024-99-99T12:00:00Z' });
         assert.strictEqual(storage.loadUser(u1.id).banned_until > storage.nowIso(), false,
             '前置条件：裸字符串比较确实会判已过期');
@@ -135,15 +135,12 @@ function ensureMember(uid) {
         ipBans.removeByRule('10.9.9.9');
     });
 
-    // ---------------- 禁言（同一类问题的另一个入口）----------------
-    // 确保 u2 在 system 域成员表里（禁言只对成员生效）
+    // 禁言需先在成员表
     ensureMember(u2.id);
 
     await check('isMuteActive：从未禁言/已解禁的空值必须判为未禁言', () => {
         const { isMuteActive } = require(path.join(ROOT, 'lib/until'));
-        // 这条是真实踩过的坑：grantRole 建成员时不写 muted_until（undefined），
-        // unmuteUser 解禁后写成 ''。若按封禁那套 isUntilActive 判，两种都会
-        // 变成「永久禁言」，于是所有正常成员的消息全被拦下。
+        // 两种空值都算未禁言
         assert.strictEqual(isMuteActive(undefined), false, 'undefined 应为未禁言');
         assert.strictEqual(isMuteActive(null), false, 'null 应为未禁言');
         assert.strictEqual(isMuteActive(''), false, '空串（解禁后）应为未禁言');
@@ -171,7 +168,7 @@ function ensureMember(uid) {
         const perms = require(path.join(ROOT, 'lib/auth/perms'));
         ensureMember(u2.id);
         members.muteUser('system', u2.id, '2099-12-31T23:59', { id: '1' });
-        // 直接改 JSON 注入非法值
+        // 注入非法值
         const d2 = JSON.parse(fs.readFileSync(domainPath, 'utf8'));
         d2.members[u2.id].muted_until = '2024-99-99T12:00:00Z';
         fs.writeFileSync(domainPath, JSON.stringify(d2, null, 2), 'utf8');
@@ -181,7 +178,7 @@ function ensureMember(uid) {
         members.unmuteUser('system', u2.id);
     });
 
-    // ---------------- 成员列表（原先比较方向是反的）----------------
+    // 成员列表
     await check('成员列表：已过期的封禁不再被计入、仍生效的被计入', () => {
         const bans2 = require(path.join(ROOT, 'lib/auth/bans'));
         const helpers = require(path.join(ROOT, 'lib/routes/_helpers'));
@@ -196,7 +193,7 @@ function ensureMember(uid) {
         bans2.unbanUserInDomain('system', u2.id);
     });
 
-    // ---------------- 检测与清理 ----------------
+    // 检测与清理
     await check('auditInvalidBans 能查出三类非法数据', () => {
         bans.banUserGlobally(u1.id, '注入', '2099-12-31T23:59', '1');
         poke(u1.id, { banned_until: '2099-99-99T99:99:00Z' });
@@ -250,7 +247,7 @@ function ensureMember(uid) {
         assert.ok(!/未知命令/.test(out), 'ban audit 不应是未知命令');
     });
 
-    // ---------------- 收尾 ----------------
+    // 收尾
     try { bans.unbanUserGlobally(u1.id); } catch (e) {}
     try { bans.unbanUserInDomain('system', u2.id); } catch (e) {}
     try { ipBans.removeByRule('10.9.9.9'); } catch (e) {}

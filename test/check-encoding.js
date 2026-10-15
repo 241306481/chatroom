@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 
 const ROOT = path.join(__dirname, '..');
-// 只扫自己写的代码：static/katex 等第三方产物不归我们管
+// 跳过第三方产物
 const DIRS = ['lib', 'test', 'static/js'];
 const EXT = new Set(['.js']);
 
@@ -34,7 +34,7 @@ function run() {
             problems.push(`BOM      ${rel}`);
         }
 
-        // 用 fatal 解码：非法 UTF-8 字节会抛，而不是被悄悄替换成 U+FFFD
+        // fatal 解码
         let text;
         try {
             text = new TextDecoder('utf-8', { fatal: true }).decode(buf);

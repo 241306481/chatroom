@@ -49,7 +49,7 @@ function post(p, body) {
 }
 const cookieOf = r => (r.headers['set-cookie'] || []).map(c => c.split(';')[0]).join('; ');
 
-// 走 requireSystemAdmin 的路由：匿名必须被 router 转成 302 跳登录页。
+// 匿名应跳登录页
 const VIA_HELPER = ['/manage/ip_bans', '/manage/user_ips',
     '/manage/system_roles', '/manage/permissions'];
 const INLINE_GUARD = ['/manage/users'];
@@ -57,7 +57,7 @@ const AGGREGATED = ['/manage/join_applications'];
 const STRICT_ADMIN = ['/manage', '/manage/settings'];
 const ROUTES = [...VIA_HELPER, ...INLINE_GUARD, ...AGGREGATED, ...STRICT_ADMIN];
 
-// 每条路由对普通成员的期望状态码
+// 期望状态码
 const MEMBER_EXPECT = {};
 for (const r of [...VIA_HELPER, ...INLINE_GUARD, ...STRICT_ADMIN]) MEMBER_EXPECT[r] = 403;
 for (const r of AGGREGATED) MEMBER_EXPECT[r] = 200;
@@ -71,7 +71,7 @@ async function check(name, fn) {
 (async () => {
     await waitForServer(PORT);
 
-    // 首个注册者 = 超级管理员；第二个 = 普通成员
+    // 首者为超管
     const adminC = cookieOf(await post('/register',
         { nickname: 'bossman', password: 'pw123456', confirm_password: 'pw123456' }));
     await post('/login', { nickname: 'bossman', password: 'pw123456' });
@@ -90,7 +90,7 @@ async function check(name, fn) {
             assert.ok([302, 401, 403].includes(anon.status),
                 `期望 302/401/403，实际 ${anon.status}`);
             if (VIA_HELPER.includes(route)) {
-                // 这几条走 requireSystemAdmin，匿名应统一跳登录页
+                // 匿名统一跳登录
                 assert.ok([302, 401].includes(anon.status),
                     `共享 helper 路由匿名应 302/401，实际 ${anon.status}`);
                 assert.ok(String(anon.headers.location || '').startsWith('/login'),
@@ -111,7 +111,7 @@ async function check(name, fn) {
         await check(`[${route}] 系统管理员：不得 5xx`, () => {
             assert.ok(adm.status < 500, `返回 ${adm.status}`);
             if (AGGREGATED.includes(route)) {
-                // 聚合页对超管同样可能是 200 空列表，只要求不是 5xx
+                // 只要求非 5xx
                 assert.ok(adm.status < 400, `返回 ${adm.status}`);
                 return;
             }
@@ -136,13 +136,13 @@ async function check(name, fn) {
     });
 
     await check('requireSystemAdmin：render403 从 template 取，不从 routes/_helpers', () => {
-        // 上轮的真实 bug：require 路径写错，只有 403 分支会炸
+        // 曾错 require
         const src = fs.readFileSync(path.join(ROOT, 'lib/routes/manage/_helpers.js'), 'utf8');
         assert.ok(/require\('\.\.\/\.\.\/template'\)/.test(src),
             'render403 未从 lib/template.js 引入');
         assert.ok(!/render403\s*\}\s*=\s*require\('\.\.\/_helpers'\)/.test(src),
             'render403 引用了 routes/_helpers（错误来源）');
-        // 并且它确实是 template 导出的
+        // 确由模板导出
         assert.strictEqual(typeof require('../../lib/template').render403, 'function');
     });
 

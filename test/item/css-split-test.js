@@ -10,7 +10,7 @@ const results = [];
 const check = (n, f) => { try { f(); results.push(['PASS', n]); } catch (e) { results.push(['FAIL', n + ' -> ' + e.message]); } };
 
 const main = fs.readFileSync(path.join(CSS, 'main.css'), 'utf8');
-// 归一化掉 ./ 前缀，才能和文件名列表直接比对
+// 归一化 ./ 前缀
 const imports = [...main.matchAll(/@import\s+url\(['"]?([^'")]+)['"]?\)/g)]
     .map((m) => m[1].replace(/^\.\//, ''));
 const cssFiles = fs.readdirSync(CSS).filter((f) => f.endsWith('.css'));
@@ -28,7 +28,7 @@ check('没有重复导入同一个文件', () => {
 });
 
 check('除 main.css 外，每个 CSS 文件都已被引入', () => {
-    // 某个文件存在却没人 import，等于写了没生效。main.css 本身是入口，不自引。
+    // 孤儿即未生效
     const orphans = cssFiles.filter((f) => f !== 'main.css' && !imports.includes(f));
     assert.strictEqual(orphans.length, 0, '存在但未被引入: ' + orphans.join(', '));
 });
@@ -38,7 +38,7 @@ check('★ 所有 CSS 都不含 // 注释（会让 @import 静默失效）', () 
     for (const f of cssFiles) {
         const s = fs.readFileSync(path.join(CSS, f), 'utf8');
         s.split('\n').forEach((l, i) => {
-            // 只看行首的 //：url(https://…) 这类不算
+            // 只看行首 //
             if (/^\s*\/\//.test(l)) bad.push(f + ':' + (i + 1));
         });
     }
@@ -46,7 +46,7 @@ check('★ 所有 CSS 都不含 // 注释（会让 @import 静默失效）', () 
 });
 
 check('CSS 注释正确闭合且不嵌套', () => {
-    // 注释体内出现 /* 会提前终止注释，后面的内容被当作规则解析
+    // 注释不可嵌套
     const bad = [];
     for (const f of cssFiles) {
         const s = fs.readFileSync(path.join(CSS, f), 'utf8');

@@ -1,4 +1,4 @@
-// Markdown 编辑器初始化
+// 编辑器初始化
 (function () {
 
     window.initContextEdit = function (root) {
@@ -25,7 +25,7 @@
             root, ta, preview, counter, wrapper,
         });
 
-        // 工具栏 + 下拉菜单（返回 closeAll 供表格选择器复用）
+        // 工具栏与菜单
         const { closeAll } = window.EditorToolbar.attach({
             root, ta, refresh: previewApi.refresh,
         });
