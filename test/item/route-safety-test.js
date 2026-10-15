@@ -13,7 +13,7 @@ const path = require('path');
 const { spawn } = require('child_process');
 const { sleep, waitForServer, clearTlsArtifacts } = require('./_helpers');
 
-const ROOT = path.join(__dirname, '..');
+const ROOT = path.join(__dirname, '..', '..');
 const DATA = path.join(ROOT, 'data');
 const PORT = 5193;
 const BASE = 'http://127.0.0.1:' + PORT;
@@ -141,8 +141,8 @@ async function check(name, fn) {
     });
 
     await check('requireSystemAdmin：匿名抛 UnauthorizedError，成员返回 false', () => {
-        const { requireSystemAdmin } = require('../lib/routes/manage/_helpers');
-        const { UnauthorizedError } = require('../lib/auth/privilege');
+        const { requireSystemAdmin } = require('../../lib/routes/manage/_helpers');
+        const { UnauthorizedError } = require('../../lib/auth/privilege');
         const stub = () => ({ headers: {}, writeHead() {}, end() {} });
         assert.throws(() => requireSystemAdmin(null, stub()), UnauthorizedError);
         assert.throws(() => requireSystemAdmin(undefined, stub()), UnauthorizedError);
@@ -157,7 +157,7 @@ async function check(name, fn) {
         assert.ok(!/render403\s*\}\s*=\s*require\('\.\.\/_helpers'\)/.test(src),
             'render403 引用了 routes/_helpers（错误来源）');
         // 并且它确实是 template 导出的
-        assert.strictEqual(typeof require('../lib/template').render403, 'function');
+        assert.strictEqual(typeof require('../../lib/template').render403, 'function');
     });
 
     proc.kill();

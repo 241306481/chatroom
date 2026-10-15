@@ -5,22 +5,22 @@ const fs = require('fs');
 const path = require('path');
 
 const ROOT = path.join(__dirname, '..');
-const TMP = path.join(ROOT, 'test');
+const TMP = path.join(ROOT, 'test', 'item');
 
 if (!fs.existsSync(TMP)) fs.mkdirSync(TMP, { recursive: true });
 
 const SUITES = [
-    'r-guard.test.js',
-    'r-permission.test.js',
-    'r-exp.test.js',
-    'r-editor.test.js',
-    'r-auth.test.js',
-    'r-route-safety.test.js',
-    'r-tls.test.js',
-    'r-console.test.js',
-    'r-console-cmds.test.js',
-    'r-css-split.test.js',
-    'r-log.test.js',
+    'guard-test.js',
+    'permission-test.js',
+    'exp-test.js',
+    'editor-test.js',
+    'auth-test.js',
+    'route-safety-test.js',
+    'tls-test.js',
+    'console-test.js',
+    'console-cmds-test.js',
+    'css-split-test.js',
+    'log-test.js',
 ];
 
 // ============================================================

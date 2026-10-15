@@ -6,7 +6,7 @@ const path = require('path');
 const { spawn } = require('child_process');
 const { WebSocket } = require('ws');
 
-const ROOT = path.join(__dirname, '..');
+const ROOT = path.join(__dirname, '..', '..');
 const DATA = path.join(ROOT, 'data');
 if (fs.existsSync(DATA)) fs.rmSync(DATA, { recursive: true, force: true });
 
@@ -81,7 +81,7 @@ clearTlsArtifacts(ROOT);
 
 (async () => {
     await waitForServer(PORT);
-    const storage = require('../lib/storage');
+    const storage = require('../../lib/storage');
 
     const A = cookieOf(await req('POST', '/register',
         { body: { nickname: 'alice99', password: 'pw123456', confirm_password: 'pw123456' } }));
@@ -228,7 +228,7 @@ clearTlsArtifacts(ROOT);
     });
 
     await check('编辑器：jsdump 注入到 script 的负载已转义', () => {
-        const { env } = require('../lib/template.js');
+        const { env } = require('../../lib/template.js');
         const out = env.renderString('x={{ v | jsdump }}', { v: '</script><img src=x onerror=1>' });
         assert.ok(!out.includes('</script>'));
     });

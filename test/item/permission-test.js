@@ -2,14 +2,14 @@
 const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
-const ROOT = path.join(__dirname, '..');
+const ROOT = path.join(__dirname, '..', '..');
 const DATA = path.join(ROOT, 'data');
 if (fs.existsSync(DATA)) fs.rmSync(DATA, { recursive: true, force: true });
 
-const storage = require('../lib/storage');
-const auth = require('../lib/auth');
-const { PRIV, hasPriv } = require('../lib/permissions');
-const { checkDual } = require('../lib/auth/privilege');
+const storage = require('../../lib/storage');
+const auth = require('../../lib/auth');
+const { PRIV, hasPriv } = require('../../lib/permissions');
+const { checkDual } = require('../../lib/auth/privilege');
 
 const results = [];
 const check = (n, f) => { try { f(); results.push(['PASS', n]); } catch (e) { results.push(['FAIL', n + ' -> ' + e.message]); } };
@@ -30,7 +30,7 @@ check('关闭前：域管理员可以置顶', () => {
     checkDual(u, auth.getDomainUser('ptest', u), 'pin_message');   // 不应抛
 });
 check('关掉 member 的 message.pin 后该位确实为 0', () => {
-    const sysRoles = require('../lib/storage/system-roles');
+    const sysRoles = require('../../lib/storage/system-roles');
     const roles = sysRoles.loadRoles();
     const p = { ...roles.member.privs };
     p.message = p.message & ~PRIV.MESSAGE.PIN;

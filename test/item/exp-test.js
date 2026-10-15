@@ -2,13 +2,13 @@
 const path = require('path');
 const assert = require('assert');
 const fs = require('fs');
-const ROOT = path.join(__dirname, '..');
+const ROOT = path.join(__dirname, '..', '..');
 const DATA = path.join(ROOT, 'data');
 if (fs.existsSync(DATA)) fs.rmSync(DATA, { recursive: true, force: true });
 
-const storage = require('../lib/storage');
-const auth = require('../lib/auth');
-const exp = require('../lib/auth/exp');
+const storage = require('../../lib/storage');
+const auth = require('../../lib/auth');
+const exp = require('../../lib/auth/exp');
 
 const results = [];
 const check = (n, f) => { try { f(); results.push(['PASS', n]); } catch (e) { results.push(['FAIL', n + ' -> ' + e.message]); } };

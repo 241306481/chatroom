@@ -79,7 +79,7 @@ node test/check-encoding.js
 - 注释用中文，与现有代码保持一致。
 - 不要提交 `data/`、`logs/`、`cert.pem`、`key.pem`。
 - 测试代码一律放 `test/`，不要在别处散落临时脚本。
-- 新增回归用例命名为 `test/r-*.test.js`，并在 `test/test.js` 的 `SUITES` 里登记。
+- 新增回归用例命名为 `test/item/*-test.js`，并在 `test/test.js` 的 `SUITES` 里登记。
 - 路径一律用 `path.join(__dirname, ...)` 推导，不要硬编码绝对路径，
   否则仓库换目录后测试会直接失效。
 - 合并重复实现时，务必确认所有调用点都已切换到新位置，并加一条断言

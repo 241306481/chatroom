@@ -7,7 +7,7 @@ const http = require('http');
 const { spawn, spawnSync } = require('child_process');
 const { WebSocket } = require('ws');
 
-const ROOT = path.join(__dirname, '..');
+const ROOT = path.join(__dirname, '..', '..');
 const DATA = path.join(ROOT, 'data');
 const CERT = path.join(ROOT, 'cert.pem');
 const KEY = path.join(ROOT, 'key.pem');

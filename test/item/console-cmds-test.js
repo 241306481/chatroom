@@ -2,7 +2,7 @@
 const path = require('path');
 const { spawnSync } = require('child_process');
 const fs = require('fs');
-const ROOT = path.join(__dirname, '..');
+const ROOT = path.join(__dirname, '..', '..');
 fs.rmSync(ROOT + '/data', { recursive: true, force: true });
 
 // 先造点数据。注意三处易错点：
