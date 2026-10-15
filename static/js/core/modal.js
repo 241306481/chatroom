@@ -1,6 +1,4 @@
-// ============================================================
 // 内联弹窗（替代原生 alert / confirm / prompt）
-// ============================================================
 (function () {
     let root = null;
 
@@ -24,7 +22,7 @@
             box.setAttribute('role', 'dialog');
             box.setAttribute('aria-modal', 'true');
 
-            // ---- 头部 ----
+// 头部
             const header = document.createElement('div');
             header.className = 'modal-header';
             const iconEl = document.createElement('span');
@@ -37,7 +35,7 @@
             header.appendChild(titleEl);
             box.appendChild(header);
 
-            // ---- 主体 ----
+// 主体
             const body = document.createElement('div');
             body.className = 'modal-body';
             const msgEl = document.createElement('div');
@@ -56,7 +54,7 @@
             }
             box.appendChild(body);
 
-            // ---- 底部 ----
+// 底部
             const footer = document.createElement('div');
             footer.className = 'modal-footer';
             let cancelBtn = null;
@@ -78,7 +76,7 @@
             container.appendChild(overlay);
             requestAnimationFrame(function () { overlay.classList.add('show'); });
 
-            // ---- 关闭逻辑 ----
+// 关闭逻辑
             let done = false;
             function cancelValue() {
                 return cfg.type === 'prompt' ? null : cfg.type === 'confirm' ? false : true;
@@ -125,7 +123,7 @@
         });
     }
 
-    // ---- 对外 API ----
+// 对外 API
     window.showModal = open;
     window.showAlert = function (message, opts) {
         return open(Object.assign({ type: 'alert', message: message }, opts || {}));
@@ -137,7 +135,7 @@
         return open(Object.assign({ type: 'prompt', message: message, value: value }, opts || {}));
     };
 
-    // ---- 全局 data-confirm 拦截 ----
+// 全局 data-confirm 拦截
     document.addEventListener('click', function (e) {
         const el = e.target && e.target.closest ? e.target.closest('[data-confirm]') : null;
         if (!el) return;

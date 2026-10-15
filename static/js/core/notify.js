@@ -1,6 +1,4 @@
-// ============================================================
 // 左下角通知卡片
-// ============================================================
 window.showNotification = function (opts) {
     opts = opts || {};
     var container = document.getElementById('notificationContainer');
@@ -23,10 +21,6 @@ window.showNotification = function (opts) {
             '<div class="notification-content">' + esc(opts.content || '') + '</div>' +
         '</div>' +
         '<button class="notification-close" type="button">×</button>';
-    // 背景色用 style 接口设置，不参与 innerHTML 拼接：
-    // color 来自私信负载里的 avatar_color，是持久化的用户可控字段，
-    // 拼进双引号属性里一个 " 就能闭合属性注入事件处理器。
-    // esc() 只处理 & < >，挡不住属性闭合。
     var avatar = card.querySelector('.notification-avatar');
     if (avatar) avatar.style.background = color;
 
@@ -54,9 +48,7 @@ window.showNotification = function (opts) {
     });
 };
 
-// ============================================================
 // 通用轻提示（表单提交成功等）
-// ============================================================
 window.showToast = function (msg) {
     var t = document.createElement('div');
     t.className = 'toast';
@@ -65,9 +57,7 @@ window.showToast = function (msg) {
     setTimeout(function () { t.remove(); }, 3000);
 };
 
-// ============================================================
 // 未读徽章 +1
-// ============================================================
 window.bumpUnreadBadge = function () {
     const anchors = document.querySelectorAll('.topbar-nav a[href="/messages"]');
     anchors.forEach(a => {

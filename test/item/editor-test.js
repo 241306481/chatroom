@@ -45,8 +45,6 @@ function req(method, p, { body, cookie } = {}) {
     });
 }
 const cookieOf = r => (r.headers['set-cookie'] || []).map(c => c.split(';')[0]).join('; ');
-// 全量跑套件时机器较忙，WS 握手偶发超过 5s：放宽超时并带一次重试。
-// 注意必须清理定时器，否则 open() 成功后残留的定时器仍会 rej。
 function open(ws, ms = 15000) {
     return new Promise((res, rej) => {
         const t = setTimeout(() => { ws.off('open', onOpen); ws.off('error', onErr); rej(new Error('ws timeout')); }, ms);
@@ -75,8 +73,6 @@ function waitFor(ws, pred, ms = 10000) {
     });
 }
 
-// 本套件测纯 HTTP 部署路径；若残留证书，server.js 会自动切到 HTTPS，
-// 导致下面的明文请求被直接重置（socket hang up）。
 clearTlsArtifacts(ROOT);
 
 (async () => {
@@ -147,8 +143,6 @@ clearTlsArtifacts(ROOT);
     });
 
     await check('讨论区：经验立即反映在存储中（无缓冲）', async () => {
-        // 用普通成员验证。alice 是首个注册用户（系统 root），其 level 被
-        // 置为 ADMIN_LEVEL=99 作为管理员标记，按设计不参与经验结算。
         assert.strictEqual(storage.loadDomain('system').members[uidA].level, 99,
             '前提不成立：alice 应为 ADMIN_LEVEL');
         const before = storage.loadDomain('system').members[uidB].exp || 0;

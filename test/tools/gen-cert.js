@@ -1,18 +1,5 @@
 #!/usr/bin/env node
 'use strict';
-// ============================================================
-// 生成自签名 TLS 证书（cert.pem / key.pem）
-// ============================================================
-// 用途：让 server.js 自动切到 HTTPS/WSS（它一检测到这两个文件就会启用）。
-//
-// 为什么需要这个脚本：本机没有 openssl，而 Node 的 crypto 只能生成密钥、
-// 不能签发 X.509 证书。这里按可用性依次尝试三条路径：
-//   1. openssl（Linux/macOS/装了 OpenSSL 的 Windows 常见）
-//   2. PowerShell New-SelfSignedCertificate（Windows 自带，导出 PEM）
-//   3. 都没有 → 打印各平台的手工命令，不做其它事
-//
-// 自签名证书浏览器会告警，局域网/内网使用属正常；
-// 生产环境请换成受信任 CA 签发的证书。
 
 const fs = require('fs');
 const os = require('os');
@@ -54,8 +41,6 @@ function viaOpenssl(bin) {
     return san;
 }
 
-// 找一个可用的 openssl：PATH 优先，其次 Windows 上常见的 Git / WinOpenSSL 附带版本。
-// Windows 默认不带 openssl，但装了 Git for Windows 就自带一份。
 function findOpenssl() {
     if (have('openssl', ['version'])) return 'openssl';
     const candidates = [
@@ -71,16 +56,12 @@ function findOpenssl() {
     return null;
 }
 
-// openssl 的部分子命令把结果写到 stdout、部分写到 stderr，
-// 跨版本不一致，所以两边一起收。用 spawnSync 才能拿到 stderr。
 function opensslOut(bin, args) {
     const r = spawnSync(bin, args, { encoding: 'utf8' });
     if (r.error) return '';
     return String(r.stdout || '') + String(r.stderr || '');
 }
 
-// 生成后把关键信息摊开：自签名证书浏览器一定会拦截，
-// 用户需要的是「怎么让它别再拦」以及「怎么确认没被掉包」。
 function reportCert(bin, san) {
     const { X509Certificate } = require('crypto');
     let x;
@@ -134,8 +115,6 @@ if (fs.existsSync(CERT) && fs.existsSync(KEY)) {
 const oss = findOpenssl();
 if (oss) {
     const san = viaOpenssl(oss);
-    // 私钥以明文保存在项目根，POSIX 上收紧到仅属主可读。
-    // Windows 靠 NTFS ACL，改 mode 无意义，跳过。
     if (os.platform() !== 'win32') {
         try { fs.chmodSync(KEY, 0o600); } catch (e) {
             console.log('（chmod 600 key.pem 失败：' + e.message + '）');

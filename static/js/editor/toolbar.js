@@ -1,11 +1,9 @@
-// ============================================================
 // 工具栏 + 下拉菜单 + 键盘快捷键
-// ============================================================
 window.EditorToolbar = {
     attach({ root, ta, refresh }) {
         const closeAll = () => window.EditorUtils.closeAll(root);
 
-        // ---------- 下拉菜单开合 ----------
+// 下拉菜单开合
         root.querySelectorAll('[data-action="dropdown"]').forEach(btn => {
             btn.addEventListener('click', e => {
                 e.stopPropagation();
@@ -26,7 +24,7 @@ window.EditorToolbar = {
         });
         document.addEventListener('click', closeAll);
 
-        // ---------- 普通动作按钮 ----------
+// 普通动作按钮
         root.querySelectorAll('[data-action]').forEach(el => {
             const action = el.dataset.action;
             if (action === 'dropdown' || action === 'toggle-preview') return;
@@ -40,7 +38,7 @@ window.EditorToolbar = {
             });
         });
 
-        // ---------- 键盘快捷键 ----------
+// 键盘快捷键
         ta.addEventListener('keydown', e => {
             if (!(e.ctrlKey || e.metaKey)) return;
             const U = window.EditorUtils;
@@ -56,9 +54,7 @@ window.EditorToolbar = {
     },
 };
 
-// ============================================================
 // 单个 action 处理
-// ============================================================
 function handleAction(action, el, ta, refresh) {
     const U = window.EditorUtils;
 
@@ -75,9 +71,6 @@ function handleAction(action, el, ta, refresh) {
             if (!url) return;
             const s = ta.selectionStart, e = ta.selectionEnd;
             const sel = ta.value.substring(s, e) || '文字';
-            // 必须走 U.insertAt：直接给 ta.value 赋值会把选区折叠到整个文档末尾，
-            // 于是光标跳到最末尾，紧接着点下一个工具栏按钮就会改错文本。
-            // insertAt 会把光标还原到插入内容之后。
             U.insertAt(ta, '[' + sel + '](' + url + ') ');
             refresh();
         });

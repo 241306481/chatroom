@@ -1,6 +1,4 @@
-// ============================================================
 // 文件上传
-// ============================================================
 window.initUpload = function (opts) {
     var MAX_MB = opts.maxMb || 50;
     var MAX_BYTES = MAX_MB * 1024 * 1024;
@@ -46,9 +44,6 @@ window.initUpload = function (opts) {
         this.value = '';
     });
 
-    // 失败计数：{ok:false} 的响应此前只是把队列里那一项标成 ❌，
-    // 但队列照样一路跑到底并走进「全部上传完成 / 100%」+ 自动刷新，
-    // 等于告诉用户上传成功了，实际一个文件都没存下来。
     var failedCount = 0;
 
     function finishAll(files) {

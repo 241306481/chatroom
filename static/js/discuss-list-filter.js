@@ -2,10 +2,6 @@
     function init() {
         const input = document.querySelector('.list-filter-input');
         if (!input) return;
-        // 筛选要作用在 .discuss-row-wrap（flex 行）上，而不是里面的
-        // <a class="discuss-row">：只隐藏 <a> 的话，外层 wrap 仍占位，
-        // 右侧的 .discuss-del-btn 还会被 .discuss-row-wrap:hover 规则点亮，
-        // 于是一条已被筛掉的讨论仍占着空白并露出删除按钮。
         const rows = Array.from(document.querySelectorAll('.discuss-row-wrap'));
         if (!rows.length) return;
         const counter = document.querySelector('.list-filter-count');

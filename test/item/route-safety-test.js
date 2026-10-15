@@ -1,12 +1,3 @@
-// [回归] /manage/* 的身份三态：匿名 / 普通成员 / 系统管理员
-//
-// 核心不变量：**任何身份、任何路由都不能返回 500**。
-//
-// 上一轮把两个一模一样的 requireSystemAdmin 合并成共享实现时，require 路径
-// 写错（render403 在 lib/template.js，不在 lib/routes/_helpers.js），
-// 结果只有「无权限」这一条分支会抛 TypeError ——
-// 受影响的是被拒绝的人看到的页面，管理员和测试都看不见，
-// 整套 110 项回归全绿。因此这里专门覆盖这一类路径。
 const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
@@ -61,12 +52,7 @@ const cookieOf = r => (r.headers['set-cookie'] || []).map(c => c.split(';')[0]).
 // 走 requireSystemAdmin 的路由：匿名必须被 router 转成 302 跳登录页。
 const VIA_HELPER = ['/manage/ip_bans', '/manage/user_ips',
     '/manage/system_roles', '/manage/permissions'];
-// /manage/users 由 lib/routes/admin.js 内的 PrivilegeError 单独拦，
-// 不在本轮改动范围内，匿名是 403 而非重定向。
 const INLINE_GUARD = ['/manage/users'];
-// /manage/join_applications 是跨域聚合页：内部按 checkDual 逐域过滤，
-// 普通成员不管理任何域 → 聚合结果为空 → 200 空列表是正确的，
-// 它本来就不是「整站管理」页面。
 const AGGREGATED = ['/manage/join_applications'];
 const STRICT_ADMIN = ['/manage', '/manage/settings'];
 const ROUTES = [...VIA_HELPER, ...INLINE_GUARD, ...AGGREGATED, ...STRICT_ADMIN];

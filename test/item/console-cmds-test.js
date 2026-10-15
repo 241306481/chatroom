@@ -5,11 +5,6 @@ const fs = require('fs');
 const ROOT = path.join(__dirname, '..', '..');
 fs.rmSync(ROOT + '/data', { recursive: true, force: true });
 
-// 先造点数据。注意三处易错点：
-//   storage.createUser() 返回的是 uid（字符串），不是 user 对象
-//   system 域的默认讨论叫 general，不是 main
-//   经验/等级存在 domain.members[uid] 里；只有 createUser 的**第一个**用户
-//   会被自动写进 system.members，其余用户必须 grantRole 才会产生成员记录
 const s = require(ROOT + '/lib/storage');
 s.ensureDirs(); s.ensureSystemDomain(); s.ensureSystemUser();
 const alice = s.createUser('alice', 'pw123456');   // 首个用户 → root, level=99

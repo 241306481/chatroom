@@ -1,5 +1,3 @@
-// 回归测试入口：npm test
-// 每个用例都是独立进程 + 独立数据目录，互不干扰。
 const { execFileSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
@@ -15,6 +13,7 @@ const SUITES = [
     'exp-test.js',
     'editor-test.js',
     'auth-test.js',
+    'ban-until-test.js',
     'route-safety-test.js',
     'tls-test.js',
     'console-test.js',
@@ -23,12 +22,6 @@ const SUITES = [
     'log-test.js',
 ];
 
-// ============================================================
-// 第一道关：编码守卫
-// ============================================================
-// 放在最前面：中文被写坏时，源码通常仍能通过语法检查、
-// 测试也常常全绿，只是注释和文案悄悄变成了乱码。
-// 先把这种损坏拦下来，再去跑那些「看起来一切正常」的回归。
 const encoding = require('./check-encoding').run();
 if (encoding.problems.length) {
     console.error('编码检查未通过：');
@@ -40,8 +33,6 @@ if (encoding.problems.length) {
 }
 console.log(`encoding                OK (${encoding.count} files, no BOM / U+FFFD)`);
 
-// r-tls 会生成证书并清理；一旦残留，server.js 会自动切到 HTTPS，
-// 导致其它按明文 HTTP 跑的套件出现 socket hang up。这里兜底清理。
 for (const f of ['cert.pem', 'key.pem']) {
     const p = path.join(ROOT, f);
     if (fs.existsSync(p)) { try { fs.rmSync(p); } catch (e) {} }

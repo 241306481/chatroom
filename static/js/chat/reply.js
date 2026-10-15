@@ -1,13 +1,11 @@
-// ============================================================
 // 回复状态 + 滚动定位
-// ============================================================
 (function () {
 
     window.ChatReply = {
         state: { id: null },
     };
 
-    // ---------- 设置回复目标 ----------
+// 设置回复目标
     window.setReplyTo = function (msgId) {
         window.ChatReply.state.id = msgId;
 
@@ -38,14 +36,14 @@
         if (ta) ta.focus();
     };
 
-    // ---------- 取消回复 ----------
+// 取消回复
     window.clearReplyTo = function () {
         window.ChatReply.state.id = null;
         const b = document.getElementById('replyBanner');
         if (b) b.remove();
     };
 
-    // ---------- 滚动到某条消息 ----------
+// 滚动到某条消息
     window.scrollToMessage = function (id) {
         const el = document.querySelector('.message[data-id="' + id + '"]');
         if (!el) return;

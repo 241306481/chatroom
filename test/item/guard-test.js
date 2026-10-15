@@ -28,7 +28,7 @@ const MEMBER = storage.loadUser(memberId);
 const SYSAD = storage.loadUser(sysId);
 const ROOT = storage.loadUser(rootId);
 
-// ================= 特权用户能力完整性 =================
+// 特权用户能力完整性
 check('域所有者仍可执行全部域级操作', () => {
     const du = auth.getDomainUser('gdom', OWNER);
     for (const op of ['edit_domain', 'manage_join', 'transfer_domain', 'delete_domain']) {
@@ -76,7 +76,7 @@ check('普通成员的基础能力未被放宽', () => {
     assert.ok(denied, '普通成员通过了 edit_domain');
 });
 
-// ================= 前几轮关键不变量 =================
+// 前几轮关键不变量
 check('r2: exp 立即落盘（无 5 秒缓冲）', () => {
     const src = fs.readFileSync(path.join(PROJ, 'lib/auth/exp.js'), 'utf8');
     assert.ok(!/setTimeout|pending\.set/.test(src), 'exp 仍有缓冲/定时器');
@@ -125,7 +125,6 @@ check('r1: requireSystemAdmin 三态正确（抽到 manage/_helpers 后回归）
         assert.ok(/require\('\.\/_helpers'\)/.test(src), f + ' 未引用 manage/_helpers');
         assert.ok(!/function requireSystemAdmin/.test(src), f + ' 仍有本地副本');
     }
-    // render403 必须来自 lib/template.js —— 上轮真实踩过的坑
     const h = fs.readFileSync(path.join(PROJ, 'lib/routes/manage/_helpers.js'), 'utf8');
     assert.ok(/require\('\.\.\/\.\.\/template'\)/.test(h), 'render403 来源不对');
     assert.strictEqual(typeof require('../../lib/template').render403, 'function');
@@ -190,7 +189,7 @@ check('r8: 日志轮转有界（不复用同名文件无限追加）', () => {
     assert.ok(/unlinkSync\(old\)/.test(src), '循环复用槽位前未删除旧文件');
 });
 
-// ================= 本轮新增 =================
+// 本轮新增
 check('登录限流：连续失败后被拦截，成功后清零', () => {
     const rl = require('../../lib/auth/rate-limit');
     // 账号维度阈值是 8
@@ -230,7 +229,6 @@ check('优雅关闭：关闭 HTTP + 断开 WS + 有超时兜底', () => {
     assert.ok(/closeAllConnections/.test(src), '未强制收尾剩余连接');
     assert.ok(/logger\.close\(\)/.test(src), '未等日志落盘');
     assert.ok(/setTimeout/.test(src) && /强制退出/.test(src), '缺少超时兜底');
-    // 超时定时器不能 unref，否则关停会静默 exit(0)、永远打印不出诊断
     assert.ok(!/force\.unref/.test(src), '超时兜底被 unref 了');
     // 关停不应再去翻 websocket/registry 的内部结构
     assert.ok(!/require\('\.\/lib\/websocket\/registry'\)/.test(src),

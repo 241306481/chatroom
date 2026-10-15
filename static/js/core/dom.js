@@ -1,11 +1,7 @@
-// ============================================================
 // 全局变量
-// ============================================================
 window.MY_UID = window.__CURRENT_UID__ || '';
 
-// ============================================================
 // HTML 转义
-// ============================================================
 window.esc = function (s) {
     return String(s == null ? '' : s)
         .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -16,9 +12,7 @@ window.escAttr = function (s) {
         .replace(/</g, '&lt;').replace(/>/g, '&gt;');
 };
 
-// ============================================================
 // 剪贴板
-// ============================================================
 window.copyToClipboard = function (text, btn) {
     const done = function () {
         if (!btn) return;
@@ -47,9 +41,6 @@ window.copyToClipboard = function (text, btn) {
     }
 };
 
-// 代码块复制按钮的点击处理：renderContent 返回的是 HTML 字符串，
-// 按钮在调用方 innerHTML 赋值时会被重新解析，节点上的监听器无法保留，
-// 因此统一在文档级做事件委托。
 document.addEventListener('click', function (e) {
     const t = e.target;
     if (!t || !t.closest) return;
@@ -61,16 +52,11 @@ document.addEventListener('click', function (e) {
     window.copyToClipboard(code ? code.textContent : pre.textContent, btn);
 });
 
-// ============================================================
 // 内容渲染：Markdown 解析 → DOM 上渲染 LaTeX
-// ============================================================
 window.renderContent = function (text) {
     if (text == null) return '';
     text = String(text);
 
-    // ---- 1. 处理 @ 提及（在 marked 之前）----
-    // 语法：@[uid] 或 @@[uid]
-    // 用 HTML 注释占位，避免被 marked 解析为链接/强调
     const mentionPlaceholders = [];
     const processed = text.replace(/@(@?)\[(\d+)\]/g,
         (whole, at, uid) => {
@@ -79,7 +65,7 @@ window.renderContent = function (text) {
             return '<!--MENTION_' + idx + '-->';
         });
 
-    // ---- 2. Markdown 解析（breaks: false 保证公式内换行不被 <br> 破坏）----
+// 2. Markdown 解析（breaks: false 保证公式内换行不被 <br> 破坏）
     let html;
     if (typeof marked !== 'undefined') {
         try {
@@ -92,12 +78,11 @@ window.renderContent = function (text) {
         html = esc(processed).replace(/\n/g, '<br>');
     }
 
-    // ---- 3. 用 template 元素承载（离线构建，不触发资源加载）----
+// 3. 用 template 元素承载（离线构建，不触发资源加载）
     const tpl = document.createElement('template');
     tpl.innerHTML = html;
     const container = tpl.content;
 
-    // ---- 4. 还原 @ 提及占位符（在 sanitize 之前，作元素插入）----
     (function restoreMentions(root) {
         const walker = document.createTreeWalker(root, NodeFilter.SHOW_COMMENT, null);
         const comments = [];
@@ -119,10 +104,10 @@ window.renderContent = function (text) {
         });
     })(container);
 
-    // ---- 5. sanitize ----
+// 5. sanitize
     sanitize(container);
 
-    // ---- 6. KaTeX auto-render（在 sanitize 后的 DOM 上，跳过 pre/code）----
+// 6. KaTeX auto-render（在 sanitize 后的 DOM 上，跳过 pre/code）
     if (window.renderMathInElement) {
         try {
             renderMathInElement(container, {
@@ -144,7 +129,7 @@ window.renderContent = function (text) {
         }
     }
 
-    // ---- 7. 代码块复制按钮（仅渲染节点，点击由文档级委托处理）----
+// 7. 代码块复制按钮（仅渲染节点，点击由文档级委托处理）
     container.querySelectorAll('pre').forEach(function (pre) {
         if (pre.querySelector('.code-copy-btn')) return;
         const btn = document.createElement('button');
@@ -155,15 +140,11 @@ window.renderContent = function (text) {
         pre.appendChild(btn);
     });
 
-    // ---- 8. 用临时容器取 innerHTML（template 的 content 没有 innerHTML 属性）----
+// 8. 用临时容器取 innerHTML（template 的 content 没有 innerHTML 属性）
     const wrap = document.createElement('div');
     wrap.appendChild(container);
     return wrap.innerHTML;
 
-    // URL 协议白名单。判定前必须先剥掉浏览器在解析 URL 时同样会忽略的
-    // 控制字符与空白：href="java&#10;script:alert(1)" 在浏览器里就是活的
-    // javascript: 协议，但 getAttribute 读回来是 "java\nscript:..."，
-    // 直接用原串做 /^javascript:/ 匹配会被绕过。
     const DANGEROUS_SCHEME_RE = /^(?:javascript|data|vbscript):/i;
     const URL_ATTRS = ['href', 'src', 'xlink:href', 'action', 'formaction',
         'srcset', 'poster', 'data', 'background', 'cite'];
@@ -191,9 +172,7 @@ window.renderContent = function (text) {
     }
 };
 
-// ============================================================
 // 源码 / 渲染切换（供模板内联 onclick 调用）
-// ============================================================
 window.toggleSource = function (btn) {
     const wrap = btn.closest('.msg-body')
               || btn.closest('.dm-msg')

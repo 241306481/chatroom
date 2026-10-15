@@ -1,6 +1,4 @@
-// ============================================================
 // 在线状态（供讨论页 / 状态 WS 共用）
-// ============================================================
 window.__onlineUsers = new Set();
 
 window.setUserOnlineUI = function (el, online) {
@@ -63,15 +61,11 @@ window.updateAllOnlineCounts = function () {
     }
 };
 
-// ============================================================
 // 域级在线状态 WebSocket
-// ============================================================
 (function () {
     const DOMAIN = window.__DOMAIN__ || '';
     if (!DOMAIN) return;
     if (document.getElementById('messageList')) return; // 讨论页有专属 WS
-    // 未登录不连 WS：服务端 upgrade 阶段会直接 destroy，
-    // 不加这道守卫会导致 onclose → connect 的无限重连。
     if (!window.MY_UID) return;
 
     const WS_PROTOCOL = window.__WS_PROTOCOL__ || 'ws';

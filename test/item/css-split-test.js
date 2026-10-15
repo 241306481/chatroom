@@ -1,11 +1,4 @@
 'use strict';
-// [回归] CSS 内容合法性
-//
-// 这里只检验「内容是否合法」：注释语法、括号配对、@import 是否断链。
-//
-// 刻意不锁定任何具体样式内容、行数或文件大小。把内容冻进测试等于禁止
-// 调整样式——改一行 CSS 就红灯，久而久之没人敢动。这里守的是「写出来的
-// CSS 一定是浏览器能解析的」，而不是「必须和昨天一模一样」。
 const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
@@ -22,9 +15,7 @@ const imports = [...main.matchAll(/@import\s+url\(['"]?([^'")]+)['"]?\)/g)]
     .map((m) => m[1].replace(/^\.\//, ''));
 const cssFiles = fs.readdirSync(CSS).filter((f) => f.endsWith('.css'));
 
-// ============================================================
 // @import 接线
-// ============================================================
 check('★ main.css 的每个 @import 目标都存在（无断链）', () => {
     assert.ok(imports.length > 0, 'main.css 里没有任何 @import，所有样式都不会生效');
     const missing = imports.filter((t) => !fs.existsSync(path.join(CSS, t)));
@@ -42,11 +33,6 @@ check('除 main.css 外，每个 CSS 文件都已被引入', () => {
     assert.strictEqual(orphans.length, 0, '存在但未被引入: ' + orphans.join(', '));
 });
 
-// ============================================================
-// 注释语法
-// ============================================================
-// CSS 只支持 /* ... */，不支持 //。用 // 写注释时，@import 会被整条忽略，
-// 所有样式静默失效，但页面只是「看起来没样式」，控制台零报错。
 check('★ 所有 CSS 都不含 // 注释（会让 @import 静默失效）', () => {
     const bad = [];
     for (const f of cssFiles) {
@@ -76,9 +62,7 @@ check('CSS 注释正确闭合且不嵌套', () => {
     assert.strictEqual(bad.length, 0, bad.join('; '));
 });
 
-// ============================================================
 // 结构完整性
-// ============================================================
 check('所有 CSS 的花括号配对', () => {
     const bad = [];
     for (const f of cssFiles) {
@@ -97,8 +81,6 @@ check('所有 CSS 文件非空', () => {
 });
 
 check('拆分元数据登记的分片都存在且已被引入', () => {
-    // .base-split.json 只用来核对「哪些文件属于拆分产物」这一结构事实，
-    // 不校验行数——内容本就可以自由增删。
     const metaPath = path.join(CSS, '.base-split.json');
     if (!fs.existsSync(metaPath)) return;
     const meta = JSON.parse(fs.readFileSync(metaPath, 'utf8'));

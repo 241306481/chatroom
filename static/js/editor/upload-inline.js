@@ -1,15 +1,7 @@
-// ============================================================
-// 编辑器内联图片上传
-// 域上下文 → 上传到域文件；否则 → 上传到用户文件
-// ============================================================
 (function () {
     function getUploadUrl() {
         const dn = window.__DOMAIN__;
         if (dn) return '/domain/' + encodeURIComponent(dn) + '/files/upload';
-        // 不带 visibility=public：/myfile/upload 默认 private，
-        // 而「我的文件」页的常规上传走的也是同一默认值。
-        // 此前内联上传强制 public，同一张图从哪个界面传进去
-        // 隐私级别就不同，是个静默的越权公开。
         return '/myfile/upload';
     }
 
@@ -28,9 +20,6 @@
             input.style.display = 'none';
             document.body.appendChild(input);
 
-            // 用户取消系统文件对话框时不会触发 change，这个隐藏 input
-            // 会永久留在 document 里。选完后窗口重新获得焦点，
-            // 若仍未选中文件就说明是取消，清理掉。
             let settled = false;
             const cleanup = function () {
                 if (settled) return;
@@ -39,7 +28,6 @@
                 window.removeEventListener('focus', onFocusBack);
             };
             const onFocusBack = function () {
-                // change 事件先于 focus 触发，所以这里读到 0 个文件即为取消
                 setTimeout(function () {
                     if (!input.files || input.files.length === 0) cleanup();
                 }, 300);

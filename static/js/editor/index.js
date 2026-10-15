@@ -1,6 +1,4 @@
-// ============================================================
 // Markdown 编辑器初始化
-// ============================================================
 (function () {
 
     window.initContextEdit = function (root) {
@@ -18,10 +16,6 @@
         const paneEdit = root.querySelector('[data-pane="edit"]');
         const panePreview = root.querySelector('[data-pane="preview"]');
         if (!ta || !preview) return;
-        // 初始化标记必须在上面的元素校验之后才置位。
-        // 提前置位会让任何一次「校验未通过」的调用永久毒化该 root：
-        // 之后即使元素齐备，再次 initContextEdit 也只会静默早退，
-        // 编辑器的工具栏/预览/拖拽全部不会接上，且没有任何报错。
         root.dataset.ctxInit = '1';
 
         // 预览

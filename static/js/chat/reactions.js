@@ -1,23 +1,15 @@
-// ============================================================
 // 表情反应：发送 + 选择器
-// ============================================================
 (function () {
 
     const REACTION_EMOJIS = ['👍', '👎', '❤️', '🎉', '😂', '😮', '😢', '🔥', '👀', '✅'];
 
-    // ---------- 发送 ----------
+// 发送
     window.sendReaction = function (id, emoji) {
         if (window.ChatWS && window.ChatWS.send) {
             window.ChatWS.send({ type: 'reaction', message_id: id, emoji });
         }
     };
 
-    // ---------- 弹出选择器 ----------
-    // 关闭必须同时摘掉 picker 和 document 上的捕获阶段监听器。
-    // 此前 close 只在它自己体内注销，而 picker 有三条移除路径
-    // （点 emoji、第 20 行换一条消息时的清扫、第 18 行的再次点击），
-    // 都会留下一个持有已分离 DOM 子树的 document 监听器，
-    // 之后每次点击都会触发它，直到某次「点击外部」恰好把它注销。
     window.toggleReactionPicker = function (msgId, btn) {
         const existId = 'reaction-picker-' + msgId;
         const existing = document.getElementById(existId);

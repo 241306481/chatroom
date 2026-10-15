@@ -1,9 +1,7 @@
-// ============================================================
 // 消息操作：发送 / 删除 / 置顶 / 禁言
-// ============================================================
 (function () {
 
-    // ---------- 发送 ----------
+// 发送
     window.sendMessage = function () {
         const input = document.getElementById('msgInput');
         if (!input) return;
@@ -23,7 +21,7 @@
         window.clearReplyTo();
     };
 
-    // ---------- 删除 ----------
+// 删除
     window.deleteMessage = function (id) {
         window.showConfirm('删除这条消息？').then(function (ok) {
             if (!ok) return;
@@ -33,7 +31,7 @@
         });
     };
 
-    // ---------- 置顶 / 取消置顶 ----------
+// 置顶 / 取消置顶
     window.pinMessage = function (id) {
         if (window.ChatWS && window.ChatWS.isOpen()) {
             window.ChatWS.send({ type: 'pin', message_id: id });
@@ -41,7 +39,7 @@
     };
     window.unpinMessage = window.pinMessage;
 
-    // ---------- 禁言成员 ----------
+// 禁言成员
     window.muteMember = function (uid) {
         window.showPrompt('禁言时长（分钟）', '60', { title: '禁言成员' }).then(function (mins) {
             if (mins === null) return;

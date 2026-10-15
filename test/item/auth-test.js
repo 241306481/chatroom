@@ -48,8 +48,6 @@ const tryOpen = ws => new Promise(r => {
     setTimeout(() => r(false), 2500);
 });
 
-// 本套件测纯 HTTP 部署路径；若残留证书，server.js 会自动切到 HTTPS，
-// 导致下面的明文请求被直接重置（socket hang up）。
 clearTlsArtifacts(ROOT);
 
 (async () => {
@@ -66,10 +64,6 @@ clearTlsArtifacts(ROOT);
     const uidB = storage.findUserByNickname('bobbb88').id;
     const uidC = storage.findUserByNickname('carol88').id;
 
-    // ================= #4 时区：封禁到期时间（放在 IP 封禁之前） =================
-    // ip-bans 有 60 秒缓存，一旦本进程封禁 127.0.0.1，
-    // 后续所有 HTTP/WS 都会被服务器拒掉（且无法从测试进程解除），
-    // 所以必须把依赖 HTTP 的检查放在封禁之前。
     await check('#4 "2026-10-14T12:00"（无秒无 Z）被接受并规范化', () => {
         assert.strictEqual(auth.normalizeUntil('2026-10-14T12:00'), '2026-10-14T12:00:00Z');
     });
@@ -101,8 +95,6 @@ clearTlsArtifacts(ROOT);
         }
     });
     await check('#4 域内封禁接口接受无秒时间（走 HTTP）', async () => {
-        // 用第三个用户：域封禁会让该用户无法建立 WS，
-        // 而后面还要用它验证 IP 封禁前的正常 WS。
         const r = await req('POST', '/domain/system/manage/user',
             { body: { action: 'ban', user_id: uidC, reason: 'tz', until: '2099-06-01T12:00' }, cookie: ROOT_C });
         const loc = String(r.headers.location || '');
@@ -112,7 +104,7 @@ clearTlsArtifacts(ROOT);
         assert.strictEqual(ban.until, '2099-06-01T12:00:00Z', '落库值未规范化: ' + ban.until);
     });
 
-    // ================= #3 IP 封禁后 WS 必须断开 =================
+    // #3 IP 封禁后 WS 必须断开
     await check('#3 正常情况下 WS 可建立', async () => {
         const w = new WebSocket(`ws://127.0.0.1:${PORT}/ws/discuss/system/general`,
             { headers: { Cookie: B } });
@@ -154,7 +146,7 @@ clearTlsArtifacts(ROOT);
         assert.strictEqual(ipb.matchRule('10.0.0.1', '192.168.5.*'), false);
     });
 
-    // ================= #4 时区：域内封禁的到期时间 =================
+    // #4 时区：域内封禁的到期时间
     await check('#4 datetime-local 无秒值在 IP 封禁管理链路同样被接受', () => {
         // 此时 IP 已封，HTTP 一律 403；改为直接验证存储层解析链路
         const ipb = require('../../lib/storage/ip-bans');
@@ -166,7 +158,7 @@ clearTlsArtifacts(ROOT);
         ipb.removeByRule('9.9.9.9');
     });
 
-    // ================= #6 触屏：点用户菜单能展开 =================
+    // #6 触屏：点用户菜单能展开
     await check('#6 菜单点击可切换展开（不再直接跳走）', () => {
         const src = fs.readFileSync(path.join(ROOT, 'static/js/core/menu.js'), 'utf8');
         assert.ok(/classList\.toggle\('show'\)/.test(src), '按钮未切换菜单');

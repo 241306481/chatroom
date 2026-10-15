@@ -1,6 +1,4 @@
-// ============================================================
 // 表格形状选择器
-// ============================================================
 window.EditorTable = {
     attach({ root, ta, refresh, closeAll }) {
         const shape = root.querySelector('[data-table-shape]');

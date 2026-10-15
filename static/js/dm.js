@@ -1,6 +1,4 @@
-// ============================================================
 // 私信 WebSocket（含通知）
-// ============================================================
 (function () {
     if (!window.MY_UID) return;
     const WS_PROTOCOL = window.__WS_PROTOCOL__ || 'ws';
@@ -139,14 +137,10 @@
 
                 const av = document.createElement('span');
                 av.className = 'avatar-circle';
-                // 颜色走 style 属性接口，不做字符串拼接：
-                // 昵称/颜色是用户可控的，拼进 style="..." 就能用 " 闭合属性
                 av.style.background = u.avatar_color || '#888';
                 av.textContent = (u.nickname || '?')[0];
 
                 const nick = document.createElement('span');
-                // 昵称允许 < > " 等字符（validateNickname 只挡保留词/数字开头/
-                // 控制字符/反斜杠），必须用 textContent，不能拼 innerHTML
                 nick.textContent = u.nickname || '?';
 
                 const uid = document.createElement('span');
@@ -244,7 +238,6 @@ function appendDM(msg, isMe) {
         // column-reverse：插到 DOM 开头 = 视觉底部
         inner.insertBefore(div, inner.firstElementChild);
 
-        // 仅当用户本来就在底部时才置底；否则保持视口位置，让 banner 提示
         if (wasAtBottom) {
             list.scrollTop = 0;
         }

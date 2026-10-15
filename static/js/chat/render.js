@@ -1,11 +1,7 @@
-// ============================================================
 // 消息 DOM 渲染 + 表情渲染 + 讨论侧栏
-// ============================================================
 (function () {
 
-    // ============================================================
     // 新消息提示条
-    // ============================================================
     let _newMsgCount = 0;
     let _banner = null;
 
@@ -62,7 +58,7 @@
         bindBottomWatcher();
     }
 
-    // ---------- 讨论侧栏 ----------
+// 讨论侧栏
     function addDiscussionToSidebar(id, title) {
         const sidebar = document.querySelector('.sidebar-discussions');
         if (!sidebar) return;
@@ -83,11 +79,8 @@
         if (a) a.remove();
     }
 
-    // ---------- 追加 / 移除消息 ----------
+// 追加 / 移除消息
 
-    // 头像色是持久化的用户可控字段（console 的 profile 命令可原样写入），
-    // 不能直接拼进 style="..."：esc() 只处理 & < >，一个 " 就能闭合属性。
-    // 提到模块作用域，供讨论消息与私信消息两个构建器共用。
     function safeColor(c) {
         const s = String(c || '');
         if (/^#[0-9a-fA-F]{3,8}$/.test(s)) return s;
@@ -142,11 +135,6 @@
                            <span class="reply-quote-content">${esc(msg.reply_info.content)}</span>
                        </div>`)
             : '';
-        // 撤回是 own/any 分离的双检操作，两个标志都必须存在：
-        // 之前只有 __CAN_REVOKE_ANY__ 且从未被服务端下发，
-        // 结果是「有权限的版主看不到撤回按钮」「没权限的人反而看到按钮、
-        // 点下去被服务端拒绝」。现由 base.html 下发 __CAN_REVOKE_OWN__ /
-        // __CAN_REVOKE_ANY__，与服务端渲染历史消息时用的判据保持一致。
         const revokeBtn = !revoked && (isOwn
             ? window.__CAN_REVOKE_OWN__ === true
             : window.__CAN_REVOKE_ANY__ === true)
@@ -188,7 +176,7 @@
         return div;
     }
 
-    // ---------- 私信消息构建（虚拟滚动用） ----------
+// 私信消息构建（虚拟滚动用）
     function buildDMMessageEl(msg) {
         const isMe = !!msg.is_me;
         const div = document.createElement('div');
@@ -315,7 +303,7 @@
         updateReplyQuotes(messageId, false);
     }
 
-    // ---------- 置顶 ----------
+// 置顶
     function updatePinned(id, pinned, msg) {
         const el = document.querySelector(`.message[data-id="${id}"]`);
         if (el) {
@@ -372,7 +360,7 @@
                 : '');
     }
 
-    // ---------- 表情 ----------
+// 表情
     function renderReaction(container, msgId, emoji, count, mine) {
         let b = container.querySelector('[data-emoji="' + CSS.escape(emoji) + '"]');
         if (count <= 0) { if (b) b.remove(); return; }
@@ -402,7 +390,7 @@
         renderReaction(c, msgId, emoji, count, mine);
     }
 
-    // ---------- 历史渲染 ----------
+// 历史渲染
     function renderAllHistory() {
         document.querySelectorAll('.msg-content[data-raw]').forEach(function (el) {
             if (el.dataset.rendered === '1') return;
@@ -411,7 +399,7 @@
         });
     }
 
-    // ---------- 初始化历史表情 ----------
+// 初始化历史表情
     function initReactionsIn(el) {
         if (el.dataset.rendered === '1') return;
         let obj = {};
@@ -429,7 +417,7 @@
         document.querySelectorAll('.msg-reactions[data-reactions]').forEach(initReactionsIn);
     }
 
-    // ---------- 工具 ----------
+// 工具
     function scrollBottom() {
         const l = document.getElementById('messageList');
         if (l) l.scrollTop = 0;
@@ -443,7 +431,7 @@
         setTimeout(() => t.remove(), 3000);
     }
 
-    // ---------- 导出 ----------
+// 导出
     window.ChatRender = {
         addDiscussionToSidebar,
         removeDiscussionFromSidebar,
