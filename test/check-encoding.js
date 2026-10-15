@@ -18,7 +18,7 @@ const path = require('path');
 
 const ROOT = path.join(__dirname, '..');
 // 只扫自己写的代码：static/katex 等第三方产物不归我们管
-const DIRS = ['lib', 'test', 'scripts', 'static/js'];
+const DIRS = ['lib', 'test', 'static/js'];
 const EXT = new Set(['.js']);
 
 function walk(dir, out) {

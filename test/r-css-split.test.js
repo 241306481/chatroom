@@ -9,7 +9,8 @@ const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
 
-const CSS = 'D:/chatroom/static/css';
+const ROOT = path.join(__dirname, '..');
+const CSS = path.join(ROOT, 'static/css');
 const ORIG = path.join(__dirname, 'fixtures', 'base.css.orig');
 
 const results = [];
@@ -84,6 +85,27 @@ check('没有遗留对旧单体 base.css 的重复内容', () => {
         const s = fs.readFileSync(path.join(CSS, n), 'utf8');
         assert.ok(/data-theme="dark"/.test(s), n + ' 未包含任何深色规则');
     }
+});
+
+check('main.css 不含非法注释（// 会让 @import 静默失效）', () => {
+    // CSS 只支持 /* ... */ 注释。用 // 写注释时，@import 会被整个忽略，
+    // 所有样式失效，但页面只是「看起来没样式」，没有任何报错 ——
+    // 上一版就这么踩过，是靠真实浏览器逐层排查才发现的。
+    const m = fs.readFileSync(path.join(CSS, 'main.css'), 'utf8');
+    assert.ok(!/^\s*\/\//m.test(m), 'main.css 含 // 注释，@import 会失效');
+    // CSS 注释不能嵌套：注释体内出现 /* 会提前终止注释
+    const bad = [];
+    let depth = 0;
+    for (const line of m.split('\n')) {
+        if (line.includes('/*')) depth++;
+        if (line.includes('*/')) depth--;
+        if (depth > 1) bad.push(line.trim().slice(0, 40));
+        if (depth < 0) break;
+    }
+    assert.strictEqual(depth, 0, 'main.css 注释未闭合');
+    assert.strictEqual(bad.length, 0, '注释体内出现 /*：' + bad.join('; '));
+    // @import 必须仍在
+    assert.ok(m.includes("@import url('./base.css')"), '缺少 base.css 导入');
 });
 
 check('main.css 保留了说明性注释', () => {

@@ -4,9 +4,9 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const { spawn } = require('child_process');
-const { WebSocket } = require('D:/chatroom/node_modules/ws');
+const { WebSocket } = require('ws');
 
-const ROOT = 'D:/chatroom';
+const ROOT = path.join(__dirname, '..');
 const DATA = path.join(ROOT, 'data');
 if (fs.existsSync(DATA)) fs.rmSync(DATA, { recursive: true, force: true });
 
@@ -50,12 +50,12 @@ const tryOpen = ws => new Promise(r => {
 
 // 本套件测纯 HTTP 部署路径；若残留证书，server.js 会自动切到 HTTPS，
 // 导致下面的明文请求被直接重置（socket hang up）。
-clearTlsArtifacts('D:/chatroom');
+clearTlsArtifacts(ROOT);
 
 (async () => {
     await waitForServer(PORT);
-    const storage = require('D:/chatroom/lib/storage');
-    const auth = require('D:/chatroom/lib/auth');
+    const storage = require('../lib/storage');
+    const auth = require('../lib/auth');
 
     const ROOT_C = cookieOf(await req('POST', '/register',
         { body: { nickname: 'rootbb', password: 'pw123456', confirm_password: 'pw123456' } }));
@@ -91,7 +91,7 @@ clearTlsArtifacts('D:/chatroom');
         assert.strictEqual(auth.normalizeUntil('abc'), null);
     });
     await check('#4 与 auth 侧校验规则完全一致', () => {
-        const ipb = require('D:/chatroom/lib/storage/ip-bans');
+        const ipb = require('../lib/storage/ip-bans');
         for (const v of ['2026-10-14T12:00', '2099-06-01T12:00', '2024-02-30T12:00', 'abc']) {
             let ipbRes;
             try { ipb.addBan('10.4.4.4', { until: v }); ipbRes = 'ok'; ipb.removeByRule('10.4.4.4'); }
@@ -149,7 +149,7 @@ clearTlsArtifacts('D:/chatroom');
             'location=' + banRes.headers.location);
     });
     await check('#3 通配规则也能匹配', () => {
-        const ipb = require('D:/chatroom/lib/storage/ip-bans');
+        const ipb = require('../lib/storage/ip-bans');
         assert.strictEqual(ipb.matchRule('192.168.5.77', '192.168.5.*'), true);
         assert.strictEqual(ipb.matchRule('10.0.0.1', '192.168.5.*'), false);
     });
@@ -157,7 +157,7 @@ clearTlsArtifacts('D:/chatroom');
     // ================= #4 时区：域内封禁的到期时间 =================
     await check('#4 datetime-local 无秒值在 IP 封禁管理链路同样被接受', () => {
         // 此时 IP 已封，HTTP 一律 403；改为直接验证存储层解析链路
-        const ipb = require('D:/chatroom/lib/storage/ip-bans');
+        const ipb = require('../lib/storage/ip-bans');
         assert.doesNotThrow(() => {
             ipb.addBan('9.9.9.9', { until: '2099-06-01T12:00' });
         }, 'datetime-local 无秒格式被拒绝');

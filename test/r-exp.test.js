@@ -1,12 +1,14 @@
 // [回归] exp 立即落盘 + 通知不延迟/不合并
+const path = require('path');
 const assert = require('assert');
 const fs = require('fs');
-const DATA = 'D:/chatroom/data';
+const ROOT = path.join(__dirname, '..');
+const DATA = path.join(ROOT, 'data');
 if (fs.existsSync(DATA)) fs.rmSync(DATA, { recursive: true, force: true });
 
-const storage = require('D:/chatroom/lib/storage');
-const auth = require('D:/chatroom/lib/auth');
-const exp = require('D:/chatroom/lib/auth/exp');
+const storage = require('../lib/storage');
+const auth = require('../lib/auth');
+const exp = require('../lib/auth/exp');
 
 const results = [];
 const check = (n, f) => { try { f(); results.push(['PASS', n]); } catch (e) { results.push(['FAIL', n + ' -> ' + e.message]); } };
@@ -36,7 +38,7 @@ check('跨级 award 立即生效（+5 一次跨两级）', () => {
     assert.strictEqual(m.level, 2, '15 点应为 Lv.2，实际 ' + m.level);
 });
 check('源码中不再存在 5 秒定时器/跨请求缓冲', () => {
-    const src = fs.readFileSync('D:/chatroom/lib/auth/exp.js', 'utf8');
+    const src = fs.readFileSync(path.join(ROOT, 'lib/auth/exp.js'), 'utf8');
     assert.ok(!/FLUSH_INTERVAL_MS|setTimeout|pending\.set|pending\.get/.test(src),
         '仍存在缓冲或定时器');
     assert.ok(!/const pending = new Map/.test(src), 'pending 缓冲未移除');

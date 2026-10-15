@@ -7,35 +7,29 @@ npm test          # 编码守卫 + 全部回归套件
 node --check <改动的 .js 文件>
 ```
 
-`npm test` 的第一道关是编码守卫（`scripts/check-encoding.js`），任何源码里出现
+`npm test` 的第一道关是编码守卫（`test/check-encoding.js`），任何源码里出现
 UTF-8 BOM 或 U+FFFD 替换字符都会直接失败并列出文件与行号。
+
+回归套件全部位于 `test/`，入口是 `test/test.js`（即 `npm test`）。
 
 ---
 
 ## 文件读写约束
 
-> 这一节是血的教训，不是形式主义。请完整读完再改含中文的文件。
-
 ### 禁止
 
 **禁止**使用 PowerShell 的 `Get-Content` / `Set-Content` / `-replace` / `Out-File`
-处理含中文的源文件（会因 GBK/UTF-8 不匹配损坏内容）。
+处理含中文的源文件（会因代码页不匹配损坏内容）。
 
-原因：Windows PowerShell 5.1 的 `Get-Content` 默认按系统 ANSI 代码页（本机为
-GBK）解码，而源文件是 UTF-8。读进来的已经是乱码，再 `Set-Content` 写回去时又
-被按 UTF-8 编码，乱码就此固化——而且 `Set-Content -Encoding UTF8` 还会额外
-塞一个 BOM。
+原因：PowerShell 的 `Get-Content` 在未显式指定编码时按系统 ANSI 代码页解码，
+而源文件是 UTF-8。读进来的已经是乱码，再写回去时又可能被按 UTF-8 编码，
+乱码就此固化；而且 `-Encoding UTF8` 在部分版本下还会额外塞一个 BOM。
 
 这种损坏有三个特点，让它格外危险：
 
 1. **语法完全合法**，`node --check` 过得去；
 2. **测试常常全绿**，因为被改坏的通常是注释和文案，不是逻辑；
-3. **肉眼看终端往往「好像没问题」**——乱码经过终端代码页二次渲染后，
-   有时能凑出可读的假象。
-
-真实案例：上一轮用 `Get-Content -Raw` + `-replace` 批量重命名 `lib/routes/auth.js`
-里的函数，整个文件的中文注释被写坏，还多了一个 BOM。是逐字节检查才发现的，
-而不是 `git diff`。
+3. **肉眼看终端往往「好像没问题」**，容易漏判。
 
 ### 必须
 
@@ -46,26 +40,37 @@ GBK）解码，而源文件是 UTF-8。读进来的已经是乱码，再 `Set-Co
   const s = fs.readFileSync(p, 'utf8');
   fs.writeFileSync(p, s.replace(oldStr, newStr), 'utf8');
   ```
-  批量替换建议写成临时 `.js` 脚本执行，不要塞进 `node -e "..."`——
-  PowerShell 对内联引号的转义同样会制造难以排查的坑。
+  批量替换建议写成临时 `.js` 脚本执行，不要塞进 `node -e "..."`，
+  shell 对内联引号的转义同样会制造难以排查的坑。
 - **编辑器 / IDE 自带的编辑 API**（单文件定位替换最稳）。
-- **命令行工具的 `--encoding utf8` 参数**（如支持），例如
-  ```powershell
-  Get-Content -Encoding UTF8
-  Get-Content -Raw -Encoding UTF8
-  ```
-  注意：`-Encoding` 必须**读取和写入两端都加上**，只加一边一样会损坏。
+- **显式指定 UTF-8 的编码参数**（如工具支持），并且**读取和写入两端都加上**，
+  只加一边一样会损坏。
 
 ### 校验
 
 改完含中文的文件后，跑一次：
 
 ```bash
-node scripts/check-encoding.js
+node test/check-encoding.js
 ```
 
-它会扫描 `lib/`、`test/`、`scripts/`、`static/js/` 下的所有 `.js`，
+它会扫描 `lib/`、`test/`、`static/js/` 下的所有 `.js`，
 报告 BOM、非法 UTF-8 字节、U+FFFD 三类问题，并指出行号。
+
+---
+
+## CSS 注释约束
+
+**CSS 只支持 `/* ... */` 注释，不支持 `//`。**
+
+在纯 `@import` 清单里用 `//` 写注释，会让 `@import` 被整个忽略，
+**全部样式静默失效**——页面只是「看起来没样式」，控制台零报错。
+
+另外 **CSS 注释不能嵌套**：注释体内出现 `/*` 会提前终止注释，
+后面的内容被当作规则解析。需要描述注释语法时，请用文字说明，
+不要真的写出那对符号。
+
+回归套件会检查这两条。
 
 ---
 
@@ -73,6 +78,9 @@ node scripts/check-encoding.js
 
 - 注释用中文，与现有代码保持一致。
 - 不要提交 `data/`、`logs/`、`cert.pem`、`key.pem`。
-- 新增回归用例放 `test/r-*.test.js`，并在 `scripts/test.js` 的 `SUITES` 里登记。
+- 测试代码一律放 `test/`，不要在别处散落临时脚本。
+- 新增回归用例命名为 `test/r-*.test.js`，并在 `test/test.js` 的 `SUITES` 里登记。
+- 路径一律用 `path.join(__dirname, ...)` 推导，不要硬编码绝对路径，
+  否则仓库换目录后测试会直接失效。
 - 合并重复实现时，务必确认所有调用点都已切换到新位置，并加一条断言
   「旧位置不再保留副本」，否则两份定义迟早分叉。

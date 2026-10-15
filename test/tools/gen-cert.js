@@ -19,7 +19,8 @@ const os = require('os');
 const path = require('path');
 const { execFileSync, spawnSync } = require('child_process');
 
-const ROOT = path.join(__dirname, '..');
+// 本文件在 test/tools/ 下，项目根目录要上溯两级
+const ROOT = path.join(__dirname, '..', '..');
 const CERT = path.join(ROOT, 'cert.pem');
 const KEY = path.join(ROOT, 'key.pem');
 const DAYS = '825';   // CA/B 论坛对私有证书的常见上限；Apple 也要求 >= 398 天

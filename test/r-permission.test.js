@@ -2,13 +2,14 @@
 const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
-const DATA = 'D:/chatroom/data';
+const ROOT = path.join(__dirname, '..');
+const DATA = path.join(ROOT, 'data');
 if (fs.existsSync(DATA)) fs.rmSync(DATA, { recursive: true, force: true });
 
-const storage = require('D:/chatroom/lib/storage');
-const auth = require('D:/chatroom/lib/auth');
-const { PRIV, hasPriv } = require('D:/chatroom/lib/permissions');
-const { checkDual } = require('D:/chatroom/lib/auth/privilege');
+const storage = require('../lib/storage');
+const auth = require('../lib/auth');
+const { PRIV, hasPriv } = require('../lib/permissions');
+const { checkDual } = require('../lib/auth/privilege');
 
 const results = [];
 const check = (n, f) => { try { f(); results.push(['PASS', n]); } catch (e) { results.push(['FAIL', n + ' -> ' + e.message]); } };
@@ -29,7 +30,7 @@ check('关闭前：域管理员可以置顶', () => {
     checkDual(u, auth.getDomainUser('ptest', u), 'pin_message');   // 不应抛
 });
 check('关掉 member 的 message.pin 后该位确实为 0', () => {
-    const sysRoles = require('D:/chatroom/lib/storage/system-roles');
+    const sysRoles = require('../lib/storage/system-roles');
     const roles = sysRoles.loadRoles();
     const p = { ...roles.member.privs };
     p.message = p.message & ~PRIV.MESSAGE.PIN;
@@ -46,11 +47,11 @@ check('★ 域管理员也不能置顶（全局关闭开关必须生效）', () 
 });
 check('★ WebSocket 侧行为一致（不得比 HTTP 更宽松）', () => {
     // WS 侧的闸门已抽到 discuss-guard.js（discuss.js 只保留消息/连接处理）
-    const src = fs.readFileSync('D:/chatroom/lib/websocket/discuss-guard.js', 'utf8');
+    const src = fs.readFileSync(path.join(ROOT, 'lib/websocket/discuss-guard.js'), 'utf8');
     assert.ok(/PRIV_EXEMPT_GROUPS\.has\(conf\.priv && conf\.priv\.group\)/.test(src),
         'WS 侧仍未按组收窄 skipPriv');
     // 且 discuss.js 必须真正用上它，不能留一份死副本
-    const main = fs.readFileSync('D:/chatroom/lib/websocket/discuss.js', 'utf8');
+    const main = fs.readFileSync(path.join(ROOT, 'lib/websocket/discuss.js'), 'utf8');
     assert.ok(/require\('\.\/discuss-guard'\)/.test(main), 'discuss.js 未引用 discuss-guard');
     assert.ok(!/PRIV_EXEMPT_GROUPS\.has/.test(main), 'discuss.js 仍留有本地副本');
 });

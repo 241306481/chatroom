@@ -221,8 +221,11 @@
                         hasMoreOlder = false;
                         return;
                     }
-                    // column-reverse：appendChild 到 inner 末尾 = 视觉更上方
-                    res.messages.forEach((m) => {
+                    // column-reverse：appendChild 到 inner 末尾 = 视觉更上方。
+                    // 服务端返回的是「本批最老 → 最新」的顺序，而 appendChild 会把
+                    // 后插入的顶到更上方；若按原序遍历，这一批在视觉上会被整个倒过来
+                    // （最新的那条跑到最顶）。因此必须倒序插入，让最老的一条最终留在顶部。
+                    res.messages.slice().reverse().forEach((m) => {
                         if (window.ChatRender && window.ChatRender.prependMessage) {
                             window.ChatRender.prependMessage(m);
                         }
@@ -244,6 +247,30 @@
 
         // 供 hash 定位以 urgent 模式触发（闭包状态与 scroll 触发共享）
         window.__chatLoadOlder = loadMore;
+
+        // Home 键：跳到最老的消息。column-reverse 下浏览器默认 Home 只滚
+        // 已渲染的 DOM，不会触发 loadMore，所以手动拦截：先把剩余历史全部
+        // 加载完，再滚到最顶（scrollTop = -scrollHeight）。
+        document.addEventListener('keydown', function (e) {
+            if (e.key !== 'Home') return;
+            // 输入框聚焦时不拦截（让用户正常用 Home 移动光标）
+            const tag = (e.target && e.target.tagName) || '';
+            if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+            e.preventDefault();
+            if (!hasMoreOlder) {
+                list.scrollTop = -list.scrollHeight;
+                return;
+            }
+            const loadAllOlder = () => {
+                if (!hasMoreOlder) {
+                    list.scrollTop = -list.scrollHeight;
+                    return;
+                }
+                loadMore();
+                setTimeout(loadAllOlder, 600);
+            };
+            loadAllOlder();
+        });
 
         list.addEventListener('scroll', function () {
             // column-reverse 下：scrollTop = 0 是底部，负数是向上滚

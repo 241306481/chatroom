@@ -3,7 +3,7 @@ const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
 
-const ROOT = 'D:/chatroom';
+const ROOT = path.join(__dirname, '..');
 const LOGS = path.join(ROOT, 'logs');
 fs.rmSync(LOGS, { recursive: true, force: true });
 fs.mkdirSync(LOGS, { recursive: true });
@@ -13,7 +13,7 @@ process.env.LOG_MAX_BYTES = '8192';   // 便于在测试里跑出轮转
 const results = [];
 const check = (n, f) => { try { f(); results.push(['PASS', n]); } catch (e) { results.push(['FAIL', n + ' -> ' + e.message]); } };
 
-const logger = require('D:/chatroom/lib/logger');
+const logger = require('../lib/logger');
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 // 部分检查需要等待 WriteStream flush

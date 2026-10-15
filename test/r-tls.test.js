@@ -5,9 +5,9 @@ const path = require('path');
 const https = require('https');
 const http = require('http');
 const { spawn, spawnSync } = require('child_process');
-const { WebSocket } = require('D:/chatroom/node_modules/ws');
+const { WebSocket } = require('ws');
 
-const ROOT = 'D:/chatroom';
+const ROOT = path.join(__dirname, '..');
 const DATA = path.join(ROOT, 'data');
 const CERT = path.join(ROOT, 'cert.pem');
 const KEY = path.join(ROOT, 'key.pem');
@@ -44,7 +44,7 @@ function httpsPost(p, body) {
     // ---- 生成证书 ----
     await check('★ npm run cert 可生成 cert.pem / key.pem', async () => {
         fs.rmSync(CERT, { force: true }); fs.rmSync(KEY, { force: true });
-        const r = spawnSync(process.execPath, [path.join(ROOT, 'scripts/gen-cert.js')],
+        const r = spawnSync(process.execPath, [path.join(ROOT, 'test/tools/gen-cert.js')],
             { cwd: ROOT, encoding: 'utf8', timeout: 60000 });
         const out = (r.stdout || '') + (r.stderr || '');
         assert.ok(fs.existsSync(CERT), '未生成 cert.pem:\n' + out.slice(0, 400));

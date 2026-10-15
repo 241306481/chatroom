@@ -5,9 +5,9 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "cert": "node scripts/gen-cert.js",
+    "cert": "node test/tools/gen-cert.js",
     "console": "node lib/console/index.js",
-    "test": "node scripts/test.js"
+    "test": "node test/test.js"
   },
   "dependencies": {
     "nunjucks": "^3.2.4",
