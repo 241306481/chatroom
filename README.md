@@ -282,12 +282,12 @@ WebSocket 端点：
 
 改动前请先读 [CONTRIBUTING.md](CONTRIBUTING.md)，那里有几条踩过坑之后定下的硬约束（尤其是文件读写与 CSS 注释）。
 
-## 提示
-
-本文由 AI 生成
-
 ## License
 
 Licensed under the [Apache License 2.0](LICENSE).
 
 Copyright 2026 241306481. See [NOTICE](NOTICE) for attribution requirements.
+
+## 提示
+
+本文由 AI 生成
