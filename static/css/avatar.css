@@ -1,4 +1,4 @@
-/* 图片头像。共用首字头像的尺寸，靠 object-fit 裁圆 */
+/* 图片头像。共用首字头像尺寸，靠 object-fit 裁圆 */
 
 .avatar-img {
   object-fit: cover;

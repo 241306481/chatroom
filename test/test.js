@@ -40,7 +40,9 @@ for (const f of ['cert.pem', 'key.pem']) {
     if (fs.existsSync(p)) { try { fs.rmSync(p); } catch (e) {} }
 }
 
-let pass = 0, fail = 0;
+let pass = 0, fail = 0, skip = 0;
+const skipWhy = [];   // {suite, reason}
+
 for (const s of SUITES) {
     const f = path.join(TMP, s);
     if (!fs.existsSync(f)) {
@@ -59,11 +61,30 @@ for (const s of SUITES) {
     } catch (e) {
         out = (e.stdout || '') + (e.stderr || '');
     }
-    const m = out.match(/(\d+) passed, (\d+) failed/);
+    const m = out.match(/(\d+) passed, (\d+) failed(?:, (\d+) skipped)?/);
+    const sk = m && m[3] ? +m[3] : 0;
     const line = m ? m[0] : 'NO RESULT';
     if (m && +m[2] === 0) pass += +m[1]; else { fail++; console.log(out.slice(-2500)); }
+    if (sk) {
+        skip += sk;
+        // 机器可读的跳过原因
+        const r = out.split('\n').find((l) => l.startsWith('SKIP: '));
+        skipWhy.push({ suite: s, n: sk, reason: r ? r.slice(5).trim() : '未说明原因' });
+    }
     console.log(`${s.padEnd(26)} ${line}`);
 }
-console.log('-'.repeat(50));
-console.log(`${pass} passed, ${fail > 0 ? fail : 0} failed`);
+
+if (skipWhy.length) {
+    console.log('-'.repeat(50));
+    console.log(`跳过 ${skip} 项（不计入失败）：`);
+    for (const w of skipWhy) {
+        console.log(`  ${w.suite}  ${w.n} 项`);
+        console.log(`    ${w.reason}`);
+    }
+    console.log('-'.repeat(50));
+}
+
+const total = `${pass} passed, ${fail > 0 ? fail : 0} failed`
+    + (skip ? `, ${skip} skipped` : '');
+console.log(total);
 process.exit(fail > 0 ? 1 : 0);

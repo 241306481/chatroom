@@ -1,4 +1,4 @@
-// 头像上传 / 删除。挂在 profile 页的编辑区。
+// 头像上传 / 删除
 (function () {
     const fileInput = document.getElementById('avatarFile');
     const uploadBtn = document.getElementById('avatarUploadBtn');
@@ -16,7 +16,7 @@
     }
 
     function afterChange() {
-        // 换图后 URL 变了，重新加载才能拿到新图
+        // URL 变了要重载才有新图
         location.reload();
     }
 
@@ -26,7 +26,7 @@
         const f = fileInput.files && fileInput.files[0];
         if (!f || busy) return;
 
-        // 前端先挡一道，减少无谓往返；服务端仍按魔数复验
+        // 只挡一道，服务端仍按魔数复验
         if (!/^image\/(png|jpeg|gif|webp)$/.test(f.type)) {
             alert('仅支持 PNG / JPEG / GIF / WebP');
             fileInput.value = '';

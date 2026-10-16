@@ -1,5 +1,5 @@
 'use strict';
-// 前端头像渲染：有图用 img，否则首字+颜色，加载失败自动回退
+// 有图用 img，否则首字+颜色
 (function () {
     const EXTS = { png: 1, jpg: 1, gif: 1, webp: 1 };
 

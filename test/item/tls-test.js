@@ -12,6 +12,7 @@ const DATA = path.join(ROOT, 'data');
 const CERT = path.join(ROOT, 'cert.pem');
 const KEY = path.join(ROOT, 'key.pem');
 const PORT = 5192;
+const SKIP_N = 8;   // 缺证书工具时要跳过的用例数
 
 const results = [];
 const check = async (n, f) => {
@@ -41,11 +42,40 @@ function httpsPost(p, body) {
 (async () => {
     if (fs.existsSync(DATA)) fs.rmSync(DATA, { recursive: true, force: true });
 
-    // 生成证书
-    await check('★ npm run cert 可生成 cert.pem / key.pem', async () => {
-        fs.rmSync(CERT, { force: true }); fs.rmSync(KEY, { force: true });
+    // exit 2 = 缺工具，跳过而非判失败
+    const probe = spawnSync(process.execPath, [path.join(ROOT, 'test/tools/gen-cert.js'), '--check'],
+        { cwd: ROOT, encoding: 'utf8', timeout: 60000 });
+    if (probe.status === 2) {
+        const lines = String(probe.stdout || '').split('\n');
+        // 拼成一句话给 test.js 汇总
+        const tools = ['openssl', 'mkcert', 'PowerShell']
+            .map((t) => {
+                const l = lines.find((x) => x.includes('- ' + t + ':'));
+                if (!l) return null;
+                return t + ' ' + (l.includes('未找到') || l.includes('不可用') ? '无' : '可用');
+            })
+            .filter(Boolean);
+        const reason = 'TLS 用例需要证书工具，本机 ' + (tools.join('、') || '无可用工具');
+        const hint = '装 openssl 或 mkcert 后重跑 npm test 即可覆盖';
+
+        console.log('\n======== [回归] TLS / HTTPS ========');
+        console.log('[跳过] ' + SKIP_N + ' 项用例未执行');
+        for (const l of lines.filter((x) => /未找到|不可用|winget|apt-get|brew/.test(x)).slice(0, 5)) {
+            console.log('       ' + l.trim());
+        }
+        console.log('       ' + hint);
+        // test.js 据此把跳过原因汇总到末尾
+        console.log('SKIP: ' + reason + '；' + hint);
+        console.log('0 passed, 0 failed, ' + SKIP_N + ' skipped\n');
+        process.exit(0);
+    }
+
+    // 从零重建，否则这条用例形同虚设
+    await check('★ npm run cert 可生成 cert.pem / key.pem', () => {
+        fs.rmSync(CERT, { force: true });
+        fs.rmSync(KEY, { force: true });
         const r = spawnSync(process.execPath, [path.join(ROOT, 'test/tools/gen-cert.js')],
-            { cwd: ROOT, encoding: 'utf8', timeout: 60000 });
+            { cwd: ROOT, encoding: 'utf8', timeout: 120000 });
         const out = (r.stdout || '') + (r.stderr || '');
         assert.ok(fs.existsSync(CERT), '未生成 cert.pem:\n' + out.slice(0, 400));
         assert.ok(fs.existsSync(KEY), '未生成 key.pem');

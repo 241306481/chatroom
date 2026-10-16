@@ -56,6 +56,97 @@ function findOpenssl() {
     return null;
 }
 
+function findMkcert() {
+    if (have('mkcert', ['-version'])) return 'mkcert';
+    const home = process.env.USERPROFILE || '';
+    const candidates = [
+        home + '\\bin\\mkcert.exe',
+        (process.env.LOCALAPPDATA || '') + '\\Microsoft\\WinGet\\Links\\mkcert.exe',
+        (process.env.ProgramData || '') + '\\chocolatey\\bin\\mkcert.exe',
+        home + '\\scoop\\shims\\mkcert.exe',
+        '/usr/local/bin/mkcert',
+        '/opt/homebrew/bin/mkcert',
+    ];
+    for (const c of candidates) {
+        if (c && fs.existsSync(c) && have(c, ['-version'])) return c;
+    }
+    return null;
+}
+
+// 不加 -install，否则会改信任库
+function viaMkcert(bin) {
+    const names = ['localhost', '127.0.0.1', ...lanIps()];
+    execFileSync(bin, ['-cert-file', CERT, '-key-file', KEY, ...names],
+        { stdio: ['ignore', 'ignore', 'ignore'] });
+    return names.join(' / ');
+}
+
+// 老版本没有 -exportPEM。报错文案随语言变，故拿一个
+// 必然无效的开关做对照：输出一致即说明都被拒了
+function certutilSupportsExportPEM() {
+    const norm = (s) => String(s || '').replace(/-exportPEM|-zzzzzNope/g, 'X')
+        .replace(/\s+/g, ' ').trim();
+    const bad = spawnSync('certutil', ['-zzzzzNope'], { encoding: 'utf8' });
+    const real = spawnSync('certutil', ['-exportPEM'], { encoding: 'utf8' });
+    const oBad = norm(bad.stdout) + norm(bad.stderr);
+    const oReal = norm(real.stdout) + norm(real.stderr);
+    if (!oReal) return false;
+    return oReal !== oBad;
+}
+
+// 仅探测，不产生副作用
+function canWindowsNative() {
+    return process.platform === 'win32'
+        && have('certutil', ['-?'])
+        && certutilSupportsExportPEM();
+}
+
+// 临时证书用完即从证书存储删除
+function viaWindowsNative() {
+    if (!canWindowsNative()) return false;
+    const out = path.join(os.tmpdir(), 'chatroom-cert-' + process.pid);
+    fs.rmSync(out, { recursive: true, force: true });
+    fs.mkdirSync(out, { recursive: true });
+
+    // 必须 ASCII，PS 5.1 会踩代码页
+    const ps = [
+        "$ErrorActionPreference='Stop'",
+        "$ips=@(" + lanIps().map((ip) => "'" + ip + "'").join(',') + ")",
+        "$san='2.5.29.17={text}ipaddress=127.0.0.1&dns=localhost'",
+        "foreach($ip in $ips){$san+=\"&ipaddress=$ip\"}",
+        "$c=New-SelfSignedCertificate -Type SSLServerAuthentication -Subject 'CN=chatroom.local' -CertStoreLocation Cert:\\CurrentUser\\My -TextExtension $san -NotAfter (Get-Date).AddDays(825) -KeyExportPolicy Exportable -KeyUsage DigitalSignature,KeyEncipherment -KeyLength 2048",
+        "$pfx=Join-Path $env:TEMP ('chatroom-'+[guid]::NewGuid().ToString()+'.pfx')",
+        "try{",
+        "  Export-PfxCertificate -Cert $c -FilePath $pfx -Password (ConvertTo-SecureString -String 'chatroom' -Force -AsPlainText)|Out-Null",
+        "  certutil -user -f -p chatroom -exportPEM $pfx '" + out + "'|Out-Null",
+        "}finally{",
+        "  Remove-Item $pfx -Force -ErrorAction SilentlyContinue",
+        "  Remove-Item ('Cert:\\CurrentUser\\My\\'+$c.Thumbprint) -Force -ErrorAction SilentlyContinue",
+        "}",
+    ].join('\n');
+
+    try {
+        execFileSync('powershell', ['-NoProfile', '-NonInteractive', '-Command', ps],
+            { stdio: ['ignore', 'ignore', 'pipe'] });
+    } catch (e) {
+        fs.rmSync(out, { recursive: true, force: true });
+        return false;
+    }
+    // 文件名随版本而变，按内容认
+    let cert = null, key = null;
+    for (const f of fs.readdirSync(out)) {
+        const p = path.join(out, f);
+        const head = fs.readFileSync(p, 'utf8').slice(0, 200);
+        if (/BEGIN CERTIFICATE/.test(head) && !cert) cert = p;
+        if (/PRIVATE KEY/.test(head) && !key) key = p;
+    }
+    fs.rmSync(out, { recursive: true, force: true });
+    if (!cert || !key) return false;
+    fs.copyFileSync(cert, CERT);
+    fs.copyFileSync(key, KEY);
+    return true;
+}
+
 function opensslOut(bin, args) {
     const r = spawnSync(bin, args, { encoding: 'utf8' });
     if (r.error) return '';
@@ -105,6 +196,55 @@ function printTrustSteps() {
     console.log('  注意：只在自己信任的机器上这么做，且别把这张证书用于公网。');
 }
 
+// 全都没有则 exit 2，让调用方跳过而非判失败
+function locate() {
+    const oss = findOpenssl();
+    if (oss) return { via: 'openssl: ' + oss, oss, run: () => viaOpenssl(oss) };
+
+    const mk = findMkcert();
+    if (mk) return { via: 'mkcert: ' + mk, oss: null, run: () => viaMkcert(mk) };
+
+    if (canWindowsNative()) {
+        return { via: 'PowerShell New-SelfSignedCertificate + certutil', oss: null, run: () => viaWindowsNative() };
+    }
+    return null;
+}
+
+function describeMissing() {
+    console.log('\n找不到可用的证书生成工具，已试过：');
+    console.log('  - openssl: ' + (findOpenssl() || '未找到'));
+    console.log('  - mkcert: ' + (findMkcert() || '未找到'));
+    console.log('  - PowerShell + certutil: ' + (canWindowsNative() ? '可用' : '不可用'));
+    console.log('\n装任意一个后重跑：npm run cert');
+    console.log('');
+    if (process.platform === 'win32') {
+        console.log('  装 OpenSSL（Git for Windows 自带，最省事）：');
+        console.log('    winget install --id ShiningLight.OpenSSL.Light -e');
+        console.log('  装 mkcert（跨平台一致，证书更干净）：');
+        console.log('    winget install --id FiloSottile.mkcert -e');
+        console.log('  若已装 Git for Windows，确认 ' + (process.env.ProgramFiles || 'C:\\Program Files')
+            + '\\Git\\usr\\bin\\openssl.exe 存在。');
+    } else {
+        console.log('  Debian/Ubuntu : sudo apt-get install openssl');
+        console.log('  macOS         : brew install openssl mkcert');
+    }
+    console.log('');
+    console.log('不想装也可以：把任意自签名 cert.pem / key.pem 放到项目根目录即可自动启用 HTTPS。');
+    console.log('不做 HTTPS 部署的话，忽略即可——服务端会以纯 HTTP 运行。');
+}
+
+// --check 只探测，不生成
+if (process.argv.includes('--check')) {
+    const probe = locate();
+    if (probe) {
+        console.log('可用工具: ' + probe.via);
+        process.exit(0);
+    }
+    console.log('\n[无可用证书工具]');
+    describeMissing();
+    process.exit(2);
+}
+
 console.log('== 生成自签名证书 ==');
 if (fs.existsSync(CERT) && fs.existsSync(KEY)) {
     console.log('cert.pem / key.pem 已存在，未做任何改动。');
@@ -112,38 +252,24 @@ if (fs.existsSync(CERT) && fs.existsSync(KEY)) {
     process.exit(0);
 }
 
-const oss = findOpenssl();
-if (oss) {
-    const san = viaOpenssl(oss);
-    if (os.platform() !== 'win32') {
-        try { fs.chmodSync(KEY, 0o600); } catch (e) {
-            console.log('（chmod 600 key.pem 失败：' + e.message + '）');
-        }
+const tool = locate();
+if (!tool) {
+    describeMissing();
+    process.exit(2);
+}
+
+const oss = tool.oss;
+const san = tool.run();
+
+if (os.platform() !== 'win32') {
+    try { fs.chmodSync(KEY, 0o600); } catch (e) {
+        console.log('（chmod 600 key.pem 失败：' + e.message + '）');
     }
-    console.log('\n已生成：cert.pem, key.pem   (openssl: ' + oss + ')');
-    console.log('路径：', ROOT);
-    reportCert(oss, san);
-    printTrustSteps();
-    console.log('\n重启服务即可自动启用 HTTPS/WSS。');
-    console.log('启动自检会显示剩余有效期，到期前请重新运行 npm run cert。');
-    process.exit(0);
 }
-
-if (process.platform === 'win32') {
-    console.log('\n未找到 openssl，但本机是 Windows。');
-    console.log('可用的手工方式（PowerShell，需要管理员权限）：');
-    console.log('');
-    console.log('  $c = New-SelfSignedCertificate -Type SSLServerAuthentication '
-        + '-Subject "CN=chatroom.local" -CertStoreLocation Cert:\\CurrentUser\\My');
-    console.log('  Export-PfxCertificate -Cert $c -FilePath cert.pfx -Password (ConvertTo-SecureString -String "chatroom" -Force -AsPlainText)');
-    console.log('  certutil -user -password chatroom -exportPEM cert.pfx .');
-    console.log('  # 然后把 cert.pem / key.pem 移到项目根目录');
-    console.log('');
-    console.log('或安装 OpenSSL 后重跑：npm run cert');
-    process.exit(1);
-}
-
-console.log('\n未找到 openssl。请安装后重试：npm run cert');
-console.log('Debian/Ubuntu : sudo apt-get install openssl');
-console.log('macOS         : brew install openssl');
-process.exit(1);
+console.log('\n已生成：cert.pem, key.pem   (' + tool.via + ')');
+console.log('路径：', ROOT);
+reportCert(oss, san);
+printTrustSteps();
+console.log('\n重启服务即可自动启用 HTTPS/WSS。');
+console.log('启动自检会显示剩余有效期，到期前请重新运行 npm run cert。');
+process.exit(0);

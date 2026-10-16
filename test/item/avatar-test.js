@@ -1,5 +1,5 @@
 'use strict';
-// [回归] 图片头像：安全校验、存储、渲染、权限门控
+// [回归] 头像全链路
 const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
@@ -84,7 +84,7 @@ check('拒绝超过 2 MB', () => {
     assert.strictEqual(avatar.save(U.id, big).ok, false);
 });
 check('只信魔数，不信传入的文件名与 MIME', () => {
-    // 传 .svg 名但内容是 PNG，应按内容判为 png
+    // 名字是 .svg，内容按魔数判 png
     const r = avatar.save(U.id, PNG);
     assert.strictEqual(r.ext, 'png');
     assert.strictEqual(r.mime, 'image/png');
@@ -173,7 +173,7 @@ check('模板不产生 XSS：昵称与 ext 均被处理', () => {
     assert.ok(out.indexOf('/avatar/' + U.id + '/png') > 0);
     const evil2 = { id: U.id, nickname: 'x', avatar_ext: '" onerror="alert(1)', avatar_color: 'red' };
     const out2 = renderToString('users.html', { current_user: {}, nav: {}, users: [evil2] });
-    // ext 非法应回退成空 src，且 img 上只允许模板自带的那一个 onerror
+    // ext 非法要空 src，且只留模板那一个 onerror
     assert.ok(/src=""/.test(out2), '非法 ext 应产出空 src');
     const imgTag = (out2.match(/<img class="user-avatar avatar-img"[\s\S]*?>/) || [''])[0];
     assert.strictEqual((imgTag.match(/onerror=/g) || []).length, 1,
@@ -193,12 +193,12 @@ check('头像路由已注册且路径无歧义', () => {
     // 同一路径只查一次并复用结果
     const getAvatar = r.findRoute('GET', '/avatar/7/png');
     assert.ok(getAvatar, '读取路由缺失');
-    // /avatar/:uid.:ext 会被 . 切开，必须用 /avatar/:uid/:ext
+    // 路由按 . 切分，不能用 uid.:ext
     assert.strictEqual(getAvatar.params.ext, 'png', '扩展名解析错误（. 未转义）');
     assert.strictEqual(getAvatar.params.uid, '7');
     assert.ok(r.findRoute('POST', '/settings/avatar'), '上传路由缺失');
     assert.ok(r.findRoute('POST', '/settings/avatar/clear'), '删除路由缺失');
-    // /settings/avatar 不被 /user/:uid 抢走
+    // 不被 /user/:uid 抢走
     const post = r.findRoute('POST', '/settings/avatar');
     assert.ok(!post.params.uid, '被 /user/:uid 抢走了');
     assert.ok(r.findRoute('POST', '/user/5').params.uid === '5', '/user/:uid 仍应正常');

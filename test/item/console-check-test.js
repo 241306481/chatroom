@@ -1,5 +1,5 @@
 'use strict';
-// [回归] 控制台自检命令：check <功能> / check avatar repair
+// [回归] check <功能> / check avatar repair
 const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
@@ -34,7 +34,7 @@ function cleanup() {
     for (const u of [A, B]) { avatar.clear(u.id); setExt(u.id, null); }
 }
 
-// 捕获 console.log，避免自检输出刷屏
+// 屏蔽自检输出
 function silence(fn) {
     const orig = console.log;
     const buf = [];
