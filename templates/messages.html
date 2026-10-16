@@ -33,7 +33,11 @@
         <a href="/messages?target={{ c.other }}"
            class="dm-conv {% if c.other == target %}active{% endif %}"
            data-uid="{{ c.other }}">
-          <span class="avatar-circle" style="background:{{ c.avatar_color | avatarColor }}">{{ c.nickname | avatarText }}</span>
+          <img class="avatar-circle avatar-img" src="{{ c | avatarSrc }}"
+                   onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex'"
+                   alt="" loading="lazy"
+                   {% if not (c | avatarSrc) %}style="display:none"{% endif %}>
+          <span class="avatar-circle" style="background: {{ c.avatar_color | avatarColor }}">{{ c.nickname | avatarText }}</span>
           <span class="dm-conv-nick">{{ c.nickname }}</span>
           {% if c.unread > 0 %}<span class="badge-unread">{{ c.unread }}</span>{% endif %}
         </a>
@@ -47,7 +51,11 @@
     {% if target and target_user and target_user.id %}
       <div class="dm-main-header">
         <a href="/user/{{ target_user.id }}" class="dm-user-link">
-          <span class="avatar-circle" style="background:{{ target_user.avatar_color | avatarColor }}">{{ target_user.nickname | avatarText }}</span>
+          <img class="avatar-circle avatar-img" src="{{ target_user | avatarSrc }}"
+                   onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex'"
+                   alt="" loading="lazy"
+                   {% if not (target_user | avatarSrc) %}style="display:none"{% endif %}>
+          <span class="avatar-circle" style="background: {{ target_user.avatar_color | avatarColor }}">{{ target_user.nickname | avatarText }}</span>
           <span>{{ target_user.nickname }}</span>
         </a>
       </div>
@@ -58,7 +66,11 @@
             <div class="dm-msg {% if m.is_me %}dm-me{% else %}dm-other{% endif %}"
                  data-id="{{ m.id }}">
               <div class="dm-avatar-wrap">
-                <span class="dm-avatar" style="background:{{ m.avatar_color | avatarColor }}">
+                <img class="dm-avatar avatar-img" src="{{ m | avatarSrc }}"
+                         onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex'"
+                         alt="" loading="lazy"
+                         {% if not (m | avatarSrc) %}style="display:none"{% endif %}>
+                <span class="dm-avatar" style="background: {{ m.avatar_color | avatarColor }}">
                   {{ m.nickname | avatarText }}
                 </span>
               </div>

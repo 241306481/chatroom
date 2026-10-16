@@ -2,6 +2,12 @@
   "name": "chatroom",
   "version": "1.0.0",
   "private": true,
+  "license": "Apache-2.0",
+  "author": "241306481 (https://github.com/241306481)",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/241306481/chatroom.git"
+  },
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

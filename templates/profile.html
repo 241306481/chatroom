@@ -3,7 +3,11 @@
 {% block content %}
 <div class="page-container">
   <div class="profile-header">
-    <div class="profile-avatar" style="background:{{ target.avatar_color | avatarColor }}">{{ target.nickname | avatarText }}</div>
+    <img class="profile-avatar avatar-img" src="{{ target | avatarSrc }}"
+             onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex'"
+             alt="" loading="lazy"
+             {% if not (target | avatarSrc) %}style="display:none"{% endif %}>
+    <span class="profile-avatar" style="background: {{ target.avatar_color | avatarColor }}">{{ target.nickname | avatarText }}</span>
     <div class="profile-info">
       <h1>{{ target.nickname }}</h1>
       <div class="uid">UID: {{ target.id }}</div>
@@ -51,6 +55,18 @@
           <button type="button" class="btn-cancel" id="profileCancelBtn">取消</button>
         </div>
       </form>
+    </div>
+  {% endif %}
+
+  {# ============ 头像（仅本人 + 有权限位） ============ #}
+  {% if is_me and can_avatar %}
+    <div class="profile-avatar-edit">
+      <input type="file" id="avatarFile" accept="image/png,image/jpeg,image/gif,image/webp" hidden>
+      <button type="button" class="btn-avatar-upload" id="avatarUploadBtn">上传头像</button>
+      {% if target.avatar_ext %}
+        <button type="button" class="btn-avatar-clear" id="avatarClearBtn">删除</button>
+      {% endif %}
+      <span class="avatar-hint">PNG / JPEG / GIF / WebP，2 MB 以内</span>
     </div>
   {% endif %}
 
@@ -144,4 +160,5 @@
     }
 })();
 </script>
+<script src="/static/js/avatar-upload.js"></script>
 {% endblock %}

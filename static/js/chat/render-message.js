@@ -95,6 +95,7 @@
                 ${contentHtml}
                 ${reactionsDiv}
             </div>`;
+        swapAvatar(div, msg, '.msg-avatar');
         return div;
     }
 
@@ -127,9 +128,29 @@
                 + contentHtml
               + '</div>'
             + '</div>';
+        swapAvatar(div, msg, '.dm-avatar');
         return div;
     }
 
-    R.buildMessageEl = buildMessageEl;
+    // 有头像图就把首字 span 换成 <img>；图片加载失败由 Avatar 内部回退。
+// 用 DOM 操作而不是内联 onerror——内联处理器拿不到这里的 msg。
+// 私信对象的扩展名字段是 from_avatar_ext，这里一并兼容。
+function swapAvatar(div, msg, sel) {
+    if (!window.Avatar) return;
+    const ext = msg.avatar_ext || msg.from_avatar_ext || '';
+    if (!ext || !msg.id && !msg.user_id) return;
+    const u = {
+        id: msg.user_id || msg.id,
+        nickname: msg.nickname || msg.from_nickname,
+        avatar_color: msg.avatar_color || msg.from_avatar_color,
+        avatar_ext: ext,
+    };
+    if (!window.Avatar.srcOf(u)) return;
+    const span = div.querySelector(sel);
+    if (!span || !span.parentNode) return;
+    span.replaceWith(window.Avatar.build(u, sel.slice(1)));
+}
+
+R.buildMessageEl = buildMessageEl;
     R.buildDMMessageEl = buildDMMessageEl;
 })();

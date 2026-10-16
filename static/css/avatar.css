@@ -1,0 +1,56 @@
+/* 图片头像。共用首字头像的尺寸，靠 object-fit 裁圆 */
+
+.avatar-img {
+  object-fit: cover;
+  object-position: center;
+  display: inline-block;
+  background: #eee;
+  flex-shrink: 0;
+}
+
+/* 各尺寸下与对应 span 对齐 */
+.user-avatar.avatar-img,
+.member-avatar.avatar-img { width: 24px; height: 24px; }
+
+.user-avatar-lg.avatar-img { width: 36px; height: 36px; }
+
+.avatar-circle.avatar-img { width: 32px; height: 32px; }
+.avatar-circle.lg.avatar-img { width: 40px; height: 40px; }
+
+.msg-avatar.avatar-img { width: 36px; height: 36px; }
+.dm-avatar.avatar-img { width: 36px; height: 36px; }
+.profile-avatar.avatar-img { width: 80px; height: 80px; }
+
+/* 头像编辑区 */
+.profile-avatar-edit {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+.btn-avatar-upload, .btn-avatar-clear {
+  padding: 5px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background: #fff;
+  cursor: pointer;
+  font-size: 13px;
+  color: #333;
+}
+.btn-avatar-upload:hover, .btn-avatar-clear:hover { background: #f5f5f5; }
+.btn-avatar-upload:disabled, .btn-avatar-clear:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.avatar-hint { font-size: 12px; color: #999; }
+
+html[data-theme="dark"] .avatar-img { background: #333; }
+html[data-theme="dark"] .btn-avatar-upload,
+html[data-theme="dark"] .btn-avatar-clear {
+  background: #2a2a2a;
+  border-color: #3a3a3a;
+  color: #e0e0e0;
+}
+html[data-theme="dark"] .btn-avatar-upload:hover,
+html[data-theme="dark"] .btn-avatar-clear:hover { background: #333; }

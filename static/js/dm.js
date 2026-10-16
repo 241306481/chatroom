@@ -135,10 +135,15 @@
                 a.className = 'dm-search-item';
                 a.href = '/messages?target=' + encodeURIComponent(u.id);
 
-                const av = document.createElement('span');
-                av.className = 'avatar-circle';
-                av.style.background = u.avatar_color || '#888';
-                av.textContent = (u.nickname || '?')[0];
+                const av = window.Avatar
+                    ? window.Avatar.build(u, 'avatar-circle')
+                    : (function () {
+                        const s = document.createElement('span');
+                        s.className = 'avatar-circle';
+                        s.style.background = u.avatar_color || '#888';
+                        s.textContent = (u.nickname || '?')[0];
+                        return s;
+                    })();
 
                 const nick = document.createElement('span');
                 nick.textContent = u.nickname || '?';
@@ -188,10 +193,15 @@
                 a.className = 'dm-search-item';
                 a.href = '/messages?target=' + encodeURIComponent(u.id);
 
-                const av = document.createElement('span');
-                av.className = 'avatar-circle';
-                av.style.background = u.avatar_color || '#888';
-                av.textContent = (u.nickname || '?')[0];
+                const av = window.Avatar
+                    ? window.Avatar.build(u, 'avatar-circle')
+                    : (function () {
+                        const s = document.createElement('span');
+                        s.className = 'avatar-circle';
+                        s.style.background = u.avatar_color || '#888';
+                        s.textContent = (u.nickname || '?')[0];
+                        return s;
+                    })();
 
                 const nick = document.createElement('span');
                 nick.textContent = u.nickname || '?';

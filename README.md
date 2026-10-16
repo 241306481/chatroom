@@ -70,6 +70,72 @@ npm start
 
 `cert.pem` 和 `key.pem` 不会进版本库。只要它们存在于项目根目录，服务就以 HTTPS / WSS 启动；删掉即回到明文。
 
+## 反向代理
+
+`npm run cert` 生成的是**自签证书**，浏览器会红色警告、必须手动点「继续访问」。正式部署通常在服务前面加一层 Nginx / Caddy，由它持有受信任 CA 签发的证书。
+
+```
+浏览器 ──HTTPS──> Nginx ──HTTP──> 本服务 (:5000)
+```
+
+好处是证书正规、浏览器不报警、可开 HTTP/2，静态文件也能交给反代直接返回。
+
+### 必开 TRUST_PROXY
+
+反代之后，服务看到的 `remoteAddress` 永远是 `127.0.0.1`（反代自己），拿不到真实访客 IP。后果是 IP 封禁失效、`/manage/user_ips` 里全是 `127.0.0.1`、登录限流的 IP 维度形同虚设。
+
+反代会把真实 IP 写进请求头，服务据此还原：
+
+```bash
+set TRUST_PROXY=1
+set PORT=5000
+node server.js
+```
+
+`TRUST_PROXY` 接受 `1` / `true` / `yes` / `on`（不区分大小写）。
+
+> **只在确实跑在反向代理后面时才开。** 开启后服务会采信请求头里的 IP，任何人都能自行伪造，封禁与审计日志随之全部失效。
+
+读取顺序为 `X-Forwarded-For` 的**第一个**值 → `X-Real-IP` → 都没有才退回 socket 地址。所以反代必须覆盖（而非追加）这两个头，否则客户端可以在自己的 XFF 前面塞假 IP。
+
+### Nginx 配置
+
+WebSocket 需要额外转发 Upgrade 头，否则 `wss://` 连不上：
+
+```nginx
+server {
+    listen 443 ssl http2;
+    server_name chat.example.com;
+
+    ssl_certificate     /etc/letsencrypt/live/chat.example.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/chat.example.com/privkey.pem;
+
+    location / {
+        proxy_pass http://127.0.0.1:5000;
+        proxy_http_version 1.1;
+
+        # WebSocket 升级
+        proxy_set_header Upgrade    $http_upgrade;
+        proxy_set_header Connection "upgrade";
+
+        # 真实 IP 与原始协议，两者都不可少
+        proxy_set_header Host              $host;
+        proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+
+server {
+    listen 80;
+    server_name chat.example.com;
+    return 301 https://$host$request_uri;
+}
+```
+
+`X-Forwarded-Proto` 决定 Cookie 是否带 `Secure`（`isSecureRequest` 只在 `TRUST_PROXY` 开启时才读这个头），漏了会导致 HTTPS 下 Cookie 属性不正确。
+
+反代终止 TLS 后，后端保持明文即可——此时**不要**在项目根目录留 `cert.pem` / `key.pem`，否则服务会以 HTTPS 启动，反代再用 HTTP 回连就会握手失败。
+
 ## 数据存放
 
 ```
@@ -125,6 +191,27 @@ npm run console
 ```
 
 覆盖用户、域、讨论、私信、文件、封禁、系统角色、经验、会话等对象。输入 `help` 查看完整命令列表。
+
+### 自检
+
+```bash
+check              # 全局自检，逐项列出并给出通过/警告/失败统计
+check user         # 只查某一子系统
+check avatar       # 头像一致性
+check help         # 列出全部可用检查项
+check avatar repair # 头像字段与磁盘不一致时以磁盘为准回填
+```
+
+覆盖 12 个子系统：`user` `domain` `discuss` `dm` `file` `avatar` `perm` `ip` `ban` `json` `space` `session`。
+
+自检以「数据是否自洽」为主，能发现磁盘与索引脱节、字段指向已删文件、非法到期时间、角色引用不存在等问题——这些在页面上看不出来，只会在用户撞到时才暴露。
+
+另有两处带修复的自检：
+
+```bash
+ban repair          # 非法解禁时间归一为永久（封禁与禁言共用同一套修复）
+check avatar repair # 头像记录以磁盘为准
+```
 
 ## 测试
 
@@ -194,3 +281,13 @@ WebSocket 端点：
 ## 开发约定
 
 改动前请先读 [CONTRIBUTING.md](CONTRIBUTING.md)，那里有几条踩过坑之后定下的硬约束（尤其是文件读写与 CSS 注释）。
+
+## 提示
+
+本文由 AI 生成
+
+## License
+
+Licensed under the [Apache License 2.0](LICENSE).
+
+Copyright 2026 241306481. See [NOTICE](NOTICE) for attribution requirements.

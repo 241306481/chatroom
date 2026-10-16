@@ -32,7 +32,11 @@
             </td>
             <td>
               <a href="/user/{{ u.id }}" class="user-link">
-                <span class="user-avatar" style="background:{{ u.avatar_color | avatarColor }}">{{ u.nickname | avatarText }}</span>
+                <img class="user-avatar avatar-img" src="{{ u | avatarSrc }}"
+                         onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex'"
+                         alt="" loading="lazy"
+                         {% if not (u | avatarSrc) %}style="display:none"{% endif %}>
+                <span class="user-avatar" style="background: {{ u.avatar_color | avatarColor }}">{{ u.nickname | avatarText }}</span>
                 <span>{{ u.nickname }}</span>
                 {% if u.is_superuser %}<span class="badge superuser">超级管理员</span>{% endif %}
                 {% if u.is_admin and not u.is_superuser %}<span class="badge admin">系统管理员</span>{% endif %}

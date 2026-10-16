@@ -2,7 +2,11 @@
   {% for u in all_members %}
     <div class="member-item {% if not u.online %}offline{% endif %}" data-uid="{{ u.id }}">
       <span class="status-dot {% if u.online %}green{% else %}red{% endif %}"></span>
-      <span class="member-avatar" style="background:{{ u.avatar_color | avatarColor }}">{{ u.nickname | avatarText }}</span>
+      <img class="member-avatar avatar-img" src="{{ u | avatarSrc }}"
+               onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex'"
+               alt="" loading="lazy"
+               {% if not (u | avatarSrc) %}style="display:none"{% endif %}>
+      <span class="member-avatar" style="background: {{ u.avatar_color | avatarColor }}">{{ u.nickname | avatarText }}</span>
       <a href="/user/{{ u.id }}" class="member-name">{{ u.nickname }}</a>
       <span class="member-level" data-exp="exp: {{ u.exp | default(0) }}">Lv.{{ u.level }}</span>
       {% if u.is_owner %}

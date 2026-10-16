@@ -21,7 +21,11 @@
         {% for u in users %}
           <tr data-uid="{{ u.id }}" {% if u.banned %}class="row-banned"{% endif %}>
             <td>
-              <span class="user-avatar-lg" style="background:{{ u.avatar_color | avatarColor }}">{{ u.nickname | avatarText }}</span>
+              <img class="user-avatar-lg avatar-img" src="{{ u | avatarSrc }}"
+                       onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex'"
+                       alt="" loading="lazy"
+                       {% if not (u | avatarSrc) %}style="display:none"{% endif %}>
+              <span class="user-avatar-lg" style="background: {{ u.avatar_color | avatarColor }}">{{ u.nickname | avatarText }}</span>
             </td>
             <td>
               {{ u.nickname }}
