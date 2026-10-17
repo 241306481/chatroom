@@ -1,84 +1,66 @@
-// 头像上传 / 删除
+'use strict';
+// 选中后随「保存」提交，不立刻上传
 (function () {
-    const fileInput = document.getElementById('avatarFile');
-    const uploadBtn = document.getElementById('avatarUploadBtn');
-    const clearBtn = document.getElementById('avatarClearBtn');
-    if (!fileInput || !uploadBtn) return;
+    const box = document.getElementById('avatarEditBox');
+    const file = document.getElementById('avatarFile');
+    const pickBtn = document.getElementById('avatarPickBtn');
+    const removeBtn = document.getElementById('avatarRemoveBtn');
+    const cancelBtn = document.getElementById('avatarCancelBtn');
+    const picked = document.getElementById('avatarPicked');
+    const removeField = document.getElementById('avatarRemove');
+    if (!box || !file || !pickBtn) return;
 
-    // 上传中要禁掉按钮，避免重复提交产生并发写
-    let busy = false;
+    const MAX = 1024 * 1024;
+    const hadAvatar = box.dataset.hasAvatar === '1';
 
-    function setBusy(on) {
-        busy = on;
-        uploadBtn.disabled = on;
-        if (clearBtn) clearBtn.disabled = on;
-        uploadBtn.textContent = on ? '上传中…' : '上传头像';
+    function refresh() {
+        const hasNew = !!(file.files && file.files.length);
+        const willRemove = removeField.value === '1';
+        picked.hidden = !hasNew;
+        removeBtn.hidden = !(hadAvatar && !hasNew && !willRemove);
+        cancelBtn.hidden = !(hasNew || willRemove);
     }
 
-    function afterChange() {
-        // URL 变了要重载才有新图
-        location.reload();
+    function reset() {
+        file.value = '';
+        removeField.value = '0';
+        refresh();
     }
 
-    uploadBtn.addEventListener('click', function () { fileInput.click(); });
+    pickBtn.addEventListener('click', function () { file.click(); });
 
-    fileInput.addEventListener('change', function () {
-        const f = fileInput.files && fileInput.files[0];
-        if (!f || busy) return;
-
-        // 只挡一道，服务端仍按魔数复验
+    file.addEventListener('change', function () {
+        const f = file.files && file.files[0];
+        if (!f) return;
         if (!/^image\/(png|jpeg|gif|webp)$/.test(f.type)) {
-            alert('仅支持 PNG / JPEG / GIF / WebP');
-            fileInput.value = '';
+            window.showAlert ? window.showAlert('仅支持 PNG / JPEG / GIF / WebP')
+                : alert('仅支持 PNG / JPEG / GIF / WebP');
+            file.value = '';
             return;
         }
-        if (f.size > 2 * 1024 * 1024) {
-            alert('头像不能超过 2 MB');
-            fileInput.value = '';
+        if (f.size > MAX) {
+            window.showAlert ? window.showAlert('头像不能超过 1 MB')
+                : alert('头像不能超过 1 MB');
+            file.value = '';
             return;
         }
-
-        setBusy(true);
-        const fd = new FormData();
-        fd.append('file', f);
-        fetch('/settings/avatar', { method: 'POST', body: fd, credentials: 'same-origin' })
-            .then(function (r) { return r.json(); })
-            .then(function (j) {
-                if (!j || !j.ok) {
-                    alert((j && j.error) || '上传失败');
-                    setBusy(false);
-                    fileInput.value = '';
-                    return;
-                }
-                afterChange();
-            })
-            .catch(function () {
-                alert('上传失败');
-                setBusy(false);
-                fileInput.value = '';
-            });
+        removeField.value = '0';
+        picked.textContent = '已选择：' + f.name;
+        refresh();
     });
 
-    if (clearBtn) {
-        clearBtn.addEventListener('click', function () {
-            if (busy) return;
-            if (!window.showConfirm('删除头像？')) return;
-            setBusy(true);
-            fetch('/settings/avatar/clear', {
-                method: 'POST',
-                credentials: 'same-origin',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            })
-                .then(function (r) { return r.json(); })
-                .then(function (j) {
-                    if (!j || !j.ok) {
-                        alert((j && j.error) || '删除失败');
-                        setBusy(false);
-                        return;
-                    }
-                    afterChange();
-                })
-                .catch(function () { alert('删除失败'); setBusy(false); });
+    if (removeBtn) {
+        removeBtn.addEventListener('click', function () {
+            removeField.value = '1';
+            file.value = '';
+            refresh();
         });
     }
+    if (cancelBtn) cancelBtn.addEventListener('click', reset);
+
+    // 取消编辑时一并复位
+    const cancelEdit = document.getElementById('profileCancelBtn');
+    if (cancelEdit) cancelEdit.addEventListener('click', reset);
+
+    refresh();
 })();

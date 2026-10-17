@@ -77,7 +77,7 @@ const text = run([
 check('ipban list 空表', /无封禁规则/.test(text));
 check('ipban add 永久封禁', /已封禁 1\.2\.3\.4/.test(text));
 check('ipban add 通配 + 到期时间', /已封禁 10\.0\.0\.\*/.test(text) && /2099-01-01T00:00:00Z/.test(text));
-check('ipban 拒绝非法 IP 段', /IP 段需在 0-255/.test(text));
+check('ipban 拒绝非法 IP 段', /数值需在 0-255/.test(text));
 check('ipban 拒绝非法日期（不得退化成永久）', /解封时间/.test(text));
 check('ipban list 显示原因', /压测IP/.test(text));
 check('ipban check 命中', /命中规则 1\.2\.3\.4/.test(text));

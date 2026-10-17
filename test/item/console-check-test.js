@@ -134,6 +134,25 @@ check('check avatar repair 幂等', () => {
     assert.ok(/无需修复/.test(out), '二次修复应无事可做:\n' + out);
 });
 
+check('ip_bans.json 结构异常不崩溃', () => {
+    const fsp = path.join(ROOT, 'data', 'ip_bans.json');
+    fs.mkdirSync(path.dirname(fsp), { recursive: true });
+    const cases = ['{"foo":1}', '[]', 'null', '"str"', '{"rules":"x"}', '{broken'];
+    for (const bad of cases) {
+        fs.writeFileSync(fsp, bad, 'utf8');
+        delete require.cache[require.resolve(path.join(ROOT, 'lib/storage/ip-bans'))];
+        const m = require(path.join(ROOT, 'lib/storage/ip-bans'));
+        assert.deepStrictEqual(m.listAll(), [], bad + ' 应按空表处理');
+        assert.doesNotThrow(() => m.addBan('9.9.9.9', { reason: 't' }), bad + ' addBan 不应抛错');
+    }
+    fs.rmSync(fsp, { force: true });
+    for (const f of fs.readdirSync(path.join(ROOT, 'data'))) {
+        if (f.startsWith('ip_bans.json.corrupt-')) {
+            fs.rmSync(path.join(ROOT, 'data', f), { force: true });
+        }
+    }
+});
+
 check('check help 列出可用项', () => {
     const out = silence(() => cmd.help());
     assert.ok(/用法/.test(out));

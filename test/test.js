@@ -15,6 +15,8 @@ const SUITES = [
     'auth-test.js',
     'ban-until-test.js',
     'avatar-test.js',
+    'profile-avatar-test.js',
+    'register-ip-color-test.js',
     'route-safety-test.js',
     'tls-test.js',
     'console-test.js',

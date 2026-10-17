@@ -82,6 +82,8 @@
                         content: Array.from(String(data.message.content || '')).slice(0, 80).join(''),
                         color: data.message.from_avatar_color || '#1890ff',
                         avatar: Array.from(nick)[0] || '?',
+                        avatarUid: data.message.from,
+                        avatarExt: data.message.from_avatar_ext || '',
                         onClick: function () { location.href = '/messages?target=' + t; },
                     });
                 }

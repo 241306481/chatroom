@@ -9,8 +9,9 @@
       <thead>
         <tr>
           <th style="width:90px;">UID</th>
-          <th style="width:180px;">昵称</th>
+          <th style="width:160px;">昵称</th>
           <th>最近 IP（最新在前）</th>
+          <th style="width:190px;">操作</th>
         </tr>
       </thead>
       <tbody>
@@ -20,16 +21,35 @@
             <td><a href="/user/{{ u.id }}">{{ u.nickname }}</a></td>
             <td>
               {% for r in u.ips %}
-                <div style="font-size:12px;margin-bottom:4px;">
+                <div style="font-size:12px;margin-bottom:6px;">
                   <code>{{ r.ip }}</code>
-                  <span style="color:#999;margin-left:8px;">{{ r.at }}</span>
-                  <form method="POST" action="/manage/ip_bans" style="display:inline;margin-left:8px;">
-                    <input type="hidden" name="action" value="add">
-                    <input type="hidden" name="rule" value="{{ r.ip }}">
-                    <input type="hidden" name="reason" value="封禁用户 {{ u.nickname }}">
-                    <button type="submit" class="mini-btn"
-                            data-confirm="确定封禁 IP {{ r.ip }}？该 IP 之后的所有请求都会被拦截。">封禁</button>
-                  </form>
+                  <span style="color:#999;margin-left:8px;" title="{{ r.at }}">{{ r.at }}</span>
+                  {% if r.banned %}<span class="tag-banned">已封禁</span>{% endif %}
+                  {% if r.covered %}<span class="tag-warn">被通配规则覆盖</span>{% endif %}
+                </div>
+              {% endfor %}
+            </td>
+            <td>
+              {% for r in u.ips %}
+                <div style="margin-bottom:4px;">
+                  {% if r.banned %}
+                    <form method="POST" action="/manage/ip_bans" style="display:inline">
+                      <input type="hidden" name="action" value="remove">
+                      <input type="hidden" name="rule" value="{{ r.ip }}">
+                      <input type="hidden" name="back" value="/manage/user_ips">
+                      <button type="submit" class="file-action-btn"
+                              data-confirm="确定解除对 {{ r.ip }} 的封禁？">解封 {{ r.ip }}</button>
+                    </form>
+                  {% else %}
+                    <form method="POST" action="/manage/ip_bans" style="display:inline">
+                      <input type="hidden" name="action" value="add">
+                      <input type="hidden" name="rule" value="{{ r.ip }}">
+                      <input type="hidden" name="reason" value="封禁用户 {{ u.nickname }}">
+                      <input type="hidden" name="back" value="/manage/user_ips">
+                      <button type="submit" class="file-action-btn danger"
+                              data-confirm="确定封禁 IP {{ r.ip }}？该 IP 之后的所有请求都会被拦截。">封禁</button>
+                    </form>
+                  {% endif %}
                 </div>
               {% endfor %}
             </td>
@@ -41,6 +61,10 @@
     <p class="empty">暂无记录。用户登录后会自动记录其 IP。</p>
   {% endif %}
 
-  <p style="margin-top:24px;"><a href="/manage/ip_bans">← 返回 IP 封禁</a></p>
+  <p style="margin-top:24px;">
+    <a href="/manage">← 返回系统管理</a>
+    &nbsp;·&nbsp;
+    <a href="/manage/ip_bans">查看 IP 封禁</a>
+  </p>
 </div>
 {% endblock %}

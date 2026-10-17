@@ -29,3 +29,14 @@
   border: none; border-radius: 6px; cursor: pointer; font-size: 14px;
   font-family: inherit; transition: background 0.15s; white-space: nowrap; flex-shrink: 0; }
 .inline-create-form button:hover { background: #40a9ff; }
+
+/* 输入框下方即时红字提示（FieldError） */
+.field-error {
+  margin: 4px 0 0; font-size: 12px; line-height: 1.5; color: #cf1322;
+}
+.field-error[hidden] { display: none; }
+input[aria-invalid=true], textarea[aria-invalid=true] {
+  border-color: #ff7875 !important;
+}
+html[data-theme=dark] .field-error { color: #ff7875; }
+html[data-theme=dark] input[aria-invalid=true] { border-color: #a8071a !important; }

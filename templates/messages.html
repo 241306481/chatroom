@@ -66,10 +66,11 @@
             <div class="dm-msg {% if m.is_me %}dm-me{% else %}dm-other{% endif %}"
                  data-id="{{ m.id }}">
               <div class="dm-avatar-wrap">
-                <img class="dm-avatar avatar-img" src="{{ m | avatarSrc }}"
-                         onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex'"
-                         alt="" loading="lazy"
-                         {% if not (m | avatarSrc) %}style="display:none"{% endif %}>
+                {% set av = m | avatarSrc(m.from) %}
+                 <img class="dm-avatar avatar-img" src="{{ av }}"
+                          onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex'"
+                          alt="" loading="lazy"
+                          {% if not av %}style="display:none"{% endif %}>
                 <span class="dm-avatar" style="background: {{ m.avatar_color | avatarColor }}">
                   {{ m.nickname | avatarText }}
                 </span>

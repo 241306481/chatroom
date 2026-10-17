@@ -68,6 +68,20 @@ async function check(name, fn) {
     catch (e) { results.push(['FAIL', name + ' -> ' + e.message]); }
 }
 
+check('route() 的 priv 声明必须按 (group, bit) 展开传给 checkPriv', () => {
+    // 曾因 checkPriv 只收 (user, group, bit) 而误传整个对象，
+    // 结果管理员也被判 403。这里钉住调用点写法。
+    const src = fs.readFileSync(path.join(ROOT, 'lib/routes/index.js'), 'utf8');
+    assert.ok(/checkPriv\(user,\s*p\.group,\s*p\.bit\)/.test(src),
+        '应展开 group/bit 传入，不能把整个 priv 对象当 group 传');
+    assert.ok(!/checkPriv\(user,\s*found\.opts\.priv\)/.test(src),
+        '不能把 priv 对象直接传给 checkPriv');
+    // checkPriv 本身不再兼容对象签名
+    const priv = fs.readFileSync(path.join(ROOT, 'lib/auth/privilege.js'), 'utf8');
+    assert.ok(!/groupOrObj/.test(priv), 'checkPriv 不应再有旧签名兼容层');
+    assert.ok(!/checkPrivCompat/.test(priv), 'checkPrivCompat 应已删除');
+});
+
 (async () => {
     await waitForServer(PORT);
 

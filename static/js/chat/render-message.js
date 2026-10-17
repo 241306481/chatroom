@@ -134,13 +134,15 @@
 
     // 有头像图就把首字 span 换成 <img>；图片加载失败由 Avatar 内部回退。
 // 用 DOM 操作而不是内联 onerror——内联处理器拿不到这里的 msg。
-// 私信对象的扩展名字段是 from_avatar_ext，这里一并兼容。
+// 讨论消息用 avatar_ext，私信用 from_avatar_ext，两种都得认。
 function swapAvatar(div, msg, sel) {
     if (!window.Avatar) return;
     const ext = msg.avatar_ext || msg.from_avatar_ext || '';
-    if (!ext || !msg.id && !msg.user_id) return;
+    // 私信的 id 是私信记录主键，uid 在 from；讨论的在 user_id
+    const uid = msg.user_id || msg.from;
+    if (!ext || !uid) return;
     const u = {
-        id: msg.user_id || msg.id,
+        id: uid,
         nickname: msg.nickname || msg.from_nickname,
         avatar_color: msg.avatar_color || msg.from_avatar_color,
         avatar_ext: ext,

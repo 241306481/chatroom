@@ -34,10 +34,30 @@
   {# ============ 编辑模式（仅本人） ============ #}
   {% if is_me %}
     <div class="profile-edit" id="profileEdit" hidden>
-      <form method="POST" action="/user/{{ target.id }}" class="form-stack" id="profileForm">
+      <form method="POST" action="/user/{{ target.id }}" class="form-stack"
+            id="profileForm" enctype="multipart/form-data">
         <label>昵称<input type="text" name="nickname" value="{{ target.nickname }}" required
           pattern="[^0-9\s].*" maxlength="32"
           title="昵称不能以数字开头，长度 1-32"></label>
+
+        {# 头像：选中后随「保存」一起提交 #}
+        {% if can_avatar %}
+          <div class="profile-avatar-edit" id="avatarEditBox"
+               data-has-avatar="{{ 1 if target.avatar_ext else 0 }}">
+            <input type="file" name="avatar_file" id="avatarFile"
+                   accept="image/png,image/jpeg,image/gif,image/webp" hidden>
+            <input type="hidden" name="avatar_remove" id="avatarRemove" value="0">
+            <div class="avatar-row">
+              <button type="button" class="btn-avatar-upload" id="avatarPickBtn">
+                {{ '更改图片' if target.avatar_ext else '上传图片' }}
+              </button>
+              <span class="avatar-hint" id="avatarPicked" hidden></span>
+              <button type="button" class="btn-avatar-clear" id="avatarRemoveBtn" hidden>删除</button>
+              <button type="button" class="btn-avatar-cancel" id="avatarCancelBtn" hidden>取消</button>
+            </div>
+            <span class="avatar-hint">PNG / JPEG / GIF / WebP，1 MB 以内；点下方「保存」后生效</span>
+          </div>
+        {% endif %}
         {% set editorOpts = {
             id: 'bioInput',
             name: 'bio',
@@ -50,23 +70,12 @@
             heightResize: 'bottom'
         } %}
         {{ context_edit(editorOpts) }}
+
         <div class="profile-form-actions">
           <button type="submit" class="btn-primary">保存</button>
           <button type="button" class="btn-cancel" id="profileCancelBtn">取消</button>
         </div>
       </form>
-    </div>
-  {% endif %}
-
-  {# ============ 头像（仅本人 + 有权限位） ============ #}
-  {% if is_me and can_avatar %}
-    <div class="profile-avatar-edit">
-      <input type="file" id="avatarFile" accept="image/png,image/jpeg,image/gif,image/webp" hidden>
-      <button type="button" class="btn-avatar-upload" id="avatarUploadBtn">上传头像</button>
-      {% if target.avatar_ext %}
-        <button type="button" class="btn-avatar-clear" id="avatarClearBtn">删除</button>
-      {% endif %}
-      <span class="avatar-hint">PNG / JPEG / GIF / WebP，2 MB 以内</span>
     </div>
   {% endif %}
 

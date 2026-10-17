@@ -2,51 +2,73 @@
 {% block content %}
 <div class="page-container">
   <h1>🚫 IP 封禁管理</h1>
+  {% if ok %}<div class="form-alert ok" role="status">{{ ok }}</div>{% endif %}
+  {% if err %}<div class="form-alert err" role="alert">{{ err }}</div>{% endif %}
   <p class="hint">
     支持格式：<code>1.2.3.4</code>（单 IP）、<code>1.2.3.*</code>（通配）、
-    <code>1.1.1-3.2</code>（范围）、<code>*.*.*.*</code>（全封）。
-    规则运行时匹配，无数量限制。
+    <code>1.1.1-3.2</code>（范围）
   </p>
 
   <h2 style="margin-top:24px;">添加封禁</h2>
   <form method="POST" action="/manage/ip_bans" class="form-stack">
     <input type="hidden" name="action" value="add">
+    {% if back %}<input type="hidden" name="back" value="{{ back }}">{% endif %}
     <label>IP 规则
-      <input type="text" name="rule" required placeholder="1.2.3.4 或 1.2.3.* 或 1.1.1-3.2">
+      <input type="text" name="rule" required placeholder="1.2.3.4 或 1.2.3.*"
+             data-error-check="checkIpRule" autocomplete="off">
     </label>
     <label>原因
-      <input type="text" name="reason" placeholder="可选，最多 200 字">
+      <input type="text" name="reason" placeholder="可选，最多 200 字" maxlength="200">
     </label>
     <label>到期时间（留空 = 永久）
-      <input type="datetime-local" name="until_local" id="untilLocal">
-      <input type="hidden" name="until" id="untilHidden">
+      <input type="datetime-local" name="until_local" data-until-local>
+      <input type="hidden" name="until" data-until-hidden>
     </label>
     <button type="submit" data-confirm="确定封禁该规则？封禁后该 IP 下的所有请求都会被拦截。">封禁</button>
   </form>
 
-  <h2 style="margin-top:32px;">已封禁列表</h2>
+  <h2 style="margin-top:32px;">已封禁列表
+    <span class="hint" style="font-weight:normal;">黄底为已过期的规则，不再生效</span>
+  </h2>
   {% if list and list.length %}
     <table class="user-table">
       <thead>
         <tr>
           <th>规则</th>
           <th>原因</th>
-          <th style="width:170px;">到期</th>
+          <th style="width:250px;">到期</th>
           <th style="width:170px;">操作时间</th>
-          <th style="width:110px;">操作</th>
+          <th style="width:80px;">操作</th>
         </tr>
       </thead>
       <tbody>
         {% for item in list %}
-          <tr>
-            <td><code>{{ item.rule }}</code></td>
+<tr class="{% if item.expired %}row-expired{% endif %}"
+              {% if item.hits_self %}title="该规则命中你当前的 IP"{% endif %}>
+            <td>
+              <code>{{ item.rule }}</code>
+              {% if item.expired %}<span class="tag-expired">已过期</span>{% endif %}
+            </td>
             <td>{{ item.reason or '—' }}</td>
-            <td>{{ item.until or '永久' }}</td>
+            <td>
+              <form method="POST" action="/manage/ip_bans" style="display:flex;gap:4px;align-items:center;">
+                <input type="hidden" name="action" value="set_until">
+                <input type="hidden" name="rule" value="{{ item.rule }}">
+                {% if back %}<input type="hidden" name="back" value="{{ back }}">{% endif %}
+                <input type="datetime-local" name="until_local" data-until-local style="font-size:12px;">
+<input type="hidden" name="until" data-until-hidden value="{{ item.until_local }}">
+                <button type="submit" class="file-action-btn">改时长</button>
+              </form>
+              <div style="font-size:12px;color:#999;margin-top:2px;">
+                当前：{{ item.until or '永久' }}
+              </div>
+            </td>
             <td>{{ item.at }}</td>
             <td>
               <form method="POST" action="/manage/ip_bans" style="display:inline">
                 <input type="hidden" name="action" value="remove">
                 <input type="hidden" name="rule" value="{{ item.rule }}">
+                {% if back %}<input type="hidden" name="back" value="{{ back }}">{% endif %}
                 <button type="submit" class="file-action-btn danger"
                         data-confirm="确定解除规则 {{ item.rule }}？">解除</button>
               </form>
@@ -75,16 +97,88 @@
     if (err && window.showAlert) window.showAlert(err);
   }
 
-  var input = document.getElementById('untilLocal');
-  var hidden = document.getElementById('untilHidden');
-  if (!input || !hidden) return;
-  input.addEventListener('input', function () {
-    if (!input.value) { hidden.value = ''; return; }
-    try {
-      var d = new Date(input.value);
-      if (isNaN(d.getTime())) { hidden.value = ''; return; }
-      hidden.value = d.toISOString().replace(/\.\d{3}Z$/, 'Z');
-    } catch (e) { hidden.value = ''; }
+  var MY_IP = '{{ my_ip }}';
+
+  // 与 lib/storage/ip-bans.js 的 validateRule 一致
+  window.checkIpRule = function (v) {
+    v = String(v || '').trim();
+    if (!v) return '';
+    var parts = v.split('.');
+    if (parts.length !== 4) return 'IP 需为 4 段，如 1.2.3.4 或 1.2.3.*';
+    for (var i = 0; i < parts.length; i++) {
+      const p = parts[i].trim();
+      if (p === '*') continue;
+      if (/^\d+$/.test(p)) {
+          const n = parseInt(p, 10);
+          if (n < 0 || n > 255) return '数值需在 0-255：' + p;
+          continue;
+      }
+      const m = p.match(/^(\d+)-(\d+)$/);
+      if (m) {
+          const a = parseInt(m[1], 10);
+          const b = parseInt(m[2], 10);
+          if (a < 0 || a > 255 || b < 0 || b > 255 || a > b) {
+              return '范围需 0-255 且 a<=b：' + p;
+          }
+          continue;
+      }
+      return '未知格式：' + p;
+    }
+    // 本机判断：* / 127 / 0 / 含 127 或 0 的区间
+    var first = parts[0].trim();
+    var loop = first === '*' || first === '127' || first === '0';
+    if (!loop) {
+      var fm = first.match(/^(\d+)-(\d+)$/);
+      if (fm) {
+        var fa = parseInt(fm[1], 10), fb = parseInt(fm[2], 10);
+        loop = (127 >= fa && 127 <= fb) || (0 >= fa && 0 <= fb);
+      }
+    }
+    if (loop) return '不能封禁本机地址（127.x / 0.0.0.0 / *.*.*.*）';
+    // 会命中你自己所在网段
+    if (MY_IP && MY_IP.split('.').length === 4) {
+      var mine = MY_IP.split('.');
+      var hit = true;
+      for (var j = 0; j < 4 && hit; j++) {
+        var r = parts[j].trim();
+        if (r === '*') continue;
+        var rm = r.match(/^(\d+)-(\d+)$/);
+        if (rm) {
+          var ra = parseInt(rm[1], 10), rb = parseInt(rm[2], 10);
+          var mv = parseInt(mine[j], 10);
+          hit = mv >= ra && mv <= rb;
+        } else if (parseInt(r, 10) !== parseInt(mine[j], 10)) {
+          hit = false;
+        }
+      }
+      if (hit) return '该规则会命中你自己（' + MY_IP + '），添加后可能无法登录解除';
+    }
+    return '';
+  };
+
+  // datetime-local 与 ISO 互转；每个表单各自一对，用 data-* 配对
+  document.querySelectorAll('[data-until-local]').forEach(function (input) {
+    var form = input.closest('form');
+    var hidden = form && form.querySelector('[data-until-hidden]');
+    if (!hidden) return;
+    // 回填已有到期时间
+    var cur = hidden.value;
+    if (cur) {
+      var d = new Date(cur);
+      if (!isNaN(d.getTime())) {
+        var p = function (n) { return String(n).padStart(2, '0'); };
+        input.value = d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate())
+          + 'T' + p(d.getHours()) + ':' + p(d.getMinutes());
+      }
+    }
+    input.addEventListener('input', function () {
+      if (!input.value) { hidden.value = ''; return; }
+      try {
+        var d = new Date(input.value);
+        if (isNaN(d.getTime())) { hidden.value = ''; return; }
+        hidden.value = d.toISOString().replace(/\.\d{3}Z$/, 'Z');
+      } catch (e) { hidden.value = ''; }
+    });
   });
 
   if (document.readyState === 'loading') {

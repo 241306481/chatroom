@@ -79,9 +79,22 @@ check('拒绝把脚本伪装成 PNG（前缀垃圾 + 正确魔数也不行）', 
 check('拒绝空文件', () => {
     assert.strictEqual(avatar.save(U.id, Buffer.alloc(0)).ok, false);
 });
-check('拒绝超过 2 MB', () => {
-    const big = Buffer.concat([PNG, Buffer.alloc(3 * 1024 * 1024)]);
-    assert.strictEqual(avatar.save(U.id, big).ok, false);
+check('上限为 1 MB', () => {
+    assert.strictEqual(avatar.MAX_BYTES, 1024 * 1024);
+});
+check('拒绝超过 1 MB', () => {
+    const big = Buffer.concat([PNG, Buffer.alloc(2 * 1024 * 1024)]);
+    const r = avatar.save(U.id, big);
+    assert.strictEqual(r.ok, false);
+    assert.ok(/1 MB/.test(r.error), '错误提示应写明 1 MB，实际: ' + r.error);
+});
+check('前端与文案上限同步为 1 MB', () => {
+    const js = fs.readFileSync(path.join(ROOT, 'static/js/avatar-upload.js'), 'utf8');
+    assert.ok(!/2 \* 1024 \* 1024/.test(js), '前端仍是 2 MB');
+    assert.ok(/1024 \* 1024/.test(js), '前端未用 1 MB');
+    const tpl = fs.readFileSync(path.join(ROOT, 'templates/profile.html'), 'utf8');
+    assert.ok(tpl.includes('1 MB 以内'), '模板文案未更新');
+    assert.ok(!tpl.includes('2 MB'), '模板仍写 2 MB');
 });
 check('只信魔数，不信传入的文件名与 MIME', () => {
     // 名字是 .svg，内容按魔数判 png
@@ -165,6 +178,119 @@ check('模板：有图渲染 img，无图隐藏 img 并保留首字', () => {
     assert.ok(/avatar-img[\s\S]{0,240}display:none/.test(off), '无图时应隐藏 img');
     assert.ok(SPAN.test(off), '首字 span 应显示');
 });
+check('模板：有图时首字 span 靠 CSS 隐藏，不靠内联样式', () => {
+    const css = fs.readFileSync(path.join(ROOT, 'static/css/avatar.css'), 'utf8');
+    // 无图时 img 带 style，故用 :not([style]) 区分
+    assert.ok(/\.avatar-img:not\(\[style\]\)/.test(css), '缺少 :not([style]) 隐藏规则');
+    // 兜底 span 的 class 都要被覆盖
+    for (const c of ['avatar-circle', 'user-avatar', 'user-avatar-lg', 'member-avatar',
+        'msg-avatar', 'dm-avatar', 'profile-avatar']) {
+        assert.ok(new RegExp('\\.avatar-img:not\\(\\[style\\]\\)\\s*~\\s*\\.' + c + '\\b').test(css),
+            'CSS 未覆盖兜底 class ' + c);
+    }
+    // 不能加 !important，会盖过 onerror
+    assert.ok(!/\.avatar-img:not\(\[style\]\)[^}]*!important/.test(css), '不能加 !important');
+});
+
+check('消息头像 URL 用用户 id 而非消息 id', () => {
+    const { renderToString } = require(path.join(ROOT, 'lib/template'));
+    // 讨论消息：id 是消息主键，user_id 才是 uid
+    const discuss = renderToString('discuss.html', {
+        current_user: {}, nav: {}, messages: [{
+            id: 'msg-999', user_id: U.id, nickname: 'av', avatar_ext: 'png',
+            avatar_color: '#123456', content: 'x', created_at: '2026-01-01T00:00:00Z',
+        }],
+        topic: { id: 1 }, members: [], candidates: [],
+    });
+    assert.ok(discuss.indexOf('/avatar/' + U.id + '/png') > 0,
+        '讨论消息头像 URL 用了消息 id');
+    assert.ok(discuss.indexOf('/avatar/msg-999/png') < 0, '不该用消息 id 拼头像 URL');
+
+    // 私信：id 是私信记录主键，from 才是 uid
+    const dm = renderToString('messages.html', {
+        current_user: {}, nav: {}, conversations: [],
+        target: U.id, target_user: storage.loadUser(U.id),
+        messages: [{
+            id: 'dm-888', from: U.id, to: '2', nickname: 'av', avatar_ext: 'png',
+            avatar_color: '#123456', content: 'x', created_at: '2026-01-01T00:00:00Z',
+        }],
+        can_send: true, can_send_error: '',
+    });
+    assert.ok(dm.indexOf('/avatar/' + U.id + '/png') > 0, '私信头像 URL 用了私信记录 id');
+    assert.ok(dm.indexOf('/avatar/dm-888/png') < 0, '不该用私信记录 id 拼头像 URL');
+});
+
+check('avatarSrc 支持显式指定 uid', () => {
+    const av = require(path.join(ROOT, 'lib/avatar-view'));
+    assert.strictEqual(av.avatarSrc({ id: 'x1', avatar_ext: 'png' }), '/avatar/x1/png');
+    assert.strictEqual(av.avatarSrc({ id: 'msgid', avatar_ext: 'png' }, 'realuid'),
+        '/avatar/realuid/png', '第二参数未生效');
+    assert.strictEqual(av.avatarSrc({ avatar_ext: 'png' }, 'onlyuid'), '/avatar/onlyuid/png');
+    assert.strictEqual(av.avatarSrc({ avatar_ext: 'png' }), '', '既无 id 也无 uid 应为空');
+});
+
+check('列表类 DTO 都带 avatar_ext（否则永远回退首字）', () => {
+    // 走真实域数据，覆盖正常与封禁两条分支
+    const fsx = require(path.join(ROOT, 'lib/routes/_helpers'));
+    const dn = storage.loadDomain('system').name || 'system';
+    const list = fsx.buildUserList(dn);
+    const mine = list.find((u) => String(u.id) === U.id);
+    assert.ok(mine, 'buildUserList 里找不到测试用户');
+    assert.ok('avatar_ext' in mine, 'buildUserList 漏 avatar_ext');
+
+    // 私信会话列表：既要有 uid 也要有 ext
+    const src = fs.readFileSync(path.join(ROOT, 'lib/routes/messages.js'), 'utf8');
+    assert.ok(/other:\s*c\.other[\s\S]{0,160}id:\s*u\.id/.test(src),
+        '私信会话列表缺 id，avatarSrc 拼不出 URL');
+    assert.ok(/other:\s*c\.other[\s\S]{0,200}avatar_ext:\s*u\.avatar_ext/.test(src),
+        '私信会话列表缺 avatar_ext');
+
+    // 其余列表型路由逐个确认没有漏
+    for (const f of ['lib/routes/home.js', 'lib/routes/admin.js', 'lib/routes/user.js']) {
+        const t = fs.readFileSync(path.join(ROOT, f), 'utf8');
+        const hit = t.match(/avatar_color:\s*u\.avatar_color[^\n]*/g) || [];
+        assert.ok(hit.length && hit.every((l) => /avatar_ext/.test(l)),
+            f + ' 的列表 DTO 漏 avatar_ext');
+    }
+});
+
+check('头像控件在昵称之后、bio 之前，且随保存提交', () => {
+    const { renderToString } = require(path.join(ROOT, 'lib/template'));
+    const html = renderToString('profile.html', {
+        target: { id: '7', nickname: 'av', avatar_ext: 'png', avatar_color: '#123', bio: '' },
+        current_user: {}, nav: {}, is_me: true, can_avatar: true,
+    });
+    // bioInput 由宏渲染，只能在结果里找
+    const nick = html.indexOf('name="nickname"');
+    const av = html.indexOf('id="avatarFile"');
+    const bio = html.indexOf('id="bioInput"');
+    assert.ok(nick > 0, '未渲染昵称输入框');
+    assert.ok(av > 0, '未渲染头像文件输入');
+    assert.ok(bio > 0, '未渲染 bio 输入框');
+    assert.ok(nick < av, '头像控件应紧跟在昵称后');
+    assert.ok(av < bio, '头像控件不应排到 bio 之后');
+
+    const tpl = fs.readFileSync(path.join(ROOT, 'templates/profile.html'), 'utf8');
+    // 表单要能带文件
+    assert.ok(/enctype="multipart\/form-data"/.test(tpl), '表单缺 enctype');
+    assert.ok(/name="avatar_file"/.test(tpl), '缺 avatar_file 字段');
+    assert.ok(/name="avatar_remove"/.test(tpl), '缺 avatar_remove 字段');
+    // 不再有立即上传 + reload
+    const js = fs.readFileSync(path.join(ROOT, 'static/js/avatar-upload.js'), 'utf8');
+    assert.ok(!/location\.reload\(\)/.test(js), '不应再立刻 reload');
+    assert.ok(!/\/settings\/avatar'/.test(js), '不应再走独立上传接口');
+});
+
+check('/user/:uid 支持 multipart 一起提交头像', () => {
+    const src = fs.readFileSync(path.join(ROOT, 'lib/routes/user.js'), 'utf8');
+    assert.ok(src.includes('multipart') && src.includes('parseMultipart'), '未识别 multipart');
+    assert.ok(/parseMultipart/.test(src), '未解析 multipart');
+    assert.ok(/avatar_file/.test(src), '未取 avatar_file');
+    assert.ok(/avatar_remove/.test(src), '未处理 avatar_remove');
+    // 普通表单提交时不能动头像
+    assert.ok(/if \(!\/multipart/.test(src), '普通提交应跳过头像处理');
+});
+
 check('模板不产生 XSS：昵称与 ext 均被处理', () => {
     const { renderToString } = require(path.join(ROOT, 'lib/template'));
     const evil = { id: U.id, nickname: '"><script>alert(1)</script>', avatar_ext: 'png', avatar_color: 'red' };

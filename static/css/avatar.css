@@ -44,8 +44,30 @@
   cursor: not-allowed;
 }
 .avatar-hint { font-size: 12px; color: #999; }
+.avatar-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.btn-avatar-cancel {
+  padding: 5px 12px;
+  border: 1px solid #ddd; border-radius: 4px;
+  background: #fff; cursor: pointer; font-size: 13px; color: #555;
+}
+.btn-avatar-cancel:hover { background: #f5f5f5; }
+html[data-theme="dark"] .btn-avatar-cancel {
+  background: #2a2a2a; border-color: #3a3a3a; color: #b0b0b0;
+}
+html[data-theme="dark"] .btn-avatar-cancel:hover { background: #333; }
 
 html[data-theme="dark"] .avatar-img { background: #333; }
+
+/* 有图片时隐藏紧跟的首字兜底 span。
+   无图时 img 带内联 style="display:none"，故用 :not([style]) 区分。
+   图片 404 时 onerror 给 span 加内联 display，能盖过这条规则。 */
+.avatar-img:not([style]) ~ .avatar-circle,
+.avatar-img:not([style]) ~ .user-avatar,
+.avatar-img:not([style]) ~ .user-avatar-lg,
+.avatar-img:not([style]) ~ .member-avatar,
+.avatar-img:not([style]) ~ .msg-avatar,
+.avatar-img:not([style]) ~ .dm-avatar,
+.avatar-img:not([style]) ~ .profile-avatar { display: none; }
 html[data-theme="dark"] .btn-avatar-upload,
 html[data-theme="dark"] .btn-avatar-clear {
   background: #2a2a2a;

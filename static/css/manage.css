@@ -66,3 +66,33 @@
   background: #fff; color: #1890ff !important; border: 1px solid #1890ff; }
 html[data-theme="dark"] .create-domain-btn.secondary {
   background: #2a2a2a; color: #4da3ff !important; border-color: #4da3ff; }
+
+/* 页内提示：POST 后直接重渲染，不再靠重定向带 ?ok= */
+.form-alert {
+  padding: 9px 12px; margin: 12px 0; border-radius: 4px;
+  font-size: 13px; border: 1px solid transparent;
+}
+.form-alert.ok { background: #f6ffed; border-color: #b7eb8f; color: #389e0d; }
+.form-alert.err { background: #fff2f0; border-color: #ffccc7; color: #cf1322; }
+html[data-theme="dark"] .form-alert.ok { background: #14261a; border-color: #2f5c3a; color: #95de64; }
+html[data-theme="dark"] .form-alert.err { background: #2a1414; border-color: #5c2f2f; color: #ff7875; }
+
+/* 已过期的封禁规则：留着但不再生效，用黄底区分 */
+.user-table tr.row-expired td { background: #fffbe6; color: #8c8c8c; }
+html[data-theme="dark"] .user-table tr.row-expired td { background: #2b2718; color: #9a9a9a; }
+.tag-expired {
+  display: inline-block; margin-left: 6px; padding: 0 6px; border-radius: 3px;
+  background: #ffe58f; color: #874d00; font-size: 11px; line-height: 18px;
+}
+/* 命中当前登录者 IP：封了会把自己关在外面，优先提示 */
+.tag-banned {
+  display: inline-block; margin-left: 6px; padding: 0 6px; border-radius: 3px;
+  background: #ffccc7; color: #a8071a; font-size: 11px; line-height: 18px;
+}
+.tag-warn {
+  display: inline-block; margin-left: 6px; padding: 0 6px; border-radius: 3px;
+  background: #fff1f0; color: #cf1322; font-size: 11px; line-height: 18px;
+}
+html[data-theme="dark"] .tag-expired { background: #4d3c00; color: #ffd666; }
+html[data-theme="dark"] .tag-banned { background: #5c1f1f; color: #ff9c9e; }
+html[data-theme="dark"] .tag-warn { background: #4a2020; color: #ff9c9e; }

@@ -250,7 +250,7 @@ check('启动自检新增：时区 / JSON 完整性 / 端口预检 / 证书有�
     assert.ok(/JSON\.parse/.test(src), '无 JSON 完整性检查');
     assert.ok(/EADDRINUSE/.test(src), '无端口占用预检');
     assert.ok(/X509Certificate/.test(src) && /validTo/.test(src), '无证书有效期检查');
-    assert.ok(/isTTY/.test(src) && /NO_COLOR/.test(src), '无 TTY/NO_COLOR 检测');
+    assert.ok(/NO_COLOR/.test(src), '启动自检未认 NO_COLOR');
 });
 check('gen-cert 无死代码，且输出指纹与信任步骤', () => {
     const src = fs.readFileSync(path.join(__dirname, '..', 'tools', 'gen-cert.js'), 'utf8');

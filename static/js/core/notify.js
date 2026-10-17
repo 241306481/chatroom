@@ -11,18 +11,36 @@ window.showNotification = function (opts) {
     card.className = 'notification-card';
     var title = opts.title || '新消息';
     var color = opts.color || '#1890ff';
-    var avatarText = opts.avatar != null ? String(opts.avatar) : (title || '?')[0];
     card.innerHTML =
-        '<div class="notification-avatar">' +
-            esc(avatarText) +
-        '</div>' +
+        '<div class="notification-avatar"></div>' +
         '<div class="notification-body">' +
             '<div class="notification-title">' + esc(title) + '</div>' +
             '<div class="notification-content">' + esc(opts.content || '') + '</div>' +
         '</div>' +
         '<button class="notification-close" type="button">×</button>';
-    var avatar = card.querySelector('.notification-avatar');
-    if (avatar) avatar.style.background = color;
+
+    var box = card.querySelector('.notification-avatar');
+    // 有图放 img，失败退首字
+    var imgSrc = window.Avatar && opts.avatarUid
+        ? window.Avatar.srcOf({ id: opts.avatarUid, avatar_ext: opts.avatarExt }) : '';
+    if (imgSrc) {
+        var img = document.createElement('img');
+        img.className = 'notification-avatar-img';
+        img.alt = '';
+        img.loading = 'lazy';
+        img.addEventListener('error', function () { paintText(); });
+        img.src = imgSrc;
+        box.appendChild(img);
+    } else {
+        paintText();
+    }
+
+    function paintText() {
+        if (!box || box.dataset.done) return;
+        box.dataset.done = '1';
+        box.style.background = color;
+        box.textContent = opts.avatar != null ? String(opts.avatar) : (title || '?')[0];
+    }
 
     if (opts.onClick) {
         card.addEventListener('click', function (e) {
