@@ -21,20 +21,6 @@
       </section>
     {% endif %}
 
-    <section class="announcement-panel">
-      <h2>📌 置顶消息</h2>
-      {% if announcements and announcements.length %}
-        {% for ann in announcements %}
-          <div class="announcement-item {% if ann.is_system %}system-ann{% endif %}">
-            <div class="announcement-content" data-raw="{{ ann.content | e }}"></div>
-            <div class="announcement-meta">{{ ann.nickname }} · {{ ann.created_at }}</div>
-          </div>
-        {% endfor %}
-      {% else %}
-        <p class="empty">暂无置顶消息</p>
-      {% endif %}
-    </section>
-
     <section class="discussion-list">
       <h2>
         💬 讨论
