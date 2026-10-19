@@ -60,8 +60,8 @@
 
   {% if searched %}
     <div class="search-results-info">
-      {% if results and results.length %}
-        共 {{ results.length }} 条结果{% if results.length >= 200 %}（显示前 200 条）{% endif %}
+      {% if total %}
+        共 {{ total }} 条结果，第 {{ page }}/{{ pageCount }} 页{% if truncated %}（结果过多，仅保留最近 {{ total }} 条）{% endif %}
       {% else %}
         无匹配结果
       {% endif %}
@@ -84,6 +84,15 @@
     {% endif %}
   {% endif %}
 </div>
+
+{% if pageCount > 1 %}
+  {% set base = '/search?q=' ~ (q | urlencode) ~ '&domain=' ~ (domainFilter | urlencode) ~ '&discuss=' ~ (discFilter | urlencode) ~ '&user=' ~ (userFilter | urlencode) %}
+  <nav class="pagination">
+    {% if page > 1 %}<a class="page-btn" href="{{ base }}&page={{ page - 1 }}">上一页</a>{% endif %}
+    <span class="page-info">{{ page }} / {{ pageCount }}</span>
+    {% if page < pageCount %}<a class="page-btn" href="{{ base }}&page={{ page + 1 }}">下一页</a>{% endif %}
+  </nav>
+{% endif %}
 
 <script>
   window.__SEARCH_DOMAINS__ = {{ domains | jsdump }};

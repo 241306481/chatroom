@@ -23,6 +23,11 @@ const SUITES = [
     'console-check-test.js',
     'console-cmds-test.js',
     'css-split-test.js',
+    'dom-sanitize-test.js',
+    'search-page-test.js',
+    'member-bar-test.js',
+    'domain-notify-test.js',
+    'flash-test.js',
     'log-test.js',
 ];
 

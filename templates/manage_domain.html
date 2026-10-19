@@ -4,6 +4,9 @@
   <h1>管理域 · {{ domain.display_name or domain_name }}</h1>
   <p class="hint">域名 {{ domain_name }} · {{ domain.members | length }} 位成员</p>
   <div class="manage-entries">
+    {% if not can_anything %}
+      <p class="empty">你没有这个域的任何管理权限。</p>
+    {% endif %}
     {% if can_edit %}
     <a href="/domain/{{ domain_name }}/manage/edit" class="manage-entry">
       <h3>编辑域设置</h3>

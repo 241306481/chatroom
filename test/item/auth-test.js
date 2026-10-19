@@ -111,14 +111,17 @@ clearTlsArtifacts(ROOT);
         }
     });
     await check('#4 域内封禁接口接受无秒时间（走 HTTP）', async () => {
-        const r = await req('POST', '/domain/system/manage/user',
-            { body: { action: 'ban', user_id: uidC, reason: 'tz', until: '2099-06-01T12:00' }, cookie: ROOT_C });
-        const loc = String(r.headers.location || '');
-        assert.ok(!loc.includes('error='), '接口报错: ' + loc);
-        assert.ok(loc.includes('ok=1'), '未成功: ' + loc);
-        const ban = (storage.loadDomain('system').bans || {})[uidC];
-        assert.strictEqual(ban.until, '2099-06-01T12:00:00Z', '落库值未规范化: ' + ban.until);
-    });
+const r = await req('POST', '/domain/system/manage/user',
+        { body: { action: 'ban', user_id: uidC, reason: 'tz', until: '2099-06-01T12:00' }, cookie: ROOT_C });
+    const loc = String(r.headers.location || '');
+    assert.ok(!loc.includes('error='), '域内封禁失败: ' + loc);
+    // 提示改走 flash cookie，不再放 URL
+    assert.ok(!loc.includes('ok='), '不应再有 ?ok=');
+    const flashCookie = (r.headers['set-cookie'] || []).find((c) => /^flash=.+;/.test(c));
+    assert.ok(flashCookie, '应下发 flash cookie');
+    const ban = (storage.loadDomain('system').bans || {})[uidC];
+    assert.strictEqual(ban.until, '2099-06-01T12:00:00Z', '到期值未规范化: ' + ban.until);
+});
 
     // IP 封禁断 WS
     await check('#3 正常情况下 WS 可建立', async () => {

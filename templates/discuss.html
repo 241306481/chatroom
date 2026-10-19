@@ -45,8 +45,8 @@
         <a href="/domain/{{ domain_name }}/manage/discussions" class="manage-link">管理</a>
       {% endif %}
       {% if can_delete_current_disc and discuss_name != 'general' %}
-        <button type="button" class="delete-disc-btn"
-                onclick="deleteCurrentDiscussion();"
+        <button type="button" class="delete-disc-btn" id="deleteDiscBtn"
+                data-disc-name="{{ discuss_name }}"
                 title="删除此讨论">删除</button>
       {% endif %}
     </div>
@@ -232,21 +232,31 @@ window.__MENTION_CANDIDATES__ = [
     {% endfor %}
   };
 window.deleteCurrentDiscussion = function () {
-    if (!confirm('确定删除当前讨论？所有消息将丢失')) return;
     const dn = window.__DOMAIN__;
     const disc = window.__DISCUSS__;
-    fetch('/domain/' + encodeURIComponent(dn) + '/discuss/'
-        + encodeURIComponent(disc) + '/delete', { method: 'POST' })
-      .then(r => r.json())
-      .then(res => {
-        if (res.ok) {
-          location.href = '/domain/' + encodeURIComponent(dn) + '/discuss';
-        } else {
-          alert(res.error || '删除失败');
-        }
+    // 用站内自定义弹窗，不用原生 confirm
+    window.showConfirm('确定删除当前讨论？所有消息将丢失', { danger: true })
+      .then(function (ok) {
+        if (!ok) return;
+        return fetch('/domain/' + encodeURIComponent(dn) + '/discuss/'
+            + encodeURIComponent(disc) + '/delete', { method: 'POST' })
+          .then(r => r.json())
+          .then(res => {
+            if (res.ok) {
+              location.href = '/domain/' + encodeURIComponent(dn) + '/discuss';
+            } else {
+              window.showAlert(res.error || '删除失败');
+            }
+          });
       })
-      .catch(() => alert('删除失败'));
+      .catch(function () { window.showAlert('删除失败'); });
   };
+
+  // 删除按钮绑定（放在函数定义之后）
+  (function () {
+    var btn = document.getElementById('deleteDiscBtn');
+    if (btn) btn.addEventListener('click', window.deleteCurrentDiscussion);
+  })();
 </script>
 <script>
   window.__MESSAGES__ = {{ messages | jsdump }};

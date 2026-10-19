@@ -26,7 +26,7 @@
       </thead>
       <tbody>
         {% for u in users %}
-          <tr data-uid="{{ u.id }}">
+          <tr data-uid="{{ u.id }}" id="user-{{ u.id }}">
             <td>
               <span class="status-dot {% if u.online %}green{% else %}red{% endif %}"></span>
             </td>
@@ -63,6 +63,25 @@
             <td>
               {% if current_user and current_user.id != u.id %}
                 <a href="/messages?target={{ u.id }}" class="mini-btn">私信</a>
+              {% endif %}
+              {% if is_domain_view and can_manage and not u.is_owner %}
+                {% if not u.banned %}
+                  <form method="POST" action="/domain/{{ domain_name }}/manage/user" style="display:inline" class="user-inline-form">
+                    <input type="hidden" name="action" value="mute">
+                    <input type="hidden" name="user_id" value="{{ u.id }}">
+                    <input type="number" name="minutes" value="60" min="1" style="width:56px;" title="禁言分钟">
+                    <button type="submit" class="mini-btn">禁言</button>
+                  </form>
+                {% endif %}
+                {% if can_kick and not is_system_domain %}
+                  <form method="POST" action="/domain/{{ domain_name }}/manage/user" style="display:inline" class="user-inline-form">
+                    <input type="hidden" name="action" value="{% if u.banned %}unban{% else %}kick{% endif %}">
+                    <input type="hidden" name="user_id" value="{{ u.id }}">
+                    <button type="submit" class="mini-btn {% if not u.banned %}danger{% endif %}"
+                            {% if not u.banned %}data-confirm="确定踢出该成员？"{% endif %}>{% if u.banned %}解封{% else %}踢出{% endif %}</button>
+                  </form>
+                {% endif %}
+                <a href="/domain/{{ domain_name }}/manage/user#user-{{ u.id }}" class="mini-btn">管理</a>
               {% endif %}
             </td>
           </tr>

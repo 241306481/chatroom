@@ -60,13 +60,17 @@ check('等级不变时也写盘（低于阈值的经验不丢）', () => {
     assert.strictEqual(storage.loadDomain('system').members[uid3].exp, 4,
         '未到阈值的经验被丢弃');
 });
-check('ADMIN_LEVEL 不会被经验覆盖', () => {
+check('存储里不应持久化 ADMIN_LEVEL 哨兵（特权由展示层覆盖）', () => {
     const d = storage.loadDomain('system');
-    d.members[uid].level = 99;
-    storage.saveDomain('system', d);
-    auth.addExp('system', uid, 50);
-    assert.strictEqual(storage.loadDomain('system').members[uid].level, 99,
-        '管理员等级被 expToLevel 覆盖');
+    // 新建域的 owner 不再存 level=99（否则永远拿不到经验）
+    const members = d.members || {};
+    const hasStored99 = Object.keys(members).some(k => members[k].level === 99);
+    assert.ok(!hasStored99, '存储中不应存在 level=99 成员');
+    // 加经验后普通成员 level 按 expToLevel 走，且不受 99 影响
+    const testUid = Object.keys(members)[0];
+    auth.addExp('system', testUid, 500);
+    const lv = storage.loadDomain('system').members[testUid].level;
+    assert.ok(lv >= 5, '经验结算正常，level=' + lv);
 });
 check('flushExp() 无参调用安全（退出钩子仍会调用）', () => {
     assert.doesNotThrow(() => exp.flushExp());
@@ -82,6 +86,29 @@ check('expToLevel 曲线未改变', () => {
     assert.strictEqual(exp.expToLevel(45), 3);
     assert.strictEqual(exp.expToLevel(180), 5);
     assert.strictEqual(exp.expToLevel(430), 6);
+});
+
+check('等级封顶在 ADMIN_LEVEL-1，不会撞上特权哨兵', () => {
+    assert.strictEqual(auth.expToLevel(23680), 98, '应封顶 98');
+    assert.strictEqual(auth.expToLevel(99999999), 98, '超大经验仍封顶 98');
+    assert.ok(auth.expToLevel(23680) < 99, '有机等级不可达到 99');
+});
+
+// 新建域的域主不应存 level:99，否则永远拿不到经验（本次修复的核心）
+const newDn = 'exp-owner-test';
+storage.createDomain(newDn, 'owner-test', uid);
+check('新建域的域主不存 level=99', () => {
+    const m = storage.loadDomain(newDn).members[uid];
+    assert.ok(m, '域主应为成员');
+    assert.strictEqual(m.level || 0, 0, '域主初始等级应为 0，实际=' + m.level);
+});
+
+check('域主也能正常获得经验（死锁已解）', () => {
+    const before = storage.loadDomain(newDn).members[uid].exp || 0;
+    auth.addExp(newDn, uid, 200);
+    const m = storage.loadDomain(newDn).members[uid];
+    assert.strictEqual(m.exp, before + 200, '域主经验应正常累加');
+    assert.ok(m.level > 0, '域主应能升级，实际 Lv.' + m.level);
 });
 
 console.log('\n======== [回归] exp 立即落盘 ========');

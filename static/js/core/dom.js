@@ -12,6 +12,32 @@ window.escAttr = function (s) {
         .replace(/</g, '&lt;').replace(/>/g, '&gt;');
 };
 
+// 渲染前清洗：剥危险标签、事件属性与 javascript: 类 URL
+const DANGEROUS_SCHEME_RE = /^(?:javascript|data|vbscript):/i;
+const URL_ATTRS = ['href', 'src', 'xlink:href', 'action', 'formaction',
+    'srcset', 'poster', 'data', 'background', 'cite'];
+
+function normalizeUrlForSchemeCheck(value) {
+    // 剥控制字符与空白，绕过 `java\tscript:` 这类变形
+    return String(value == null ? '' : value)
+        .replace(/[\u0000-\u0020\u00a0\u2028\u2029\ufeff]/g, '');
+}
+
+function sanitize(root) {
+    root.querySelectorAll('script, iframe, object, embed, link, meta, style, base, form')
+        .forEach(n => n.remove());
+    root.querySelectorAll('*').forEach(el => {
+        for (const attr of Array.from(el.attributes)) {
+            const name = attr.name.toLowerCase();
+            if (name.startsWith('on')) { el.removeAttribute(attr.name); continue; }
+            if (URL_ATTRS.indexOf(name) >= 0
+                && DANGEROUS_SCHEME_RE.test(normalizeUrlForSchemeCheck(attr.value))) {
+                el.removeAttribute(attr.name);
+            }
+        }
+    });
+}
+
 // 剪贴板
 window.copyToClipboard = function (text, btn) {
     const done = function () {
@@ -144,32 +170,6 @@ window.renderContent = function (text) {
     const wrap = document.createElement('div');
     wrap.appendChild(container);
     return wrap.innerHTML;
-
-    const DANGEROUS_SCHEME_RE = /^(?:javascript|data|vbscript):/i;
-    const URL_ATTRS = ['href', 'src', 'xlink:href', 'action', 'formaction',
-        'srcset', 'poster', 'data', 'background', 'cite'];
-
-    function normalizeUrlForSchemeCheck(value) {
-        // 剥控制字符并转义
-        return String(value == null ? '' : value)
-            .replace(/[\u0000-\u0020\u00a0\u2028\u2029\ufeff]/g, '');
-    }
-
-    function sanitize(root) {
-        root.querySelectorAll('script, iframe, object, embed, link, meta, style, base, form')
-            .forEach(n => n.remove());
-        root.querySelectorAll('*').forEach(el => {
-            for (const attr of Array.from(el.attributes)) {
-                const name = attr.name.toLowerCase();
-                const value = String(attr.value || '');
-                if (name.startsWith('on')) { el.removeAttribute(attr.name); continue; }
-                if (URL_ATTRS.indexOf(name) >= 0
-                    && DANGEROUS_SCHEME_RE.test(normalizeUrlForSchemeCheck(value))) {
-                    el.removeAttribute(attr.name);
-                }
-            }
-        });
-    }
 };
 
 // 源码/渲染切换

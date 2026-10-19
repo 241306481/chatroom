@@ -105,6 +105,10 @@
                     R.showToast('你已被移出「' + data.domain + '」');
                     setTimeout(function () { location.href = '/home'; }, 1500);
                     break;
+                case 'domain_deleted':
+                    R.showToast('「' + (data.name || '该域') + '」已被删除');
+                    setTimeout(function () { location.href = '/home'; }, 1500);
+                    break;
                 case 'error':
                     R.showToast(data.msg);
                     break;

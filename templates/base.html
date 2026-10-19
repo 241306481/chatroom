@@ -46,7 +46,7 @@
     <a href="{{ prefix }}/files">文件</a>
 
     {% if domain_name %}
-      <a href="/domain/{{ domain_name }}/users">成员</a>
+      <a href="/domain/{{ domain_name }}/users">域-成员</a>
     {% else %}
       <a href="/users">用户列表</a>
     {% endif %}
@@ -159,11 +159,13 @@
             el.dataset.rendered = '1';
         });
 
-    // 3.1.2 保存成功反馈
+    // 3.1.2 保存成功反馈。文案来自服务端下发的 flash cookie，
+// 不用 ?ok=，否则任何人都能拼 URL 伪造提示。
     (function () {
-        var ok = new URL(location.href).searchParams.get('ok');
-        if (ok && window.showToast) {
-            window.showToast(ok === '1' ? '保存成功' : ok);
+        var flash = {{ flash | jsdump | safe }};
+        if (flash && window.showToast) {
+            window.showToast(flash);
+            if (window.clearFlashCookie) window.clearFlashCookie();
         }
     })();
 

@@ -55,15 +55,30 @@ check('★ WebSocket 侧行为一致（不得比 HTTP 更宽松）', () => {
     assert.ok(/require\('\.\/discuss-guard'\)/.test(main), 'discuss.js 未引用 discuss-guard');
     assert.ok(!/PRIV_EXEMPT_GROUPS\.has/.test(main), 'discuss.js 仍留有本地副本');
 });
-check('域设置组仍然豁免（系统角色 member 的 privs.domain=0，域所有者仍能管自己的域）', () => {
-    const u = storage.loadUser(adminId);          // 系统角色 member → privs.domain 应为 0
-    assert.strictEqual(hasPriv(u, 'domain', PRIV.DOMAIN.EDIT), false,
-        '前提不成立：member 角色的 domain 位本应为 0');
+    check('域设置默认开放：成员角色的 domain 位已给默认值', () => {
+    const u = storage.loadUser(adminId);
+    // member 角色的 domain 位现在默认开放，实际能否操作由域内 PERM 收口
+    assert.strictEqual(hasPriv(u, 'domain', PRIV.DOMAIN.EDIT), true,
+        '前提不成立：member 角色的 domain 位应默认开放');
     const du = auth.getDomainUser('ptest', u);
     assert.strictEqual(du.role, 'root');
-    checkDual(u, du, 'edit_domain');   // 不应抛 —— 豁免生效
+    checkDual(u, du, 'edit_domain');   // 默认状态下应有效
 });
-check('域设置组豁免后，被关闭的 message 位不受影响', () => {
+
+check('域设置不再豁免：关掉权限位后域所有者同样被拒', () => {
+    const u = storage.loadUser(adminId);
+    const saved = u.privs.domain;
+    u.privs.domain = 0;                 // 模拟管理员关闭了「编辑域设置」
+    try {
+        let denied = false;
+        try { checkDual(u, auth.getDomainUser('ptest', u), 'edit_domain'); }
+        catch (e) { denied = true; }
+        assert.ok(denied, '域所有者在关闭域设置权限后仍能编辑');
+    } finally {
+        u.privs.domain = saved;
+    }
+});
+check('关闭 message 位后不会被域设置的改动放宽', () => {
     const u = storage.loadUser(adminId);
     let denied = false;
     try { checkDual(u, auth.getDomainUser('ptest', u), 'pin_message'); } catch (e) { denied = true; }

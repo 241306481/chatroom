@@ -142,16 +142,17 @@ clearTlsArtifacts(ROOT);
         assert.strictEqual(storage.findMessage('system', 'general', 'del-me-1').deleted, true);
     });
 
-    await check('讨论区：经验立即反映在存储中（无缓冲）', async () => {
-        assert.strictEqual(storage.loadDomain('system').members[uidA].level, 99,
-            '前提不成立：alice 应为 ADMIN_LEVEL');
-        const before = storage.loadDomain('system').members[uidB].exp || 0;
-        wsB.send(JSON.stringify({ type: 'message', content: 'earn some exp' }));
-        await sleep(600);
-        const after = storage.loadDomain('system').members[uidB].exp || 0;
-        assert.strictEqual(after, before + 1,
-            '发消息后经验未立即落盘: before=' + before + ' after=' + after);
-    });
+await check('讨论区：经验立即反映在存储中（无缓冲）', async () => {
+          // 新语义：域主不再存 level=99，应和其他成员一样正常结算经验
+          const lvA = storage.loadDomain('system').members[uidA].level || 0;
+          assert.ok(lvA !== 99, '存储中不应存在 ADMIN_LEVEL 哨兵，实际 level=' + lvA);
+          const before = storage.loadDomain('system').members[uidB].exp || 0;
+          wsB.send(JSON.stringify({ type: 'message', content: 'earn some exp' }));
+          await sleep(600);
+          const after = storage.loadDomain('system').members[uidB].exp || 0;
+          assert.strictEqual(after, before + 1,
+              '发消息后经验未即时落盘: before=' + before + ' after=' + after);
+      });
 
     await check('讨论区：置顶消息出现在域主页', async () => {
         const r = await req('GET', '/domain/system/home', { cookie: A });
