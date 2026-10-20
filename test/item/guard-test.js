@@ -192,9 +192,9 @@ check('r8: 日志轮转有界（不复用同名文件无限追加）', () => {
 // 本轮新增
 check('登录限流：连续失败后被拦截，成功后清零', () => {
     const rl = require('../../lib/auth/rate-limit');
-    // 账号维度阈值是 8
-    for (let i = 0; i < 8; i++) rl.noteFailure('victim', '10.1.1.1');
-    assert.ok(rl.checkLoginAllowed('victim', '10.1.1.1'), '账号维度未拦截');
+    // 登录按要求只留 IP 维度：同一 IP 连续失败会被拦
+    for (let i = 0; i < 30; i++) rl.noteFailure('victim', '10.1.1.1');
+    assert.ok(rl.checkLoginAllowed('victim', '10.1.1.1'), 'IP 维度未拦截');
     // IP 维度未触发
     rl.noteSuccess('victim', '10.1.1.1');
     assert.strictEqual(rl.checkLoginAllowed('victim', '10.1.1.1'), null, '成功后未清零');

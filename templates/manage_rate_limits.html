@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-container">
+  <h1>🚦 限流管理</h1>
+  {% if ok %}<div class="form-alert ok" role="status">{{ ok }}</div>{% endif %}
+  {% if err %}<div class="form-alert err" role="alert">{{ err }}</div>{% endif %}
+  <p class="hint">
+    三个维度的含义：
+    <code>每 IP</code> 同一 IP 的总次数；
+    <code>每账号名</code> 按登录框里填的名字计（昵称或 UID 都算同一个账号），用于登录、注册；
+    <code>每用户 uid</code> 按登录后的用户计，用于发消息、私信、上传、建域。
+  </p>
+  <p class="hint">
+    每用户 uid 这一维是按账号算的，换 IP 依然受限，所以 cookie 被搬到别处也用不了多久。
+  </p>
+
+  <h2 style="margin-top:24px;">各操作限制</h2>
+  <form method="POST" action="/manage/rate_limits">
+    <input type="hidden" name="action" value="save">
+    <table class="user-table">
+      <thead>
+        <tr>
+          <th>操作</th>
+          <th style="width:150px;">名称</th>
+          <th style="width:90px;">窗口(分)</th>
+          <th style="width:90px;">每 IP</th>
+          <th style="width:120px;">每账号</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for a in actions %}
+        <tr>
+          <td><code>{{ a.action }}</code></td>
+          <td><input type="text" name="label_{{ a.action }}" value="{{ a.label }}" maxlength="20"></td>
+          <td><input type="number" name="window_{{ a.action }}" value="{{ a.windowMin }}" min="1" max="1440"></td>
+          <td><input type="number" name="ip_{{ a.action }}" value="{{ a.perIp }}" min="0" max="1000000"></td>
+          <td><input type="number" name="acct_{{ a.action }}" value="{{ a.perAccount }}" min="0" max="1000000"></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <div style="margin-top:14px;">
+      <button type="submit">保存限流配置</button>
+    </div>
+  </form>
+
+  <h2 style="margin-top:32px;">实时计数</h2>
+  <p class="hint">只显示当前窗口内还有效的记录，按次数从多到少。共 {{ sessionCount }} 个在线会话。</p>
+  {% for a in actions %}
+    {% if a.live and a.live.length %}
+      <div style="margin-top:14px;">
+        <strong>{{ a.label }}</strong> <code>{{ a.action }}</code>
+        <table class="user-table" style="margin-top:6px;">
+          <thead>
+            <tr>
+              <th style="width:90px;">维度</th>
+              <th>键</th>
+              <th style="width:80px;">次数</th>
+              <th style="width:90px;">剩余秒</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in a.live %}
+            <tr>
+              <td>{{ item.dim }}</td>
+              <td><code>{{ item.key }}</code></td>
+              <td>{{ item.n }}</td>
+              <td>{{ item.secsLeft }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% endif %}
+  {% endfor %}
+  {% if not actions %}<p class="empty">暂无配置</p>{% endif %}
+
+  <div style="margin-top:20px;display:flex;gap:10px;">
+    <form method="POST" action="/manage/rate_limits">
+      <input type="hidden" name="action" value="reset">
+      <button type="submit" class="file-action-btn danger"
+              data-confirm="确定清空所有限流计数？">清空全部计数</button>
+    </form>
+  </div>
+
+  <h2 style="margin-top:32px;">会话绑定</h2>
+  <p class="hint">
+    一个登录会话通常会在多个 IP、多个浏览器上使用（手机切 WiFi、同时用电脑和手机），
+    所以这里给的是「上限」而不是「唯一」。
+    超过上限就说明同一个 cookie 出现在太多地方，判定为外泄并强制退出。
+  </p>
+  <form method="POST" action="/manage/rate_limits" class="form-stack">
+    <input type="hidden" name="action" value="save_bind">
+    <label class="checkbox-row">
+      <input type="checkbox" name="bind_ua" value="1" {% if bind.bindUa %}checked{% endif %}>
+      校验 User-Agent（cookie 搬到别的浏览器会失效）
+    </label>
+    <label>同一会话最多可在几个 IP 上使用
+      <input type="number" name="max_ips" value="{{ bind.maxIps }}" min="1" max="50">
+    </label>
+    <label>同一会话最多可出现几个浏览器标识
+      <input type="number" name="max_uas" value="{{ bind.maxUas }}" min="1" max="20">
+    </label>
+    <button type="submit">保存绑定设置</button>
+  </form>
+
+  <p style="margin-top:24px;"><a href="/manage">← 返回系统管理</a></p>
+</div>
+{% endblock %}
