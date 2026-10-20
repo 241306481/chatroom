@@ -9,6 +9,8 @@ if (!fs.existsSync(TMP)) fs.mkdirSync(TMP, { recursive: true });
 
 const SUITES = [
     'guard-test.js',
+    'perm-bits-test.js',
+    'perm-audit-test.js',
     'permission-test.js',
     'exp-test.js',
     'editor-test.js',

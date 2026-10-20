@@ -34,7 +34,7 @@
                   {% if r.editable %}
                     <input type="checkbox"
                       data-role="{{ r.name }}"
-                      data-bit="{{ p.bit }}"
+                      data-index="{{ p.index }}"
                       {% if r.bitMap[p.key] %}checked{% endif %}>
                   {% else %}
                     <input type="checkbox" disabled {% if r.bitMap[p.key] %}checked{% endif %}>
@@ -50,7 +50,7 @@
     {# 隐藏字段：每个可编辑角色一个（初始值兜底，提交时由 syncPermForm 重算） #}
     {% for r in roles %}
       {% if r.editable %}
-        <input type="hidden" name="perm_{{ r.name }}" id="perm_value_{{ r.name }}" value="{{ r.perm }}">
+        <input type="hidden" name="perm_{{ r.name }}" id="perm_value_{{ r.name }}" value="{{ r.permStr }}">
       {% endif %}
     {% endfor %}
 
@@ -68,19 +68,27 @@
 </div>
 
 <script>
+// 权限位拆成两个 32 位字：位号 0..31 落 lo，32+ 落 hi。
+// 合成时用 BigInt，普通 Number 超过 2^53 会丢精度。
 function syncPermForm(form) {
   var state = {};
-  var checkboxes = form.querySelectorAll('input[type="checkbox"][data-role][data-bit]');
+  var checkboxes = form.querySelectorAll('input[type="checkbox"][data-role][data-index]');
   for (var i = 0; i < checkboxes.length; i++) {
     var cb = checkboxes[i];
     var role = cb.dataset.role;
-    var bit = parseInt(cb.dataset.bit, 10);
-    if (!state[role]) state[role] = 0;
-    if (cb.checked) state[role] = (state[role] | bit) >>> 0;
+    var index = parseInt(cb.dataset.index, 10);
+    if (!state[role]) state[role] = { hi: 0, lo: 0 };
+    if (!cb.checked) continue;
+    if (index < 32) {
+      state[role].lo = (state[role].lo | (1 << index)) >>> 0;
+    } else {
+      state[role].hi = (state[role].hi | (1 << (index - 32))) >>> 0;
+    }
   }
   var keys = Object.keys(state);
   for (var j = 0; j < keys.length; j++) {
     var roleName = keys[j];
+    var s = state[roleName];
     var hidden = form.querySelector('input[name="perm_' + roleName + '"]');
     if (!hidden) {
       hidden = document.createElement('input');
@@ -88,7 +96,7 @@ function syncPermForm(form) {
       hidden.name = 'perm_' + roleName;
       form.appendChild(hidden);
     }
-    hidden.value = String(state[roleName]);
+    hidden.value = ((BigInt(s.hi) << 32n) | BigInt(s.lo)).toString();
   }
   return true;
 }
