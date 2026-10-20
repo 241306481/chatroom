@@ -23,55 +23,55 @@ storage.ensureSystemDomain();
 // ---- 1. 存量兼容 ----
 check('裸数字形式的权限值可直接判定', () => {
     // 位号已重排，不硬编码数值：按 PERM 表反查每一位的裸数字
-    const raw = bits.toStr(PERM.MANAGE_ROLE);
-    assert.ok(hasPerm(raw, PERM.MANAGE_ROLE), '应能判定');
-    assert.ok(!hasPerm(raw, PERM.MANAGE_USER), '不该误判');
+    const raw = bits.toStr(PERM.MANAGE.ROLE);
+    assert.ok(hasPerm(raw, PERM.MANAGE.ROLE), '应能判定');
+    assert.ok(!hasPerm(raw, PERM.MANAGE.USER), '不该误判');
 });
 
 check('高位（>32 位）的权限值也能识别', () => {
     const high = bits.bitByIndex(40);
     assert.ok(hasPerm(bits.toStr(high), high), '高位应能判定');
-    assert.ok(!hasPerm(bits.toStr(high), PERM.VIEW), '不该误判');
+    assert.ok(!hasPerm(bits.toStr(high), PERM.GENERAL.VIEW), '不该误判');
 });
 
 check('字符串形式的权限值同样可判', () => {
-    assert.ok(hasPerm(bits.toStr(PERM.MANAGE_ROLE), PERM.MANAGE_ROLE));
-    assert.ok(hasPerm(bits.toStr(PERM.MANAGE_PERM), PERM.MANAGE_PERM));
-    assert.ok(hasPerm(bits.toStr(PERM.ALL), PERM.MANAGE_PERM));
-    assert.ok(hasPerm(bits.toStr(PERM.ALL), PERM.MANAGE_ROLE));
+    assert.ok(hasPerm(bits.toStr(PERM.MANAGE.ROLE), PERM.MANAGE.ROLE));
+    assert.ok(hasPerm(bits.toStr(PERM.MANAGE.PERM), PERM.MANAGE.PERM));
+    assert.ok(hasPerm(bits.toStr(PERM.ALL), PERM.MANAGE.PERM));
+    assert.ok(hasPerm(bits.toStr(PERM.ALL), PERM.MANAGE.ROLE));
 });
 
 check('垃圾输入不抛异常', () => {
     for (const v of [null, undefined, '', 'abc', -1, {}, { hi: 'x', lo: null }]) {
-        hasPerm(v, PERM.VIEW);
+        hasPerm(v, PERM.GENERAL.VIEW);
         expandPerm(v);
     }
 });
 
 // ---- 2. 位运算正确性 ----
 check('双字位运算：or/and/not/has 自洽', () => {
-    const a = bits.or(PERM.VIEW, PERM.MANAGE_PERM);
-    assert.ok(bits.has(a, PERM.VIEW));
-    assert.ok(bits.has(a, PERM.MANAGE_PERM));
-    assert.ok(!bits.has(a, PERM.MANAGE_USER));
+    const a = bits.or(PERM.GENERAL.VIEW, PERM.MANAGE.PERM);
+    assert.ok(bits.has(a, PERM.GENERAL.VIEW));
+    assert.ok(bits.has(a, PERM.MANAGE.PERM));
+    assert.ok(!bits.has(a, PERM.MANAGE.USER));
     const n = bits.not(a);
-    assert.ok(!bits.has(n, PERM.VIEW));
-    assert.ok(!bits.has(n, PERM.MANAGE_PERM));
-    assert.ok(bits.has(n, PERM.MANAGE_USER));
+    assert.ok(!bits.has(n, PERM.GENERAL.VIEW));
+    assert.ok(!bits.has(n, PERM.MANAGE.PERM));
+    assert.ok(bits.has(n, PERM.MANAGE.USER));
 });
 
 check('toStr/norm 往返无损（64 位）', () => {
-    for (const p of [PERM.VIEW, PERM.DELETE_DOMAIN, PERM.MANAGE_PERM, PERM.ALL]) {
+    for (const p of [PERM.GENERAL.VIEW, PERM.MANAGE.DELETE, PERM.MANAGE.PERM, PERM.ALL]) {
         const s = bits.toStr(p);
         const back = bits.norm(s);
         assert.ok(bits.eq(back, p), p.name || 'perm 往返失败: ' + s);
     }
     // 最高位组合（不硬编码数值，随位号重排而变）
-    const combo = bits.or(PERM.MANAGE_PERM, PERM.DELETE_DOMAIN);
+    const combo = bits.or(PERM.MANAGE.PERM, PERM.MANAGE.DELETE);
     const comboStr = bits.toStr(combo);
-    assert.ok(bits.has(bits.norm(comboStr), PERM.MANAGE_PERM));
-    assert.ok(bits.has(bits.norm(comboStr), PERM.DELETE_DOMAIN));
-    assert.ok(!bits.has(bits.norm(comboStr), PERM.VIEW));
+    assert.ok(bits.has(bits.norm(comboStr), PERM.MANAGE.PERM));
+    assert.ok(bits.has(bits.norm(comboStr), PERM.MANAGE.DELETE));
+    assert.ok(!bits.has(bits.norm(comboStr), PERM.GENERAL.VIEW));
 });
 
 check('64 位值不丢精度（超出 2^53 的部分）', () => {
@@ -86,14 +86,14 @@ check('64 位值不丢精度（超出 2^53 的部分）', () => {
 
 // ---- 3. 角色管理 / 权限管理 独立 ----
 check('MANAGE_ROLE 与 MANAGE_PERM 是两个独立位', () => {
-    assert.notStrictEqual(bits.toStr(PERM.MANAGE_ROLE), bits.toStr(PERM.MANAGE_PERM));
-    assert.ok(!bits.has(PERM.MANAGE_ROLE, PERM.MANAGE_PERM));
-    assert.ok(!bits.has(PERM.MANAGE_PERM, PERM.MANAGE_ROLE));
+    assert.notStrictEqual(bits.toStr(PERM.MANAGE.ROLE), bits.toStr(PERM.MANAGE.PERM));
+    assert.ok(!bits.has(PERM.MANAGE.ROLE, PERM.MANAGE.PERM));
+    assert.ok(!bits.has(PERM.MANAGE.PERM, PERM.MANAGE.ROLE));
 });
 
 check('MANAGE_ROLE 不隐含 MANAGE_PERM（关闭互不影响）', () => {
-    const only = expandPerm(PERM.MANAGE_ROLE);
-    assert.ok(!bits.has(only, PERM.MANAGE_PERM),
+    const only = expandPerm(PERM.MANAGE.ROLE);
+    assert.ok(!bits.has(only, PERM.MANAGE.PERM),
         '只有角色管理时不应自动获得权限管理');
 });
 
@@ -118,7 +118,7 @@ check('域角色权限落盘为字符串并能读回', () => {
     storage.createDomain(dn, 'perm e2e', 'owner-e2e');
 
     const domain = storage.loadDomain(dn);
-    domain.roles = { tester: { display: '测试角色', perm: bits.norm(bits.or(PERM.MANAGE_PERM, PERM.MANAGE_ROLE)) } };
+    domain.roles = { tester: { display: '测试角色', perm: bits.norm(bits.or(PERM.MANAGE.PERM, PERM.MANAGE.ROLE)) } };
     storage.saveDomain(dn, domain);
 
     const reloaded = storage.loadDomain(dn);
@@ -126,27 +126,31 @@ check('域角色权限落盘为字符串并能读回', () => {
     assert.ok(stored && typeof stored === 'object', '落盘应为 {hi,lo} 对象');
     assert.strictEqual(typeof stored.hi, 'number');
     assert.strictEqual(typeof stored.lo, 'number');
-    assert.ok(hasPerm(stored, PERM.MANAGE_PERM), '读回后应仍持有 MANAGE_PERM');
-    assert.ok(hasPerm(stored, PERM.MANAGE_ROLE), '读回后应仍持有 MANAGE_ROLE');
-    assert.ok(!hasPerm(stored, PERM.MANAGE_USER), '不应多出 MANAGE_USER');
+    assert.ok(hasPerm(stored, PERM.MANAGE.PERM), '读回后应仍持有 MANAGE_PERM');
+    assert.ok(hasPerm(stored, PERM.MANAGE.ROLE), '读回后应仍持有 MANAGE_ROLE');
+    assert.ok(!hasPerm(stored, PERM.MANAGE.USER), '不应多出 MANAGE_USER');
 
     try { storage.deleteDomain(dn); } catch (e) {}
 });
 
 check('PERM_NAMES 的位序号与 PERM 表位置一致（无空洞）', () => {
-    const order = Object.keys(PERM).filter(k => k !== 'ALL');
+    const flat = [];
+    for (const [g, group] of Object.entries(PERM)) {
+        if (g === 'ALL') continue;
+        for (const [k, bit] of Object.entries(group)) flat.push({ g, k, bit });
+    }
     for (const item of PERM_NAMES) {
-        const key = order.find(k => PERM[k] === item.bit);
-        assert.ok(key, item.name + ' 的 bit 不在 PERM 表');
-        assert.strictEqual(order.indexOf(key), item.index,
-            item.name + ' 位序号与表中位置不符');
+        const pos = flat.findIndex(f => bits.eq(f.bit, item.bit));
+        assert.ok(pos >= 0, item.name + ' 的 bit 不在 PERM 表');
+        assert.strictEqual(pos, item.index, item.name + ' 位序号与表中位置不符');
     }
     // 开发阶段不做位号保留，位序号必须严格连续
     const idx = PERM_NAMES.map(p => p.index).sort((a, b) => a - b);
     idx.forEach((v, i) => assert.strictEqual(v, i, '位序号不连续于 ' + i));
-    assert.strictEqual(PERM_NAMES.length, order.length);
-    assert.strictEqual(order.filter(k => /^RESERVED_/.test(k)).length, 0,
-        '不应再有保留占位');
+    assert.strictEqual(PERM_NAMES.length, flat.length);
+    for (const f of flat) {
+        assert.ok(!/^RESERVED_/.test(f.k), f.g + ' 组不应有保留占位');
+    }
 });
 
 check('权限页模板用位序号而非位掩码', () => {

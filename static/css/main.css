@@ -29,5 +29,7 @@
 @import url('./files.css');
 @import url('./manage.css');
 @import url('./editor.css');
+@import url('./markdown.css');
+@import url('./markdown-dark.css');
 @import url('./modal.css');
 @import url('./errors.css');

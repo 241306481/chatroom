@@ -49,23 +49,6 @@
   padding: 10px 12px; background: #fafafa; line-height: 1.6; word-wrap: break-word; }
 .md-editor-preview:empty::before { content: '预览区（输入后显示渲染结果）';
   color: #ccc; font-style: italic; }
-.md-editor-preview h1,
-.md-editor-preview h2,
-.md-editor-preview h3 { margin: 0.5em 0 0.3em; }
-.md-editor-preview p { margin: 0.4em 0; }
-.md-editor-preview code { background: #eef0f4; padding: 1px 5px;
-  border-radius: 3px; font-family: Consolas, monospace; font-size: 13px; }
-.md-editor-preview pre { background: #eef0f4; padding: 8px 12px;
-  border-radius: 4px; overflow-x: auto; }
-.md-editor-preview pre code { background: none; padding: 0; }
-.md-editor-preview blockquote { margin: 0.4em 0; padding: 2px 10px;
-  border-left: 3px solid #ddd; color: #666; }
-.md-editor-preview ul,
-.md-editor-preview ol { padding-left: 22px; margin: 0.4em 0; }
-.md-editor-preview table { border-collapse: collapse; margin: 0.4em 0; }
-.md-editor-preview table th,
-.md-editor-preview table td { border: 1px solid #ddd; padding: 4px 8px; }
-.md-editor-preview a { color: #1890ff; }
 .md-editor-resize-operate { width: 5px; background: #f0f0f0;
   cursor: col-resize; position: relative; flex-shrink: 0;
   transition: background 0.15s; }

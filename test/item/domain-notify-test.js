@@ -123,11 +123,11 @@ const check = (n, f) => {
 
     check('PERM 位 31 的权限也能正确判定', () => {
         const { PERM, hasPerm } = require(path.join(ROOT, 'lib/permissions/perm'));
-        assert.ok(hasPerm(PERM.ALL, PERM.VIEW), 'ALL 应含低位');
-        assert.ok(hasPerm(PERM.ALL, PERM.DELETE_DOMAIN), 'ALL 应含位 31');
-        assert.ok(hasPerm(PERM.DELETE_DOMAIN, PERM.DELETE_DOMAIN), '单独判定应成立');
-        assert.ok(!hasPerm(0, PERM.DELETE_DOMAIN), '空权限不该有位 31');
-        assert.ok(hasPerm(PERM.MANAGE_USER, PERM.MUTE_MEMBER), '隐含关系仍应生效');
+        assert.ok(hasPerm(PERM.ALL, PERM.GENERAL.VIEW), 'ALL 应含低位');
+        assert.ok(hasPerm(PERM.ALL, PERM.MANAGE.DELETE), 'ALL 应含位 31');
+        assert.ok(hasPerm(PERM.MANAGE.DELETE, PERM.MANAGE.DELETE), '单独判定应成立');
+        assert.ok(!hasPerm(0, PERM.MANAGE.DELETE), '空权限不该有位 31');
+        assert.ok(hasPerm(PERM.MANAGE.USER, PERM.MESSAGE.MUTE_MEMBER), '隐含关系仍应生效');
     });
 
     // ---------- 注册广播 members_update ----------

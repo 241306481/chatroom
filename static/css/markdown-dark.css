@@ -1,0 +1,21 @@
+/* 暗色主题下的 Markdown 正文 */
+html[data-theme="dark"] .md-body { color: #e0e0e0; }
+html[data-theme="dark"] .md-body h1,
+html[data-theme="dark"] .md-body h2,
+html[data-theme="dark"] .md-body h3,
+html[data-theme="dark"] .md-body h4,
+html[data-theme="dark"] .md-body h5,
+html[data-theme="dark"] .md-body h6 { color: #f0f0f0; }
+html[data-theme="dark"] .md-body a { color: #4da3ff; }
+html[data-theme="dark"] .md-body code { background: #2a2a2a; color: #e0e0e0; }
+html[data-theme="dark"] .md-body pre { background: #242424; color: #e0e0e0; }
+html[data-theme="dark"] .md-body pre code { background: none; color: inherit; }
+html[data-theme="dark"] .md-body blockquote {
+  border-left-color: #444; color: #aaa;
+}
+html[data-theme="dark"] .md-body table th,
+html[data-theme="dark"] .md-body table td { border-color: #3a3a3a; }
+html[data-theme="dark"] .md-body table th { background: #2a2a2a; }
+html[data-theme="dark"] .md-body hr { border-top-color: #333; }
+html[data-theme="dark"] .md-body h5,
+html[data-theme="dark"] .md-body h6 { color: #bbb; }

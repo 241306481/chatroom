@@ -97,7 +97,7 @@
                     {% endif %}
                     {% if not msg.revoked %}
                       {% if (msg.user_id == current_user.id and nav.can_revoke_own) or nav.can_revoke_any %}
-                        <button type="button" onclick="revokeMessage('{{ msg.id }}')" title="撤回">↺</button>
+                        <button type="button" onclick="revokeMessage('{{ msg.id }}')" title="撤回">↩️</button>
                       {% endif %}
                     {% endif %}
                     {% if can_delete_any or msg.user_id == current_user.id %}
@@ -123,12 +123,12 @@
                 {% endif %}
               {% endif %}
               {% if msg.revoked %}
-                <div class="msg-content msg-revoked">
+                <div class="msg-content md-body msg-revoked">
                   <span class="revoked-nick">{{ msg.revoked_by_nickname or msg.nickname }}</span>
                   撤回了一条消息
                 </div>
               {% else %}
-                <div class="msg-content" data-raw="{{ msg.content | e }}"></div>
+                <div class="msg-content md-body" data-raw="{{ msg.content | e }}"></div>
               {% endif %}
               {% if not msg.revoked %}
                 <div class="msg-reactions" id="reactions-{{ msg.id }}"
@@ -191,7 +191,7 @@
                       onclick="toggleSource(this)"
                       title="查看源码">📄</button>
             </div>
-            <div class="pinned-content" data-raw="{{ pin.content | e }}"></div>
+            <div class="pinned-content md-body" data-raw="{{ pin.content | e }}"></div>
             {% if can_pin %}
               <div class="pinned-actions">
                 <button type="button" title="取消置顶" onclick="unpinMessage('{{ pin.id }}')">📌</button>

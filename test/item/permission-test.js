@@ -46,14 +46,18 @@ check('★ 域管理员也不能置顶（全局关闭开关必须生效）', () 
     assert.ok(denied, '域管理员仍然可以置顶 —— 全局 kill-switch 对特权用户失效');
 });
 check('★ WebSocket 侧行为一致（不得比 HTTP 更宽松）', () => {
-    // 闸门已抽出
+    // WS 与 HTTP 都不豁免：特权用户同样受组权限约束
     const src = fs.readFileSync(path.join(ROOT, 'lib/websocket/discuss-guard.js'), 'utf8');
-    assert.ok(/PRIV_EXEMPT_GROUPS\.has\(conf\.priv && conf\.priv\.group\)/.test(src),
-        'WS 侧仍未按组收窄 skipPriv');
-    // 须真正用上
+    assert.ok(!/PRIV_EXEMPT_GROUPS/.test(src), 'WS 侧不应再有特权豁免');
+    assert.ok(!/skipPriv/.test(src), 'WS 侧不应再有 skipPriv 豁免分支');
+    // HTTP 路径同样不豁免
+    const http = fs.readFileSync(path.join(ROOT, 'lib/auth/privilege.js'), 'utf8');
+    assert.ok(!/PRIV_EXEMPT_GROUPS/.test(http), 'HTTP 侧不应再有特权豁免');
+    assert.ok(!/skipPriv/.test(http), 'HTTP 侧不应再有 skipPriv 豁免分支');
+    // 须真正用上闸门
     const main = fs.readFileSync(path.join(ROOT, 'lib/websocket/discuss.js'), 'utf8');
     assert.ok(/require\('\.\/discuss-guard'\)/.test(main), 'discuss.js 未引用 discuss-guard');
-    assert.ok(!/PRIV_EXEMPT_GROUPS\.has/.test(main), 'discuss.js 仍留有本地副本');
+    assert.ok(!/PRIV_EXEMPT_GROUPS/.test(main), 'discuss.js 仍留有本地副本');
 });
     check('域设置默认开放：成员角色的 domain 位已给默认值', () => {
     const u = storage.loadUser(adminId);
