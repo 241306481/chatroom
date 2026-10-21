@@ -11,13 +11,10 @@ const routes = require('./lib/routes');
 const websocket = require('./lib/websocket');
 const startupCheck = require('./lib/startup-check');
 const logger = require('./lib/logger');
+const { registerShutdown } = require('./lib/graceful');
 
 const PORT = parseInt(process.env.PORT || '5000', 10);
 const HOST = process.env.HOST || '0.0.0.0';
-// 勿 unref
-const FORCE_MS = 8000;
-// 等关闭帧发出
-const WS_FRAME_GRACE_MS = 500;
 const LINE = '--------------------------------------------------';
 const RULE = '==================================================';
 
@@ -94,58 +91,6 @@ function handleServerError(err) {
         console.error(`  没有权限绑定 ${HOST}:${PORT}。1024 以下端口需要管理员权限。`);
     }
     process.exit(1);
-}
-
-// 优雅关闭六步
-function registerShutdown(server, wsHandle) {
-    // 同为请求监听
-    let httpRequests = 0;
-    server.on('request', () => { httpRequests++; });
-
-    let shuttingDown = false;
-    function shutdown(signal) {
-        // 幂等
-        if (shuttingDown) return;
-        shuttingDown = true;
-        const t0 = Date.now();
-        console.log(`\n[Shutdown] 收到 ${signal}，开始优雅关闭…`);
-
-        const force = setTimeout(() => {
-            console.error(`[Shutdown] 超时 ${FORCE_MS}ms，强制退出`);
-            process.exit(1);
-        }, FORCE_MS);
-
-        server.close();
-        if (server.closeIdleConnections) server.closeIdleConnections();
-
-        let closedWs = 0;
-        try {
-            if (wsHandle && typeof wsHandle.shutdown === 'function') {
-                closedWs = wsHandle.shutdown() || 0;
-            }
-        } catch (e) {
-            console.error('[Shutdown] WS 关闭异常:', e.message);
-        }
-
-        setTimeout(() => {
-            if (server.closeAllConnections) server.closeAllConnections();
-            Promise.resolve()
-                .then(() => logger.close())
-                .catch(() => {})
-                .then(() => {
-                    clearTimeout(force);
-                    const took = Date.now() - t0;
-                    const ws = closedWs === 1 ? 'connection' : 'connections';
-                    const rq = httpRequests === 1 ? 'request' : 'requests';
-                    console.log(`[Shutdown] closed ${closedWs} ws ${ws}, `
-                        + `served ${httpRequests} HTTP ${rq}, took ${took}ms`);
-                    process.exit(0);
-                });
-        }, closedWs > 0 ? WS_FRAME_GRACE_MS : 0);
-    }
-
-    process.on('SIGTERM', () => shutdown('SIGTERM'));
-    process.on('SIGINT', () => shutdown('SIGINT'));
 }
 
 // 入口

@@ -184,6 +184,13 @@ check('配置值越界会被夹紧', () => {
     const back = limiter.listConfig().find(a => a.action === 'post_message');
     assert.ok(back.perAccount <= 1000000, '应被夹到上限，实际 ' + back.perAccount);
     assert.ok(back.windowMin >= 1, '窗口至少 1 分钟，实际 ' + back.windowMin);
+
+    // 还原默认，避免污染后续测试
+    const { DEFAULTS } = require('../../lib/rate-limit');
+    limiter.saveConfig(Object.entries(DEFAULTS)
+        .filter(([, d]) => d)
+        .map(([action, d]) => ({ action, ...d })));
+    limiter.invalidate();
 });
 
 // ---- 3. 会话绑定（防 cookie 搬运）----
@@ -284,14 +291,96 @@ check('注册与发消息都接了限流', () => {
     assert.ok(files.includes("check('upload_file'"), '上传应限流');
 });
 
-check('login/register 只有每 IP 维度（无账号维度）', () => {
+check('login/register 同时有 IP 与账号维度（防换 IP 撞库）', () => {
     const { listConfig } = require('../../lib/rate-limit');
     for (const action of ['login', 'register']) {
         const c = listConfig().find(a => a.action === action);
         assert.ok(c, action + ' 应有配置');
-        assert.strictEqual(c.perAccount, 0, action + ' 不应有账号维度限制');
         assert.ok(c.perIp > 0, action + ' 应有 IP 维度限制');
+        assert.ok(c.perAccount > 0,
+            action + ' 应有账号维度限制，否则换 IP 就能绕过');
     }
+});
+
+check('localhost 豁免限流（限流只是兜底）', () => {
+    const limiter = require('../../lib/rate-limit');
+    assert.ok(limiter.isLocal('127.0.0.1'), '127.0.0.1 应豁免');
+    assert.ok(limiter.isLocal('::1'), '::1 应豁免');
+    assert.ok(limiter.isLocal('127.0.0.5'), '整个 127/8 都应豁免');
+    assert.ok(!limiter.isLocal('10.0.0.1'), '内网 IP 不豁免');
+    assert.ok(!limiter.isLocal(''), '空 IP 不豁免');
+
+    // 本机不该被计数也不该被拦
+    limiter.resetCounters('page_view');
+    for (let i = 0; i < 2000; i++) {
+        limiter.note('page_view', { ip: '127.0.0.1', account: 'a' });
+    }
+    assert.strictEqual(limiter.check('page_view', { ip: '127.0.0.1', account: 'a' }),
+        null, '本机不应被限流');
+});
+
+check('限流窗口：手动可设 60 分钟，出厂默认最大 10 分钟', () => {
+    const limiter = require('../../lib/rate-limit');
+    assert.strictEqual(limiter.WINDOW_MAX, 60, '手动上限应为 60 分钟');
+
+    // 出厂默认的窗口都不超过 10 分钟
+    for (const a of Object.values(limiter.DEFAULTS)) {
+        if (!a) continue;
+        assert.ok(a.windowMin <= 10,
+            '出厂默认窗口应 <=10，实际 ' + a.windowMin);
+    }
+
+    // 手动存 999 会被夹到 60
+    const list = limiter.listConfig().map(a => (a.action === 'login'
+        ? { ...a, windowMin: 999 } : a));
+    limiter.saveConfig(list);
+    limiter.invalidate();
+    const back = limiter.listConfig().find(a => a.action === 'login');
+    assert.strictEqual(back.windowMin, 60, '窗口应被夹到 60 分钟');
+
+    // 手动存 30 应当保留
+    const list2 = limiter.listConfig().map(a => (a.action === 'login'
+        ? { ...a, windowMin: 30 } : a));
+    limiter.saveConfig(list2);
+    limiter.invalidate();
+    assert.strictEqual(
+        limiter.listConfig().find(a => a.action === 'login').windowMin, 30,
+        '手动设的 30 分钟应保留');
+
+    const { DEFAULTS } = require('../../lib/rate-limit');
+    limiter.saveConfig(Object.entries(DEFAULTS)
+        .filter(([, d]) => d).map(([action, d]) => ({ action, ...d })));
+    limiter.invalidate();
+});
+
+check('限流返回原因与剩余时间', () => {
+    const limiter = require('../../lib/rate-limit');
+    limiter.resetCounters('search');
+    for (let i = 0; i < 100; i++) {
+        limiter.note('search', { ip: '10.7.0.1', account: 'a' });
+    }
+    const hit = limiter.check('search', { ip: '10.7.0.1', account: 'a' });
+    assert.ok(hit, '应被限');
+    assert.ok(hit.dim, '应带维度（ip/account）');
+    assert.ok(hit.leftSec > 0, '应带剩余秒数');
+    assert.ok(hit.leftSec <= 60, '搜索窗口 1 分钟，剩余应 <=60，实际 ' + hit.leftSec);
+
+    const { limitMessage } = require('../../lib/routes/_helpers');
+    const msg = limitMessage('搜索', hit);
+    assert.ok(msg.includes('搜索'), '文案应说明是什么操作: ' + msg);
+    assert.ok(msg.includes('频繁'), '文案应说明原因: ' + msg);
+    assert.ok(/[0-9]+ *(秒|分钟)/.test(msg), '文案应带剩余时间: ' + msg);
+});
+
+check('过期计数会被清理', () => {
+    const limiter = require('../../lib/rate-limit');
+    limiter.resetCounters('upload_file');
+    limiter.note('upload_file', { ip: '10.8.0.1', account: 'a' });
+    // 刚记的不算过期
+    assert.strictEqual(limiter.cleanExpired(), 0, '刚记的不该被清');
+    // 快照里能看到
+    const snap = limiter.snapshot();
+    assert.ok(snap.upload_file && snap.upload_file.ip.length, '快照应能看到计数');
 });
 
 check('页面/文件/搜索都有独立限流档位', () => {

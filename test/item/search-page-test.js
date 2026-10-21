@@ -1,6 +1,7 @@
 'use strict';
 // 搜索：真实总数 + 分页（此前硬截断 200 条，模板把截断值当总数显示）
 const assert = require('assert');
+const fs = require('fs');
 const storage = require('../../lib/storage');
 const { parseAdvanced } = require('../../lib/routes/search');
 
@@ -40,22 +41,26 @@ check('搜索命中全部 45 条（不再被 200 硬截断）', () => {
     assert.strictEqual(all.length, 45, '实际命中 ' + all.length);
 });
 
-check('分页：每页 20 条，共 3 页', () => {
-    const PAGE_SIZE = 20;
-    const all = storage.loadAllMessages(dn, 'general');
-    assert.strictEqual(Math.ceil(all.length / PAGE_SIZE), 3);
-    const p1 = all.slice(0, PAGE_SIZE);
-    const p2 = all.slice(PAGE_SIZE, PAGE_SIZE * 2);
-    const p3 = all.slice(PAGE_SIZE * 2);
-    assert.strictEqual(p1.length, 20);
-    assert.strictEqual(p2.length, 20);
-    assert.strictEqual(p3.length, 5);
+check('分页：每页条数取自代码，最多 10 页', () => {
+    const src = fs.readFileSync(
+        require('path').join(__dirname, '../../lib/routes/search.js'), 'utf8');
+    const pm = /const PAGE_SIZE = (\d+)/.exec(src);
+    const mm = /const MAX_RESULTS = (\d+)/.exec(src);
+    assert.ok(pm && mm, '应能读到分页参数');
+    const PAGE_SIZE = parseInt(pm[1], 10);
+    const MAX_RESULTS = parseInt(mm[1], 10);
+    assert.strictEqual(PAGE_SIZE, 50, '每页应为 50');
+    assert.strictEqual(MAX_RESULTS, 500, '最多应为 500');
+    // 500 / 50 = 10 页
+    assert.strictEqual(Math.ceil(MAX_RESULTS / PAGE_SIZE), 10, '应为 10 页');
 });
 
 check('分页：总数与截断标记可区分', () => {
-    const total = 45;
-    const MAX_RESULTS = 2000;
-    assert.strictEqual(total >= MAX_RESULTS, false, '45 条不应标记为 truncated');
+    const src = fs.readFileSync(
+        require('path').join(__dirname, '../../lib/routes/search.js'), 'utf8');
+    const mm = /const MAX_RESULTS = (\d+)/.exec(src);
+    const MAX_RESULTS = parseInt(mm[1], 10);
+    assert.strictEqual(45 >= MAX_RESULTS, false, '45 条不应标记为 truncated');
 });
 
 check('模板不再硬编码 200', () => {

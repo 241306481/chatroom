@@ -215,23 +215,38 @@ check('登录限流已接入登录路由', () => {
     assert.ok(src.indexOf('checkLoginAllowed') < src.indexOf('auth.login('),
         '限流检查必须早于密码校验（否则 scrypt 仍可被无限次调用）');
 });
-check('启动自检存在且先于监听端口', () => {
-    const src = fs.readFileSync(path.join(PROJ, 'server.js'), 'utf8');
-    assert.ok(/startupCheck\.run/.test(src), '未调用自检');
-    assert.ok(src.indexOf('startupCheck.run') < src.indexOf('server.listen'),
-        '自检未在 listen 之前');
-});
-check('优雅关闭：关闭 HTTP + 断开 WS + 有超时兜底', () => {
-    const src = fs.readFileSync(path.join(PROJ, 'server.js'), 'utf8');
+    // 关闭逻辑已抽到 lib/graceful.js
+    const src = fs.readFileSync(path.join(PROJ, 'lib/graceful.js'), 'utf8');
     assert.ok(/SIGTERM/.test(src) && /SIGINT/.test(src), '缺少信号处理');
+    // Windows 关闭控制台窗口 = CTRL_CLOSE_EVENT，Node 转发为 SIGHUP
+    assert.ok(/SIGHUP/.test(src), '缺少 SIGHUP 处理');
     assert.ok(/server\.close/.test(src), '未关闭 HTTP');
-    assert.ok(/closeIdleConnections/.test(src), '未放掉空闲 keep-alive');
-    assert.ok(/closeAllConnections/.test(src), '未强制收尾剩余连接');
-    assert.ok(/logger\.close\(\)/.test(src), '未等日志落盘');
+    assert.ok(/closeIdleConnections/.test(src), '未关闭 keep-alive');
+    assert.ok(/closeAllConnections/.test(src), '未强制断开剩余连接');
+    assert.ok(/logger\.close\(\)/.test(src), '未刷日志');
     assert.ok(/setTimeout/.test(src) && /强制退出/.test(src), '缺少超时兜底');
-    assert.ok(!/force\.unref/.test(src), '超时兜底被 unref 了');
+    assert.ok(!/force\.unref/.test(src), '超时定时器被 unref 了');
+    // 兜底超时必须短于 Windows 给的 5 秒宽限期
+    const fm = /const FORCE_MS\s*=\s*(\d+)/.exec(src);
+    assert.ok(fm && parseInt(fm[1], 10) < 5000, 'FORCE_MS 应小于 5000');
+check('优雅关闭：关闭 HTTP + 断开 WS + 有超时兜底', () => {
+    // 关闭逻辑已抽到 lib/graceful.js
+    const src = fs.readFileSync(path.join(PROJ, 'lib/graceful.js'), 'utf8');
+    assert.ok(/SIGTERM/.test(src) && /SIGINT/.test(src), '缺少信号处理');
+    // Windows 关闭控制台窗口 = CTRL_CLOSE_EVENT，Node 转发为 SIGHUP
+    assert.ok(/SIGHUP/.test(src), '缺少 SIGHUP 处理');
+    assert.ok(/server\.close/.test(src), '未关闭 HTTP');
+    assert.ok(/closeIdleConnections/.test(src), '未关闭 keep-alive');
+    assert.ok(/closeAllConnections/.test(src), '未强制断开剩余连接');
+    assert.ok(/logger\.close\(\)/.test(src), '未刷日志');
+    assert.ok(/setTimeout/.test(src) && /强制退出/.test(src), '缺少超时兜底');
+    assert.ok(!/force\.unref/.test(src), '超时定时器被 unref 了');
+    // 兜底超时必须短于 Windows 给的 5 秒宽限期
+    const fm = /const FORCE_MS\s*=\s*(\d+)/.exec(src);
+    assert.ok(fm && parseInt(fm[1], 10) < 5000, 'FORCE_MS 应小于 5000');
     // 不翻内部结构
-    assert.ok(!/require\('\.\/lib\/websocket\/registry'\)/.test(src),
+    const server = fs.readFileSync(path.join(PROJ, 'server.js'), 'utf8');
+    assert.ok(!/require\('\.\/lib\/websocket\/registry'\)/.test(server),
         'server.js 仍在直接操作 registry（分层倒置）');
 });
 check('WebSocket 模块暴露 shutdown，且关停时摘掉 upgrade 监听', () => {

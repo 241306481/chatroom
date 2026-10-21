@@ -32,7 +32,7 @@
         <tr>
           <td><code>{{ a.action }}</code></td>
           <td><input type="text" name="label_{{ a.action }}" value="{{ a.label }}" maxlength="20"></td>
-          <td><input type="number" name="window_{{ a.action }}" value="{{ a.windowMin }}" min="1" max="1440"></td>
+          <td><input type="number" name="window_{{ a.action }}" value="{{ a.windowMin }}" min="1" max="60"></td>
           <td><input type="number" name="ip_{{ a.action }}" value="{{ a.perIp }}" min="0" max="1000000"></td>
           <td><input type="number" name="acct_{{ a.action }}" value="{{ a.perAccount }}" min="0" max="1000000"></td>
         </tr>

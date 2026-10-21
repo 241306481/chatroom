@@ -9,6 +9,7 @@ if (!fs.existsSync(TMP)) fs.mkdirSync(TMP, { recursive: true });
 
 const SUITES = [
     'guard-test.js',
+    'register-domain-test.js',
     'rate-limit-test.js',
     'uid-login-test.js',
     'perm-bits-test.js',
@@ -28,6 +29,9 @@ const SUITES = [
     'console-cmds-test.js',
     'css-split-test.js',
     'dom-sanitize-test.js',
+    'shutdown-conn-test.js',
+    'shutdown-test.js',
+    'search-perf-test.js',
     'search-page-test.js',
     'member-bar-test.js',
     'domain-notify-test.js',
