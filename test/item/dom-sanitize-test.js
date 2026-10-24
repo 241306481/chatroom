@@ -11,7 +11,9 @@ const check = (n, f) => {
     catch (e) { results.push(['FAIL', n + ' -> ' + e.message]); }
 };
 
-const L = fs.readFileSync(path.join(ROOT, 'static/js/core/dom.js'), 'utf8').split('\n');
+const L = fs.readFileSync(path.join(ROOT, 'static/js/core/dom.js'), 'utf8')
+    .replace(/\r\n/g, '\n')
+    .split('\n');
 
 // 极简 DOM 替身，只实现 sanitize 用到的方法
 function mkRoot(tags) {

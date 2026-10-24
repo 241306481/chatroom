@@ -102,6 +102,8 @@ async function main() {
     await runStartupCheck();
 
     const { server, hasCert } = createServer();
+    // 协议锁在启动这一刻，运行中补 cert.pem/key.pem 不会前后不一致
+    require('./lib/ws-protocol').setWsProtocol(hasCert ? 'wss' : 'ws');
     registerShutdown(server, websocket.setup(server));
     server.on('error', handleServerError);
     server.listen(PORT, HOST, () => printBanner(hasCert));

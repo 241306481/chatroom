@@ -24,6 +24,7 @@ const SUITES = [
     'register-ip-color-test.js',
     'route-safety-test.js',
     'tls-test.js',
+    'dm-image-test.js',
     'console-test.js',
     'console-check-test.js',
     'console-cmds-test.js',

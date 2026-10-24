@@ -78,7 +78,8 @@ check('注册后所有用户都进了 system 域（含首个超管）', () => {
 });
 
 check('入域逻辑只在 createUser 一处（不重复实现）', () => {
-    const users = fs.readFileSync(path.join(ROOT, 'lib/storage/users.js'), 'utf8');
+    const users = fs.readFileSync(path.join(ROOT, 'lib/storage/users.js'), 'utf8')
+        .replace(/\r\n/g, '\n');
     const i = users.indexOf('function createUser');
     const body = users.substring(i, users.indexOf('\n}\n', i));
     assert.ok(/domain\.members\[uid\]/.test(body),

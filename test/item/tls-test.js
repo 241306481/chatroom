@@ -12,7 +12,7 @@ const DATA = path.join(ROOT, 'data');
 const CERT = path.join(ROOT, 'cert.pem');
 const KEY = path.join(ROOT, 'key.pem');
 const PORT = 5192;
-const SKIP_N = 8;   // 缺证书工具时要跳过的用例数
+const SKIP_N = 9;   // 缺证书工具时要跳过的用例数
 
 const results = [];
 const check = async (n, f) => {
@@ -36,6 +36,20 @@ function httpsPost(p, body) {
             x.on('end', () => res({ status: x.statusCode, headers: x.headers, body: d }));
         });
         r.on('error', rej); r.write(payload); r.end();
+    });
+}
+
+function httpsGet(p, cookie) {
+    return new Promise((res, rej) => {
+        const r = https.request({
+            host: '127.0.0.1', port: PORT, path: p, method: 'GET',
+            rejectUnauthorized: false,
+            headers: cookie ? { Cookie: cookie } : {},
+        }, x => {
+            let d = ''; x.on('data', c => d += c);
+            x.on('end', () => res({ status: x.statusCode, headers: x.headers, body: d }));
+        });
+        r.on('error', rej); r.end();
     });
 }
 
@@ -154,6 +168,16 @@ function httpsPost(p, body) {
         });
         assert.ok(ok, 'WSS 握手失败');
         ws.close();
+    });
+
+    await check('★ 所有页面都注入锁定的 wss（不靠路由传参）', async () => {
+        // /myfile 路由本身不传 ws_protocol，必须由模板层兜底
+        const r = await httpsGet('/myfile', cookie);
+        assert.strictEqual(r.status, 200, '/myfile 未正常渲染: ' + r.status);
+        const m = r.body.match(/__WS_PROTOCOL__\s*=\s*([^;]+);/);
+        assert.ok(m, '页面没有注入 __WS_PROTOCOL__');
+        assert.strictEqual(m[1].trim(), '"wss"',
+            '未传 ws_protocol 的页面注入成了 ' + m[1]);
     });
 
     await check('HTTP 部署下不设 Secure（否则浏览器丢弃 Cookie）', () => {

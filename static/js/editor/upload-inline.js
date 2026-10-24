@@ -1,8 +1,9 @@
 (function () {
-    function getUploadUrl() {
+    function getUploadUrl(visibility) {
         const dn = window.__DOMAIN__;
         if (dn) return '/domain/' + encodeURIComponent(dn) + '/files/upload';
-        return '/myfile/upload';
+        return '/myfile/upload'
+            + (visibility === 'public' ? '?visibility=public' : '');
     }
 
     function getViewUrl(fileId) {
@@ -13,7 +14,7 @@
     }
 
     window.EditorUpload = {
-        pickAndUpload(ta, refresh) {
+        pickAndUpload(ta, refresh, opts) {
             const input = document.createElement('input');
             input.type = 'file';
             input.accept = 'image/*';
@@ -39,18 +40,18 @@
                 input.remove();
                 window.removeEventListener('focus', onFocusBack);
                 if (!f) return;
-                window.EditorUpload._upload(f, ta, refresh);
+                window.EditorUpload._upload(f, ta, refresh, opts);
             });
 
             window.addEventListener('focus', onFocusBack);
             input.click();
         },
 
-        _upload(file, ta, refresh) {
+        _upload(file, ta, refresh, opts) {
             const fd = new FormData();
             fd.append('file', file);
             const xhr = new XMLHttpRequest();
-            xhr.open('POST', getUploadUrl());
+            xhr.open('POST', getUploadUrl(opts && opts.visibility));
             xhr.onload = function () {
                 let res = null;
                 try { res = JSON.parse(xhr.responseText); } catch (e) {}

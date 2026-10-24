@@ -2,6 +2,30 @@
 // 有图用 img，否则首字+颜色
 (function () {
     const EXTS = { png: 1, jpg: 1, gif: 1, webp: 1 };
+    const COLOR_FALLBACK = '#888';
+
+    // 与 lib/template.js 的 avatarText 过滤器保持一致
+    function avatarText(nickname) {
+        const chars = Array.from(String(nickname == null ? '?' : nickname));
+        if (!chars.length) return '?';
+        const first = chars[0];
+        const cp = first.codePointAt(0);
+        if (cp > 0xFFFF) return first;
+        if (/[\u2e80-\u303f\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\ufe30-\ufe4f\uff00-\uffef\uac00-\ud7af]/.test(first)) {
+            return first;
+        }
+        return chars.slice(0, 2).join('');
+    }
+
+    // 与 lib/template.js 的 avatarColor 过滤器保持一致
+    function safeColor(c) {
+        const s = String(c == null ? '' : c).trim();
+        if (/^#[0-9a-fA-F]{3,8}$/.test(s)) return s;
+        if (/^hsl\(\s*-?\d+(\.\d+)?\s*,\s*\d+(\.\d+)?%\s*,\s*\d+(\.\d+)?%\s*\)$/.test(s)) return s;
+        if (/^rgba?\([0-9,\s.]+\)$/.test(s)) return s;
+        if (/^[a-zA-Z]{3,20}$/.test(s)) return s;
+        return COLOR_FALLBACK;
+    }
 
     function srcOf(user) {
         if (!user || !user.id || !user.avatar_ext) return '';
@@ -13,7 +37,6 @@
     // 造一个头像元素，样式类由调用方给
     function build(user, cls) {
         const src = srcOf(user);
-        const nick = (user && user.nickname) || '?';
 
         if (src) {
             const img = document.createElement('img');
@@ -32,8 +55,8 @@
     function fallback(user, cls) {
         const s = document.createElement('span');
         s.className = cls || '';
-        s.style.background = (user && user.avatar_color) || '#888';
-        s.textContent = (user && user.nickname ? user.nickname[0] : '?');
+        s.style.background = safeColor(user && user.avatar_color);
+        s.textContent = avatarText(user && user.nickname);
         return s;
     }
 
@@ -43,5 +66,5 @@
         container.replaceWith(build(user, cls));
     }
 
-    window.Avatar = { build, fallback, srcOf, apply };
+    window.Avatar = { build, fallback, srcOf, apply, avatarText, safeColor };
 })();

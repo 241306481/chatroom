@@ -18,7 +18,9 @@
 {% set _submitOnClick = _opts.submitOnClick or '' %}
 {% set _height = _opts.height or 220 %}
 {% set _heightResize = _opts.heightResize or 'bottom' %}
+{% set _imageVisibility = _opts.imageVisibility or '' %}
 <div class="md-editor" data-context-edit
+     {% if _imageVisibility %}data-image-visibility="{{ _imageVisibility }}"{% endif %}
      style="--md-editor-height: {{ _height }}px">
 
   <div class="md-editor-toolbar-wrapper">

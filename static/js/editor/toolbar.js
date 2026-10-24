@@ -83,7 +83,9 @@ function handleAction(action, el, ta, refresh) {
         });
     } else if (action === 'image-upload') {
         if (window.EditorUpload) {
-            window.EditorUpload.pickAndUpload(ta, refresh);
+            const root = el.closest('.md-editor');
+            const visibility = root && root.dataset.imageVisibility;
+            window.EditorUpload.pickAndUpload(ta, refresh, { visibility });
         }
     } else if (action === 'undo') {
         ta.focus();

@@ -63,8 +63,8 @@
             {% set av = msg | avatarSrc(msg.user_id) %}
             {% if av %}<img class="msg-avatar avatar-img" src="{{ av }}"
                      onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex'"
-                     alt="" loading="lazy">
-            {% else %}<span class="msg-avatar" style="background: {{ msg.avatar_color | avatarColor }}">{{ msg.nickname | avatarText }}</span>{% endif %}
+                     alt="" loading="lazy">{% endif %}
+            <span class="msg-avatar" style="background: {{ msg.avatar_color | avatarColor }}">{{ msg.nickname | avatarText }}</span>
             <div class="msg-body">
               <div class="msg-header">
                 {% if msg.pinned %}<span class="pin-icon">📌</span>{% endif %}

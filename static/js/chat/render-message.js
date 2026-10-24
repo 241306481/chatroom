@@ -39,7 +39,9 @@
         const showDelete = canDeleteAny || isOwn;
         const revoked = !!msg.revoked;
 
-        const nick = (msg.nickname || '?')[0];
+        const nick = window.Avatar
+            ? window.Avatar.avatarText(msg.nickname)
+            : (msg.nickname || '?')[0];
         const color = safeColor(msg.avatar_color);
         const mid = escSingle(msg.id);
 
@@ -110,7 +112,9 @@
         const rawAttr = window.escAttr ? window.escAttr(msg.content) : esc(msg.content);
         const nick = msg.nickname || msg.from_nickname || '?';
         const color = safeColor(msg.avatar_color || msg.from_avatar_color);
-        const firstChar = nick[0] || '?';
+        const firstChar = window.Avatar
+            ? window.Avatar.avatarText(nick)
+            : (nick[0] || '?');
         div.innerHTML =
             '<div class="dm-avatar-wrap">'
               + '<span class="dm-avatar" style="background:' + esc(color) + '">'
