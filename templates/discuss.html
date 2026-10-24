@@ -61,11 +61,10 @@
           <div class="message {% if msg.pinned %}pinned{% endif %} {% if msg.is_system %}system-msg{% endif %}"
                data-id="{{ msg.id }}" {% if msg.reply_to %}data-reply-to="{{ msg.reply_to }}"{% endif %} id="msg-{{ msg.id }}">
             {% set av = msg | avatarSrc(msg.user_id) %}
-            <img class="msg-avatar avatar-img" src="{{ av }}"
+            {% if av %}<img class="msg-avatar avatar-img" src="{{ av }}"
                      onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex'"
-                     alt="" loading="lazy"
-                     {% if not av %}style="display:none"{% endif %}>
-            <span class="msg-avatar" style="background: {{ msg.avatar_color | avatarColor }}">{{ msg.nickname | avatarText }}</span>
+                     alt="" loading="lazy">
+            {% else %}<span class="msg-avatar" style="background: {{ msg.avatar_color | avatarColor }}">{{ msg.nickname | avatarText }}</span>{% endif %}
             <div class="msg-body">
               <div class="msg-header">
                 {% if msg.pinned %}<span class="pin-icon">📌</span>{% endif %}

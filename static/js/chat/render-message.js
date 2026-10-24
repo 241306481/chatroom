@@ -73,7 +73,7 @@
             : '';
         const contentHtml = revoked
             ? `<div class="msg-content msg-revoked"><span class="revoked-nick">${esc(msg.revoked_by_nickname || msg.nickname)}</span> 撤回了一条消息</div>`
-            : `<div class="msg-content" data-raw="${escAttr(msg.content)}">${window.renderContent(msg.content)}</div>`;
+            : `<div class="msg-content md-body" data-raw="${escAttr(msg.content)}">${window.renderContent(msg.content)}</div>`;
 
         div.innerHTML = `
             <div class="msg-avatar" style="background:${color}">${esc(nick)}</div>
@@ -132,7 +132,7 @@
         return div;
     }
 
-    // 有头像图就把首字 span 换成 <img>；图片加载失败由 Avatar 内部回退。
+// 有头像图就把首字 span 换成 <img>；图片加载失败由 Avatar 内部回退。
 // 用 DOM 操作而不是内联 onerror——内联处理器拿不到这里的 msg。
 // 讨论消息用 avatar_ext，私信用 from_avatar_ext，两种都得认。
 function swapAvatar(div, msg, sel) {
