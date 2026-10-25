@@ -38,6 +38,7 @@ const SUITES = [
     'domain-notify-test.js',
     'flash-test.js',
     'log-test.js',
+    'backup-test.js',
 ];
 
 const encoding = require('./check-encoding').run();

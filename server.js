@@ -11,6 +11,7 @@ const routes = require('./lib/routes');
 const websocket = require('./lib/websocket');
 const startupCheck = require('./lib/startup-check');
 const logger = require('./lib/logger');
+const backup = require('./lib/backup');
 const { registerShutdown } = require('./lib/graceful');
 
 const PORT = parseInt(process.env.PORT || '5000', 10);
@@ -104,7 +105,10 @@ async function main() {
     const { server, hasCert } = createServer();
     // 协议锁在启动这一刻，运行中补 cert.pem/key.pem 不会前后不一致
     require('./lib/ws-protocol').setWsProtocol(hasCert ? 'wss' : 'ws');
-    registerShutdown(server, websocket.setup(server));
+    backup.init();
+    registerShutdown(server, websocket.setup(server), {
+        beforeExit: () => { backup.stop(); return backup.runNow('关机'); },
+    });
     server.on('error', handleServerError);
     server.listen(PORT, HOST, () => printBanner(hasCert));
 }
