@@ -26,6 +26,7 @@ const SUITES = [
     'console-check-test.js',
     'console-cmds-test.js',
     'css-split-test.js',
+    'markdown-test.js',
     'highlight-test.js',
     'dom-sanitize-test.js',
     'shutdown-conn-test.js',

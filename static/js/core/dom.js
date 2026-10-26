@@ -10,18 +10,28 @@ window.escAttr = function (s) {
 };
 const DANGEROUS_SCHEME_RE = /^(?:javascript|data|vbscript):/i;
 const URL_ATTRS = ['href', 'src', 'xlink:href', 'action', 'formaction',
-    'srcset', 'poster', 'data', 'background', 'cite'];
+    'srcset', 'poster', 'data', 'background', 'cite', 'srcdoc'];
 function normalizeUrlForSchemeCheck(value) {
     return String(value == null ? '' : value)
         .replace(/[\u0000-\u0020\u00a0\u2028\u2029\ufeff]/g, '');
 }
+function unsafeStyle(value) {
+    const css = String(value == null ? '' : value).replace(/\/\*[\s\S]*?\*\//g, '');
+    return /expression\s*\(|javascript\s*:|vbscript\s*:|behavior\s*:|-moz-binding|@import|position\s*:\s*(?:fixed|sticky)/i
+        .test(css);
+}
 function sanitize(root) {
-    root.querySelectorAll('script, iframe, object, embed, link, meta, style, base, form')
+    root.querySelectorAll('script, iframe, object, embed, link, meta, style, base, form, '
+        + 'title, textarea, xmp, plaintext, noembed, noframes, noscript, template')
         .forEach(n => n.remove());
     root.querySelectorAll('*').forEach(el => {
         for (const attr of Array.from(el.attributes)) {
             const name = attr.name.toLowerCase();
             if (name.startsWith('on')) { el.removeAttribute(attr.name); continue; }
+            if (name === 'style' && unsafeStyle(attr.value)) {
+                el.removeAttribute(attr.name);
+                continue;
+            }
             if (URL_ATTRS.indexOf(name) >= 0
                 && DANGEROUS_SCHEME_RE.test(normalizeUrlForSchemeCheck(attr.value))) {
                 el.removeAttribute(attr.name);
@@ -32,6 +42,11 @@ function sanitize(root) {
 window.copyToClipboard = function (text, btn) {
     navigator.clipboard.writeText(text).then(function () {
         if (!btn) return;
+        if (btn.classList && btn.classList.contains('copy-button')) {
+            btn.classList.add('copied');
+            setTimeout(function () { btn.classList.remove('copied'); }, 1500);
+            return;
+        }
         const old = btn.textContent;
         btn.textContent = '已复制';
         setTimeout(function () { btn.textContent = old; }, 1500);
@@ -40,12 +55,12 @@ window.copyToClipboard = function (text, btn) {
 document.addEventListener('click', function (e) {
     const t = e.target;
     if (!t || !t.closest) return;
-    const btn = t.closest('.code-copy-btn');
+    const btn = t.closest('.code-copy-btn, .copy-button');
     if (!btn) return;
-    const pre = btn.closest('pre');
-    if (!pre) return;
-    const code = pre.querySelector('code');
-    window.copyToClipboard(code ? code.textContent : pre.textContent, btn);
+    const box = btn.closest('.code-container') || btn.closest('pre');
+    if (!box) return;
+    const code = box.querySelector('code');
+    window.copyToClipboard(code ? code.textContent : box.textContent, btn);
 });
 window.renderContent = function (text) {
     if (text == null) return '';
@@ -58,19 +73,19 @@ window.renderContent = function (text) {
             return '<!--MENTION_' + idx + '-->';
         });
     let html;
-    if (typeof marked !== 'undefined') {
-        try {
+    try {
+        if (window.LuoguMarkdown) html = window.LuoguMarkdown.parse(processed);
+        else if (typeof marked !== 'undefined') {
             html = marked.parse(processed, { breaks: false, gfm: true });
-        } catch (e) {
-            console.error('Markdown parse error:', e);
-            html = esc(processed).replace(/\n/g, '<br>');
-        }
-    } else {
+        } else html = esc(processed).replace(/\n/g, '<br>');
+    } catch (e) {
+        console.error('Markdown parse error:', e);
         html = esc(processed).replace(/\n/g, '<br>');
     }
     const tpl = document.createElement('template');
     tpl.innerHTML = html;
     const container = tpl.content;
+    if (window.LuoguMarkdown) window.LuoguMarkdown.mergeTables(container);
     (function restoreMentions(root) {
         const walker = document.createTreeWalker(root, NodeFilter.SHOW_COMMENT, null);
         const comments = [];
@@ -113,14 +128,24 @@ window.renderContent = function (text) {
             console.error('KaTeX render error:', e);
         }
     }
+    const copyIcon = '<svg viewBox="0 0 448 512" aria-hidden="true">'
+        + '<path d="M192 0c-35.3 0-64 28.7-64 64l0 256c0 35.3 28.7 64 64 64l192 0c35.3 0 64-28.7 64-64l0-200.6c0-17.4-7.1-34.1-19.7-46.2L370.6 17.8C358.7 6.4 342.8 0 326.3 0L192 0zM64 128c-35.3 0-64 28.7-64 64L0 448c0 35.3 28.7 64 64 64l192 0c35.3 0 64-28.7 64-64l0-16-64 0 0 16-192 0 0-256 16 0 0-64-16 0z"/>'
+        + '</svg>';
     container.querySelectorAll('pre').forEach(function (pre) {
-        if (pre.querySelector('.code-copy-btn')) return;
+        if (pre.closest('.code-container')) return;
+        const parent = pre.parentNode;
+        if (!parent) return;
+        const box = document.createElement('div');
+        box.className = 'code-container';
+        parent.insertBefore(box, pre);
+        box.appendChild(pre);
         const btn = document.createElement('button');
         btn.type = 'button';
-        btn.className = 'code-copy-btn';
-        btn.textContent = '复制';
+        btn.className = 'copy-button';
         btn.title = '复制代码';
-        pre.appendChild(btn);
+        btn.setAttribute('aria-label', '复制代码');
+        btn.innerHTML = copyIcon;
+        box.appendChild(btn);
     });
     const wrap = document.createElement('div');
     wrap.appendChild(container);

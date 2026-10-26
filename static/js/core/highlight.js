@@ -68,6 +68,10 @@
         'c#': 'cs', cs: 'cs', kt: 'kotlin', rs: 'rust', md: '',
         markdown: '', text: '', plaintext: '', plain: '', txt: '',
     };
+    const TOKEN = {
+        com: 'comment', str: 'string', num: 'number', kw: 'keyword',
+        lit: 'boolean', fn: 'function', pre: 'macro', tag: 'tag', attr: 'attr-name',
+    };
     const cache = new Map();
     const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     function build(lang) {
@@ -106,22 +110,83 @@
             for (let i = 1; i < m.length; i++) {
                 if (m[i] !== undefined) { cls = t.names[i - 1]; break; }
             }
-            out += '<span class="tok-' + cls + '">' + esc(m[0]) + '</span>';
+            if (cls === 'pre') {
+                const pm = /^([ \t]*)(#)([ \t]*)([A-Za-z]+)([\s\S]*)$/.exec(m[0]);
+                if (pm) {
+                    const hm = /^([ \t]*)(<[^>\n]*>|"(?:\\.|[^"\\])*")?([\s\S]*)$/.exec(pm[5]);
+                    out += '<span class="token macro property tok-pre">' + esc(pm[1])
+                        + '<span class="token directive-hash">' + esc(pm[2]) + '</span>' + esc(pm[3])
+                        + '<span class="token directive keyword tok-kw">' + esc(pm[4]) + '</span>'
+                        + esc(hm[1])
+                        + (hm[2] ? '<span class="token string tok-str">' + esc(hm[2]) + '</span>' : '')
+                        + esc(hm[3]) + '</span>';
+                } else {
+                    out += '<span class="token macro tok-pre">' + esc(m[0]) + '</span>';
+                }
+            } else {
+                out += '<span class="token ' + (TOKEN[cls] || cls) + ' tok-' + cls + '">' + esc(m[0]) + '</span>';
+            }
             last = t.re.lastIndex;
         }
         return out + esc(src.slice(last));
     }
+    function ranges(spec, max) {
+        const set = new Set();
+        String(spec).split(',').forEach(function (part) {
+            const m = /^(\d+)(?:-(\d+))?$/.exec(part.trim());
+            if (!m) return;
+            let a = Number(m[1]);
+            let b = m[2] ? Number(m[2]) : a;
+            if (a > b) { const t = a; a = b; b = t; }
+            for (let i = Math.max(1, a); i <= Math.min(max, b); i++) set.add(i);
+        });
+        const nums = Array.from(set).sort(function (a, b) { return a - b; });
+        const out = [];
+        nums.forEach(function (n) {
+            const last = out[out.length - 1];
+            if (last && last.end + 1 === n) last.end = n;
+            else out.push({ start: n, end: n });
+        });
+        return out;
+    }
+    function addLineNumbers(pre, code, count) {
+        if (count < 1 || !pre.classList) return;
+        pre.classList.add('line-numbers');
+        let rows = '';
+        for (let i = 0; i < count; i++) rows += '<span></span>';
+        code.innerHTML += '<span class="line-numbers-rows" aria-hidden="true">' + rows + '</span>';
+    }
+    function addRanges(pre, spec, count) {
+        if (!pre.insertAdjacentHTML) return;
+        let html = '';
+        ranges(spec, count).forEach(function (r) {
+            html += '<div class="line-highlight" aria-hidden="true" data-range="'
+                + (r.start === r.end ? r.start : r.start + '-' + r.end)
+                + '" style="--start:' + r.start + ';--end:' + r.end + ';"></div>';
+        });
+        if (html) pre.insertAdjacentHTML('afterbegin', html);
+    }
     window.highlightCode = function (root) {
         root.querySelectorAll('pre > code').forEach(function (code) {
-            const m = /(?:^|\s)language-([^\s]+)/.exec(code.className);
-            if (!m) return;
-            const raw = m[1].toLowerCase();
-            const lang = ALIAS[raw] !== undefined ? ALIAS[raw] : raw;
-            if (!lang || !LANG[lang]) return;
             const pre = code.parentElement;
-            code.innerHTML = highlight(code.textContent, lang);
-            pre.dataset.lang = raw;
-            pre.classList.add('has-lang');
+            if (!pre || (pre.dataset && pre.dataset.highlighted === '1')) return;
+            const m = /(?:^|\s)language-([^\s]+)/.exec(code.className);
+            const fenceLang = pre.dataset && pre.dataset.lang ? pre.dataset.lang : '';
+            if (!m && !fenceLang) return;
+            const raw = (m ? m[1] : fenceLang).toLowerCase();
+            if (pre.dataset) pre.dataset.lang = raw;
+            const lang = ALIAS[raw] !== undefined ? ALIAS[raw] : raw;
+            const options = pre.dataset && pre.dataset.codeOptions ? pre.dataset.codeOptions : '';
+            const text = code.textContent.replace(/\n$/, '');
+            const count = text === '' ? 0 : text.split('\n').length;
+            if (lang && LANG[lang]) code.innerHTML = highlight(code.textContent, lang);
+            if (!/\bno-line-numbers\b/.test(options)) {
+                addLineNumbers(pre, code, count);
+                if (pre.classList) pre.classList.add('hide-numbers');
+            }
+            const lines = /(?:^|\s)lines=([\d,\-\s]+)/.exec(options);
+            if (lines) addRanges(pre, lines[1], count);
+            if (pre.dataset) pre.dataset.highlighted = '1';
         });
     };
 })();

@@ -79,6 +79,21 @@ check('危险协议被剥掉（含变形写法）', () => {
             attr + '=' + JSON.stringify(val) + ' 未被剥掉');
     }
 });
+check('class / style / align 等精细 HTML 属性保留', () => {
+    const r = mkRoot([{ class: 'box', style: 'color:red', align: 'center', 'data-x': '1' }]);
+    SAN.sanitize(r);
+    for (const a of ['class', 'style', 'align', 'data-x']) {
+        assert.ok(r.nodes[0].attributes.some((x) => x.name === a), a + ' 被误删');
+    }
+});
+check('危险内联样式被剥掉', () => {
+    for (const v of ['position:fixed;top:0', 'background:url(javascript:alert(1))',
+        'width:expression(alert(1))', 'behavior:url(x.htc)']) {
+        const r = mkRoot([{ style: v }]);
+        SAN.sanitize(r);
+        assert.ok(!r.nodes[0].attributes.some((a) => a.name === 'style'), v + ' 未被剥掉');
+    }
+});
 check('on* 事件属性被剥掉', () => {
     for (const attr of ['onclick', 'onerror', 'onload', 'onmouseover']) {
         const r = mkRoot([{ [attr]: 'x()' }]);
