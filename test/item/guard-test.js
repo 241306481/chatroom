@@ -1,34 +1,27 @@
-// 回归 特权不变量
 const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
 const PROJ = path.join(__dirname, '..', '..');
 const DATA = path.join(PROJ, 'data');
 if (fs.existsSync(DATA)) fs.rmSync(DATA, { recursive: true, force: true });
-
 const storage = require('../../lib/storage');
 const auth = require('../../lib/auth');
 const { checkDual } = require('../../lib/auth/privilege');
-
 const results = [];
 const check = (n, f) => { try { f(); results.push(['PASS', n]); } catch (e) { results.push(['FAIL', n + ' -> ' + e.message]); } };
-
 storage.ensureDirs(); storage.ensureSystemDomain(); storage.ensureSystemUser();
 const rootId = storage.createUser('rootu', 'pw123456');
 const sysId = storage.createUser('sysad', 'pw123456');
-const ownerId = storage.createUser('ownu', 'pw123456');   // 系统角色 member
+const ownerId = storage.createUser('ownu', 'pw123456');
 const memberId = storage.createUser('memb', 'pw123456');
 auth.setSystemRole(sysId, 'admin');
 storage.createDomain('gdom', 'G', ownerId);
 auth.grantRole('gdom', ownerId, 'owner');
 auth.grantRole('gdom', memberId, 'default');
-
-const OWNER = storage.loadUser(ownerId);   // 系统角色 member + 域角色 owner → 特权
+const OWNER = storage.loadUser(ownerId);
 const MEMBER = storage.loadUser(memberId);
 const SYSAD = storage.loadUser(sysId);
 const ROOT = storage.loadUser(rootId);
-
-// 特权用户能力完整性
 check('域所有者仍可执行全部域级操作', () => {
     const du = auth.getDomainUser('gdom', OWNER);
     for (const op of ['edit_domain', 'manage_join', 'transfer_domain', 'delete_domain']) {
@@ -75,8 +68,6 @@ check('普通成员的基础能力未被放宽', () => {
     try { checkDual(MEMBER, du, 'edit_domain'); } catch (e) { denied = true; }
     assert.ok(denied, '普通成员通过了 edit_domain');
 });
-
-// 前几轮关键不变量
 check('r2: exp 立即落盘（无 5 秒缓冲）', () => {
     const src = fs.readFileSync(path.join(PROJ, 'lib/auth/exp.js'), 'utf8');
     assert.ok(!/setTimeout|pending\.set/.test(src), 'exp 仍有缓冲/定时器');
@@ -98,12 +89,10 @@ check('r1: 文件 ID 拒绝 __proto__', () => {
 });
 check('r1: safeFileId 为唯一实现，用户/域文件共用', () => {
     const { safeFileId } = require('../../lib/storage/fs-utils');
-    // 穿越与原型污染
     for (const id of ['__proto__', 'constructor', 'prototype', '..', '.', 'a/b', 'a\\b', 'a\0b', '']) {
         assert.strictEqual(safeFileId(id), null, '放行了危险 id: ' + JSON.stringify(id));
     }
     assert.strictEqual(safeFileId('abc123'), 'abc123');
-    // 两边同一份
     for (const f of ['domain-files.js', 'user-files.js']) {
         const src = fs.readFileSync(path.join(PROJ, 'lib/storage/') + f, 'utf8');
         assert.ok(/require\('\.\/fs-utils'\)/.test(src), f + ' 未引用 fs-utils');
@@ -114,12 +103,10 @@ check('r1: requireSystemAdmin 三态正确（抽到 manage/_helpers 后回归）
     const { requireSystemAdmin } = require('../../lib/routes/manage/_helpers');
     const { UnauthorizedError } = require('../../lib/auth/privilege');
     const stub = () => ({ headers: {}, writeHead() {}, end() {} });
-    // 三态鉴权
     assert.strictEqual(requireSystemAdmin(ROOT, stub()), true, '超管被拒');
     assert.strictEqual(requireSystemAdmin(MEMBER, stub()), false, '普通成员未被拒');
     assert.throws(() => requireSystemAdmin(null, stub()), UnauthorizedError, '匿名未抛 401');
     assert.throws(() => requireSystemAdmin(undefined, stub()), UnauthorizedError);
-    // 共用共享实现
     for (const f of ['ip-bans.js', 'system-roles.js']) {
         const src = fs.readFileSync(path.join(PROJ, 'lib/routes/manage/') + f, 'utf8');
         assert.ok(/require\('\.\/_helpers'\)/.test(src), f + ' 未引用 manage/_helpers');
@@ -188,14 +175,10 @@ check('r8: 日志轮转有界（不复用同名文件无限追加）', () => {
     assert.ok(!/rotateIfNeeded/.test(src), '仍使用改名轮转（EBUSY 风险）');
     assert.ok(/unlinkSync\(old\)/.test(src), '循环复用槽位前未删除旧文件');
 });
-
-// 本轮新增
 check('登录限流：连续失败后被拦截，成功后清零', () => {
     const rl = require('../../lib/auth/rate-limit');
-    // 登录按要求只留 IP 维度：同一 IP 连续失败会被拦
     for (let i = 0; i < 30; i++) rl.noteFailure('victim', '10.1.1.1');
     assert.ok(rl.checkLoginAllowed('victim', '10.1.1.1'), 'IP 维度未拦截');
-    // IP 维度未触发
     rl.noteSuccess('victim', '10.1.1.1');
     assert.strictEqual(rl.checkLoginAllowed('victim', '10.1.1.1'), null, '成功后未清零');
     assert.strictEqual(rl.checkLoginAllowed('other', '10.1.1.1'), null,
@@ -215,10 +198,8 @@ check('登录限流已接入登录路由', () => {
     assert.ok(src.indexOf('checkLoginAllowed') < src.indexOf('auth.login('),
         '限流检查必须早于密码校验（否则 scrypt 仍可被无限次调用）');
 });
-    // 关闭逻辑已抽到 lib/graceful.js
     const src = fs.readFileSync(path.join(PROJ, 'lib/graceful.js'), 'utf8');
     assert.ok(/SIGTERM/.test(src) && /SIGINT/.test(src), '缺少信号处理');
-    // Windows 关闭控制台窗口 = CTRL_CLOSE_EVENT，Node 转发为 SIGHUP
     assert.ok(/SIGHUP/.test(src), '缺少 SIGHUP 处理');
     assert.ok(/server\.close/.test(src), '未关闭 HTTP');
     assert.ok(/closeIdleConnections/.test(src), '未关闭 keep-alive');
@@ -226,14 +207,11 @@ check('登录限流已接入登录路由', () => {
     assert.ok(/logger\.close\(\)/.test(src), '未刷日志');
     assert.ok(/setTimeout/.test(src) && /强制退出/.test(src), '缺少超时兜底');
     assert.ok(!/force\.unref/.test(src), '超时定时器被 unref 了');
-    // 兜底超时必须短于 Windows 给的 5 秒宽限期
     const fm = /const FORCE_MS\s*=\s*(\d+)/.exec(src);
     assert.ok(fm && parseInt(fm[1], 10) < 5000, 'FORCE_MS 应小于 5000');
 check('优雅关闭：关闭 HTTP + 断开 WS + 有超时兜底', () => {
-    // 关闭逻辑已抽到 lib/graceful.js
     const src = fs.readFileSync(path.join(PROJ, 'lib/graceful.js'), 'utf8');
     assert.ok(/SIGTERM/.test(src) && /SIGINT/.test(src), '缺少信号处理');
-    // Windows 关闭控制台窗口 = CTRL_CLOSE_EVENT，Node 转发为 SIGHUP
     assert.ok(/SIGHUP/.test(src), '缺少 SIGHUP 处理');
     assert.ok(/server\.close/.test(src), '未关闭 HTTP');
     assert.ok(/closeIdleConnections/.test(src), '未关闭 keep-alive');
@@ -241,10 +219,8 @@ check('优雅关闭：关闭 HTTP + 断开 WS + 有超时兜底', () => {
     assert.ok(/logger\.close\(\)/.test(src), '未刷日志');
     assert.ok(/setTimeout/.test(src) && /强制退出/.test(src), '缺少超时兜底');
     assert.ok(!/force\.unref/.test(src), '超时定时器被 unref 了');
-    // 兜底超时必须短于 Windows 给的 5 秒宽限期
     const fm = /const FORCE_MS\s*=\s*(\d+)/.exec(src);
     assert.ok(fm && parseInt(fm[1], 10) < 5000, 'FORCE_MS 应小于 5000');
-    // 不翻内部结构
     const server = fs.readFileSync(path.join(PROJ, 'server.js'), 'utf8');
     assert.ok(!/require\('\.\/lib\/websocket\/registry'\)/.test(server),
         'server.js 仍在直接操作 registry（分层倒置）');
@@ -265,7 +241,8 @@ check('启动自检新增：时区 / JSON 完整性 / 端口预检 / 证书有�
     assert.ok(/JSON\.parse/.test(src), '无 JSON 完整性检查');
     assert.ok(/EADDRINUSE/.test(src), '无端口占用预检');
     assert.ok(/X509Certificate/.test(src) && /validTo/.test(src), '无证书有效期检查');
-    assert.ok(/NO_COLOR/.test(src), '启动自检未认 NO_COLOR');
+    assert.ok(/NO_COLOR/.test(fs.readFileSync(path.join(PROJ, 'lib/color.js'), 'utf8')),
+        '颜色模块未认 NO_COLOR');
 });
 check('gen-cert 无死代码，且输出指纹与信任步骤', () => {
     const src = fs.readFileSync(path.join(__dirname, '..', 'tools', 'gen-cert.js'), 'utf8');
@@ -282,7 +259,6 @@ check('依赖无已知漏洞（npm audit 报告）', () => {
     assert.ok(/found 0 vulnerabilities/.test(out),
         'npm audit 未通过:\n' + out.slice(-400));
 });
-
 console.log('\n======== [回归] 特权能力与历史不变量 ========');
 for (const [s, n] of results) console.log(s.padEnd(5), n);
 const f = results.filter(x => x[0] === 'FAIL').length;

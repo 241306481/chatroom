@@ -1,12 +1,9 @@
 'use strict';
 const fs = require('fs');
 const path = require('path');
-
 const ROOT = path.join(__dirname, '..');
-// 跳过第三方产物
 const DIRS = ['lib', 'test', 'static/js'];
 const EXT = new Set(['.js']);
-
 function walk(dir, out) {
     let entries;
     try { entries = fs.readdirSync(dir, { withFileTypes: true }); } catch (e) { return out; }
@@ -21,20 +18,15 @@ function walk(dir, out) {
     }
     return out;
 }
-
 function run() {
     const files = DIRS.reduce((acc, d) => walk(path.join(ROOT, d), acc), []);
     const problems = [];
-
     for (const f of files) {
         const buf = fs.readFileSync(f);
         const rel = path.relative(ROOT, f).replace(/\\/g, '/');
-
         if (buf[0] === 0xEF && buf[1] === 0xBB && buf[2] === 0xBF) {
             problems.push(`BOM      ${rel}`);
         }
-
-        // fatal 解码
         let text;
         try {
             text = new TextDecoder('utf-8', { fatal: true }).decode(buf);
@@ -47,12 +39,9 @@ function run() {
             problems.push(`U+FFFD   ${rel}:${line}`);
         }
     }
-
     return { count: files.length, problems };
 }
-
 module.exports = { run };
-
 if (require.main === module) {
     const { count, problems } = run();
     if (problems.length) {

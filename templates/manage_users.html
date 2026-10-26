@@ -3,7 +3,6 @@
 <div class="page-container" style="max-width: 1200px;">
   <h1>用户管理（全局）</h1>
   <p class="hint">封禁后该用户无法登录；管理员拥有系统管理权限</p>
-
   {% if users and users.length %}
     <table class="user-table">
       <thead>
@@ -101,15 +100,12 @@
   {% else %}
     <p class="empty">暂无用户</p>
   {% endif %}
-
   <p style="margin-top:16px;"><a href="/manage">← 返回系统管理</a></p>
 </div>
-<script>
-  (function () {
+<script>  (function () {
     function init() {
       var err = new URL(location.href).searchParams.get('error');
       if (err && window.showAlert) window.showAlert(err);
-
       document.querySelectorAll('input[name="until_local"]').forEach(function (input) {
         var hidden = input.form.querySelector('input[name="until"]');
         if (!hidden) {

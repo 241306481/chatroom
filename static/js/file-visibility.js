@@ -1,5 +1,4 @@
 'use strict';
-
 window.toggleFileVisibility = function (btn, actionUrl) {
     const cur = btn.dataset.visibility || 'private';
     const next = cur === 'public' ? 'private' : 'public';

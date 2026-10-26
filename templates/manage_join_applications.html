@@ -3,7 +3,6 @@
 <div class="page-container">
   <h1>全局加入申请</h1>
   <p class="hint">所有你管理的域收到的加入申请</p>
-
   {% if applications and applications.length %}
     <table class="user-table">
       <thead>
@@ -44,14 +43,9 @@
   {% else %}
     <p class="empty">暂无待审批的申请</p>
   {% endif %}
-
   <p style="margin-top:24px;"><a href="/manage">← 返回系统管理</a></p>
 </div>
-<script>
-(function () {
-  // showAlert 由 base.html 在内容块之后才引入的
-  // core/modal.js 提供，同步执行时它还不存在，?error= 会被静默吞掉。
-  // 等待 DOMContentLoaded（与 manage_transfer.html 一致）。
+<script>(function () {
   function check() {
     var err = new URL(location.href).searchParams.get('error');
     if (err && window.showAlert) window.showAlert(err);

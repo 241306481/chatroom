@@ -1,9 +1,6 @@
-// 工具栏与快捷键
 window.EditorToolbar = {
     attach({ root, ta, refresh }) {
         const closeAll = () => window.EditorUtils.closeAll(root);
-
-// 下拉菜单开合
         root.querySelectorAll('[data-action="dropdown"]').forEach(btn => {
             btn.addEventListener('click', e => {
                 e.stopPropagation();
@@ -23,12 +20,9 @@ window.EditorToolbar = {
             });
         });
         document.addEventListener('click', closeAll);
-
-// 普通动作按钮
         root.querySelectorAll('[data-action]').forEach(el => {
             const action = el.dataset.action;
             if (action === 'dropdown' || action === 'toggle-preview') return;
-
             el.addEventListener('click', e => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -37,8 +31,6 @@ window.EditorToolbar = {
                 refresh();
             });
         });
-
-// 键盘快捷键
         ta.addEventListener('keydown', e => {
             if (!(e.ctrlKey || e.metaKey)) return;
             const U = window.EditorUtils;
@@ -46,18 +38,13 @@ window.EditorToolbar = {
             else if (e.key === 'i' || e.key === 'I') { e.preventDefault(); U.surround(ta, '*', '*'); refresh(); }
             else if (e.key === 'u' || e.key === 'U') { e.preventDefault(); U.surround(ta, '<u>', '</u>'); refresh(); }
         });
-
         window.addEventListener('scroll', closeAll, true);
         window.addEventListener('resize', closeAll);
-
         return { closeAll };
     },
 };
-
-// 单个 action
 function handleAction(action, el, ta, refresh) {
     const U = window.EditorUtils;
-
     if (action === 'wrap') {
         U.surround(ta, el.dataset.before || '', el.dataset.after || '', el.dataset.placeholder || '');
     } else if (action === 'prefix') {

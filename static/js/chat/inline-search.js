@@ -4,14 +4,12 @@
         if (!input) return;
         const closeBtn = document.querySelector('.inline-search-close');
         const counter = document.querySelector('.inline-search-count');
-
         function clearAll() {
             document.querySelectorAll('.message.inline-search-hit').forEach(el =>
                 el.classList.remove('inline-search-hit'));
             if (counter) counter.textContent = '';
             if (closeBtn) closeBtn.hidden = true;
         }
-
         function apply() {
             clearAll();
             const q = (input.value || '').toLowerCase().trim();
@@ -29,7 +27,6 @@
             if (counter) counter.textContent = hit ? hit + ' 条命中' : '无匹配';
             if (closeBtn) closeBtn.hidden = false;
         }
-
         input.addEventListener('input', apply);
         window.__chatSearchReapply = function () {
             if ((input.value || '').trim()) apply();

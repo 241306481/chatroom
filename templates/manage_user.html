@@ -5,7 +5,6 @@
   {% if is_system_domain %}
     <p class="hint">⚠ 系统域成员不可被踢出</p>
   {% endif %}
-
   {% if users and users.length %}
     <table class="user-table">
       <thead>
@@ -105,15 +104,12 @@
   {% else %}
     <p class="empty">暂无成员</p>
   {% endif %}
-
   <p style="margin-top:24px;"><a href="/domain/{{ domain_name }}/manage">← 返回域管理</a></p>
 </div>
-<script>
-  (function () {
+<script>  (function () {
     function init() {
       var err = new URL(location.href).searchParams.get('error');
       if (err && window.showAlert) window.showAlert(err);
-
       document.querySelectorAll('.ban-form').forEach(function (form) {
         var input = form.querySelector('input[name="until_local"]');
         if (!input) return;
@@ -122,7 +118,6 @@
         hidden.name = 'until';
         hidden.value = '';
         form.appendChild(hidden);
-
         input.addEventListener('input', function () {
           if (!input.value) { hidden.value = ''; return; }
           try {

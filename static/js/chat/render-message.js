@@ -1,7 +1,5 @@
-// 讨论消息 DOM 构建
 (function () {
     const R = window.ChatRender = window.ChatRender || {};
-
     function safeColor(c) {
         const s = String(c || '');
         if (/^#[0-9a-fA-F]{3,8}$/.test(s)) return s;
@@ -10,9 +8,7 @@
         if (/^[a-zA-Z]{3,20}$/.test(s)) return s;
         return '#888';
     }
-
     function buildMessageEl(msg) {
-        // 内联 onclick 里的单引号字符串转义
         const escSingle = function (s) {
             return String(s == null ? '' : s)
                 .replace(/\\/g, '\\\\')
@@ -23,14 +19,12 @@
                 .replace(/\n/g, '\\n')
                 .replace(/\r/g, '\\r');
         };
-
         const div = document.createElement('div');
         div.className = 'message';
         if (msg.is_system) div.classList.add('system-msg');
         div.dataset.id = msg.id;
         if (msg.id) div.id = 'msg-' + msg.id;
         if (msg.reply_to) div.dataset.replyTo = msg.reply_to;
-
         const canPin = window.__CAN_PIN__ === true;
         const canDeleteAny = window.__CAN_DELETE_ANY__ === true;
         const canAddReaction = window.__CAN_ADD_REACTION__ === true;
@@ -38,13 +32,11 @@
         const showPin = canPin && !msg.revoked;
         const showDelete = canDeleteAny || isOwn;
         const revoked = !!msg.revoked;
-
         const nick = window.Avatar
             ? window.Avatar.avatarText(msg.nickname)
             : (msg.nickname || '?')[0];
         const color = safeColor(msg.avatar_color);
         const mid = escSingle(msg.id);
-
         const canReply = !!document.getElementById('msgInput') && !revoked;
         const replyBtn = canReply
             ? `<button type="button" class="msg-reply-btn" onclick="setReplyTo('${mid}', this)" title="回复">↩️</button>`
@@ -76,7 +68,6 @@
         const contentHtml = revoked
             ? `<div class="msg-content msg-revoked"><span class="revoked-nick">${esc(msg.revoked_by_nickname || msg.nickname)}</span> 撤回了一条消息</div>`
             : `<div class="msg-content md-body" data-raw="${escAttr(msg.content)}">${window.renderContent(msg.content)}</div>`;
-
         div.innerHTML = `
             <div class="msg-avatar" style="background:${color}">${esc(nick)}</div>
             <div class="msg-body">
@@ -100,7 +91,6 @@
         swapAvatar(div, msg, '.msg-avatar');
         return div;
     }
-
     function buildDMMessageEl(msg) {
         const isMe = !!msg.is_me;
         const div = document.createElement('div');
@@ -135,14 +125,9 @@
         swapAvatar(div, msg, '.dm-avatar');
         return div;
     }
-
-// 有头像图就把首字 span 换成 <img>；图片加载失败由 Avatar 内部回退。
-// 用 DOM 操作而不是内联 onerror——内联处理器拿不到这里的 msg。
-// 讨论消息用 avatar_ext，私信用 from_avatar_ext，两种都得认。
 function swapAvatar(div, msg, sel) {
     if (!window.Avatar) return;
     const ext = msg.avatar_ext || msg.from_avatar_ext || '';
-    // 私信的 id 是私信记录主键，uid 在 from；讨论的在 user_id
     const uid = msg.user_id || msg.from;
     if (!ext || !uid) return;
     const u = {
@@ -156,7 +141,6 @@ function swapAvatar(div, msg, sel) {
     if (!span || !span.parentNode) return;
     span.replaceWith(window.Avatar.build(u, sel.slice(1)));
 }
-
 R.buildMessageEl = buildMessageEl;
     R.buildDMMessageEl = buildDMMessageEl;
 })();

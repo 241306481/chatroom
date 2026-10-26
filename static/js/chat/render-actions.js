@@ -1,8 +1,5 @@
-// 撤回、置顶与表情面板
 (function () {
     const R = window.ChatRender = window.ChatRender || {};
-
-    // 撤回
     function revokeMessage(id) {
         window.showConfirm('撤回这条消息？').then(function (ok) {
             if (!ok) return;
@@ -11,11 +8,9 @@
             }
         });
     }
-
     function applyRevoke(data) {
         const el = document.querySelector('.message[data-id="' + data.message_id + '"]');
         if (!el) return;
-
         const content = el.querySelector('.msg-content');
         if (content) {
             content.classList.add('msg-revoked');
@@ -24,8 +19,6 @@
                 + esc(data.revoked_by_nickname || '?')
                 + '</span> 撤回了一条消息';
         }
-
-        // 除「删除」外的按钮全部移除
         const actions = el.querySelector('.msg-actions');
         if (actions) {
             actions.querySelectorAll('button').forEach(b => {
@@ -34,12 +27,9 @@
                 b.remove();
             });
         }
-
         const re = el.querySelector('.msg-reactions');
         if (re) re.remove();
-
         R.updateReplyQuotes(data.message_id, true);
-
         if (data.was_pinned) {
             el.classList.remove('pinned');
             const icon = el.querySelector('.pin-icon');
@@ -51,8 +41,6 @@
             }
         }
     }
-
-    // 置顶
     function updatePinned(id, pinned, msg) {
         const el = document.querySelector('.message[data-id="' + id + '"]');
         if (el) {
@@ -70,11 +58,9 @@
         }
         updatePinnedPanel(id, pinned, msg);
     }
-
     function updatePinnedPanel(id, pinned, msg) {
         const panel = document.querySelector('.pinned-panel');
         if (!panel) return;
-
         if (!pinned) {
             const item = panel.querySelector('.pinned-item[data-id="' + id + '"]');
             if (item) item.remove();
@@ -89,10 +75,8 @@
             }
             return;
         }
-
         const empty = panel.querySelector('.empty');
         if (empty) empty.remove();
-
         let item = panel.querySelector('.pinned-item[data-id="' + id + '"]');
         if (!item) {
             item = document.createElement('div');
@@ -108,12 +92,9 @@
                 ? '<div class="pinned-actions"><button type="button" title="取消置顶" onclick="unpinMessage(\'' + id + '\')">📌</button></div>'
                 : '');
     }
-
-    // 表情
     function renderReaction(container, msgId, emoji, count, mine) {
         let b = container.querySelector('[data-emoji="' + CSS.escape(emoji) + '"]');
         if (count <= 0) { if (b) b.remove(); return; }
-
         if (!b) {
             b = document.createElement('button');
             b.type = 'button';
@@ -129,7 +110,6 @@
         b.querySelector('.reaction-emoji').textContent = emoji;
         b.querySelector('.count').textContent = String(count);
     }
-
     function applyReaction(msgId, emoji, userId, added, count) {
         const c = document.getElementById('reactions-' + msgId);
         if (!c) return;
@@ -138,8 +118,6 @@
         if (userId === window.MY_UID) mine = !!added;
         renderReaction(c, msgId, emoji, count, mine);
     }
-
-    // 历史表情从 data-reactions 还原
     function initReactionsIn(el) {
         if (el.dataset.rendered === '1') return;
         let obj = {};
@@ -152,11 +130,9 @@
         });
         el.dataset.rendered = '1';
     }
-
     function initReactions() {
         document.querySelectorAll('.msg-reactions[data-reactions]').forEach(initReactionsIn);
     }
-
     R.revokeMessage = revokeMessage;
     R.applyRevoke = applyRevoke;
     R.updatePinned = updatePinned;
@@ -165,6 +141,5 @@
     R.applyReaction = applyReaction;
     R.initReactionsIn = initReactionsIn;
     R.initReactions = initReactions;
-
     window.revokeMessage = revokeMessage;
 })();

@@ -1,26 +1,21 @@
-// 通用原地编辑
 window.inlineEdit = function (el, opts) {
     opts = opts || {};
     if (el.dataset.editing === '1') return;
     el.dataset.editing = '1';
-
     const originalText = el.textContent;
     const originalValue = opts.value !== undefined ? opts.value : originalText.trim();
     const emptyText = opts.emptyText || '（空）';
     const hadEmptyClass = el.classList.contains('empty');
-
     const input = document.createElement('input');
     input.type = 'text';
     input.className = 'inline-edit-input';
     input.value = originalValue;
     if (opts.placeholder) input.placeholder = opts.placeholder;
     if (opts.maxLength) input.maxLength = opts.maxLength;
-
     const parent = el.parentNode;
     parent.replaceChild(input, el);
     input.focus();
     input.select();
-
     let finished = false;
     function finish(save) {
         if (finished) return;
@@ -28,7 +23,6 @@ window.inlineEdit = function (el, opts) {
         const newValue = input.value.trim();
         parent.replaceChild(el, input);
         delete el.dataset.editing;
-
         if (!save || newValue === originalValue) {
             el.textContent = originalText;
             el.classList.toggle('empty', hadEmptyClass);
@@ -61,7 +55,6 @@ window.inlineEdit = function (el, opts) {
     });
     input.addEventListener('blur', function () { finish(true); });
 };
-
 window.inlineEditTitle = function (el) {
     const domain = window.__DOMAIN__ || '';
     const id = el.dataset.id;
@@ -84,7 +77,6 @@ window.inlineEditTitle = function (el) {
         },
     });
 };
-
 window.inlineEditId = function (el) {
     const domain = window.__DOMAIN__ || '';
     const oldId = el.dataset.oldId;
@@ -115,7 +107,6 @@ window.inlineEditId = function (el) {
         },
     });
 };
-
 window.inlineEditFilename = function (el) {
     const url = el.dataset.renameUrl;
     window.inlineEdit(el, {

@@ -17,17 +17,13 @@
       </form>
     </details>
     <button class="dm-new-btn" onclick="newDMTarget()">+ 新增会话</button>
-
     <div class="dm-new-picker" id="dmNewPicker" hidden>
       <input type="text" id="dmSearchInput" class="dm-search-input"
              placeholder="搜索用户昵称…" autocomplete="off">
       <div class="dm-search-list" id="dmSearchList"></div>
     </div>
-
-    <script>
-      window.__DM_USERS__ = {{ all_users | jsdump }};
-    </script>
-
+    <script>      window.__DM_USERS__ = {{ all_users | jsdump }};
+</script>
     {% if conversations and conversations.length %}
       {% for c in conversations %}
         <a href="/messages?target={{ c.other }}"
@@ -46,7 +42,6 @@
       <p class="empty" style="padding:12px;">暂无会话</p>
     {% endif %}
   </aside>
-
   <section class="dm-main">
     {% if target and target_user and target_user.id %}
       <div class="dm-main-header">
@@ -119,8 +114,7 @@
       <div class="dm-empty">选择左侧会话开始聊天，或点上方「新增会话」</div>
     {% endif %}
   </section>
-<script>
-(function () {
+<script>(function () {
     window.__MESSAGES__ = {{ messages | jsdump }};
     window.__MESSAGES_TOTAL__ = {{ messages_total | default(0) }};
     window.__MESSAGES_OFFSET__ = {{ messages_offset | default(0) }};
@@ -130,9 +124,7 @@
 </script>
 </div>
 </div>
-
-<script>
-(function () {
+<script>(function () {
     function renderHistory() {
         document.querySelectorAll('.dm-bubble[data-raw]').forEach(function (el) {
             if (el.dataset.rendered === '1') return;
@@ -142,21 +134,18 @@
             el.dataset.rendered = '1';
         });
     }
-
     function clearActiveBadge() {
         var active = document.querySelector('.dm-conv.active');
         if (!active) return;
         var badge = active.querySelector('.badge-unread');
         if (badge) badge.remove();
     }
-
     function init() {
         renderHistory();
         clearActiveBadge();
         var l = document.getElementById('dmList');
         if (l) l.scrollTop = 0;
     }
-
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', init);
     } else {

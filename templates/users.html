@@ -8,7 +8,6 @@
     <h1>全局用户列表</h1>
     <p class="hint">站点共 {{ users.length }} 个用户</p>
   {% endif %}
-
   {% if users and users.length %}
     <table class="user-table">
       <thead>
@@ -95,15 +94,12 @@
       <p class="empty">暂无用户</p>
     {% endif %}
   {% endif %}
-
   <div class="list-filter-bar">
     <input type="text" class="list-filter-input"
            placeholder="输入昵称或 UID 筛选…" autocomplete="off">
     <span class="list-filter-count"></span>
   </div>
-
-<script>
-  window.__LIST_FILTER_SCOPE__ = 'userTable';
+<script>  window.__LIST_FILTER_SCOPE__ = 'userTable';
 </script>
 </div>
 {% endblock %}

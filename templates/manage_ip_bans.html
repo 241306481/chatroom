@@ -8,7 +8,6 @@
     支持格式：<code>1.2.3.4</code>（单 IP）、<code>1.2.3.*</code>（通配）、
     <code>1.1.1-3.2</code>（范围）
   </p>
-
   <h2 style="margin-top:24px;">添加封禁</h2>
   <form method="POST" action="/manage/ip_bans" class="form-stack">
     <input type="hidden" name="action" value="add">
@@ -26,7 +25,6 @@
     </label>
     <button type="submit" data-confirm="确定封禁该规则？封禁后该 IP 下的所有请求都会被拦截。">封禁</button>
   </form>
-
   <h2 style="margin-top:32px;">已封禁列表
     <span class="hint" style="font-weight:normal;">黄底为已过期的规则，不再生效</span>
   </h2>
@@ -80,26 +78,18 @@
   {% else %}
     <p class="empty">暂无封禁记录</p>
   {% endif %}
-
   <p style="margin-top:24px;">
     <a href="/manage">← 返回系统管理</a>
     &nbsp;·&nbsp;
     <a href="/manage/user_ips">查看用户最近 IP</a>
   </p>
 </div>
-
-<script>
-(function () {
-  // showAlert 由 base.html 在内容块之后才引入的 core/modal.js
-  // 提供，同步执行时 window.showAlert 仍是 undefined，?error= 会被静默吞掉。
+<script>(function () {
   function check() {
     var err = new URL(location.href).searchParams.get('error');
     if (err && window.showAlert) window.showAlert(err);
   }
-
   var MY_IP = '{{ my_ip }}';
-
-  // 与 lib/storage/ip-bans.js 的 validateRule 一致
   window.checkIpRule = function (v) {
     v = String(v || '').trim();
     if (!v) return '';
@@ -124,7 +114,6 @@
       }
       return '未知格式：' + p;
     }
-    // 本机判断：* / 127 / 0 / 含 127 或 0 的区间
     var first = parts[0].trim();
     var loop = first === '*' || first === '127' || first === '0';
     if (!loop) {
@@ -135,7 +124,6 @@
       }
     }
     if (loop) return '不能封禁本机地址（127.x / 0.0.0.0 / *.*.*.*）';
-    // 会命中你自己所在网段
     if (MY_IP && MY_IP.split('.').length === 4) {
       var mine = MY_IP.split('.');
       var hit = true;
@@ -155,13 +143,10 @@
     }
     return '';
   };
-
-  // datetime-local 与 ISO 互转；每个表单各自一对，用 data-* 配对
   document.querySelectorAll('[data-until-local]').forEach(function (input) {
     var form = input.closest('form');
     var hidden = form && form.querySelector('[data-until-hidden]');
     if (!hidden) return;
-    // 回填已有到期时间
     var cur = hidden.value;
     if (cur) {
       var d = new Date(cur);
@@ -180,7 +165,6 @@
       } catch (e) { hidden.value = ''; }
     });
   });
-
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', check);
   } else {

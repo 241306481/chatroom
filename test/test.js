@@ -1,12 +1,9 @@
 const { execFileSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
-
 const ROOT = path.join(__dirname, '..');
 const TMP = path.join(ROOT, 'test', 'item');
-
 if (!fs.existsSync(TMP)) fs.mkdirSync(TMP, { recursive: true });
-
 const SUITES = [
     'guard-test.js',
     'register-domain-test.js',
@@ -29,6 +26,7 @@ const SUITES = [
     'console-check-test.js',
     'console-cmds-test.js',
     'css-split-test.js',
+    'highlight-test.js',
     'dom-sanitize-test.js',
     'shutdown-conn-test.js',
     'shutdown-test.js',
@@ -40,7 +38,6 @@ const SUITES = [
     'log-test.js',
     'backup-test.js',
 ];
-
 const encoding = require('./check-encoding').run();
 if (encoding.problems.length) {
     console.error('编码检查未通过：');
@@ -51,15 +48,12 @@ if (encoding.problems.length) {
     process.exit(1);
 }
 console.log(`encoding                OK (${encoding.count} files, no BOM / U+FFFD)`);
-
 for (const f of ['cert.pem', 'key.pem']) {
     const p = path.join(ROOT, f);
     if (fs.existsSync(p)) { try { fs.rmSync(p); } catch (e) {} }
 }
-
 let pass = 0, fail = 0, skip = 0;
-const skipWhy = [];   // {suite, reason}
-
+const skipWhy = [];
 for (const s of SUITES) {
     const f = path.join(TMP, s);
     if (!fs.existsSync(f)) {
@@ -84,13 +78,11 @@ for (const s of SUITES) {
     if (m && +m[2] === 0) pass += +m[1]; else { fail++; console.log(out.slice(-2500)); }
     if (sk) {
         skip += sk;
-        // 机器可读的跳过原因
         const r = out.split('\n').find((l) => l.startsWith('SKIP: '));
         skipWhy.push({ suite: s, n: sk, reason: r ? r.slice(5).trim() : '未说明原因' });
     }
     console.log(`${s.padEnd(26)} ${line}`);
 }
-
 if (skipWhy.length) {
     console.log('-'.repeat(50));
     console.log(`跳过 ${skip} 项（不计入失败）：`);
@@ -100,7 +92,6 @@ if (skipWhy.length) {
     }
     console.log('-'.repeat(50));
 }
-
 const total = `${pass} passed, ${fail > 0 ? fail : 0} failed`
     + (skip ? `, ${skip} skipped` : '');
 console.log(total);

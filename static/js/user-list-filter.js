@@ -6,10 +6,8 @@
         if (!table) return;
         const tbody = table.querySelector('tbody');
         if (!tbody) return;
-
         const rows = Array.from(tbody.querySelectorAll('tr'));
         const counter = document.querySelector('.list-filter-count');
-
         function apply() {
             const q = (input.value || '').toLowerCase().trim();
             let shown = 0;
@@ -33,7 +31,6 @@
         input.addEventListener('input', apply);
         apply();
     }
-
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', init);
     } else {

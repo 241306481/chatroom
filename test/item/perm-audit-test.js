@@ -1,25 +1,19 @@
 'use strict';
-// 权限系统审计：所有 GET/POST 路由是否都有权限守卫，权限位是否可达
 const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
 const { PRIV, PERM, PRIV_GROUPS, DUAL_CHECK } = require('../../lib/permissions');
 const { PAGE_BITS } = require('../../lib/routes/manage/_helpers');
-
-// 公开入口：设计上就允许匿名，不应有守卫
 const PUBLIC_ROUTES = new Set([
     'GET /login', 'GET /register', 'POST /login', 'POST /register',
     'GET /avatar/:uid/:ext', 'GET /search', 'GET /messages',
     'GET /user/:uid',
 ]);
-
 const results = [];
 const check = (n, f) => {
     try { f(); results.push(['PASS', n]); }
     catch (e) { results.push(['FAIL', n + ' -> ' + e.message]); }
 };
-
-// ---- 收集所有路由 ----
 function walk(d, out = []) {
     for (const e of fs.readdirSync(d, { withFileTypes: true })) {
         if (e.name === 'node_modules') continue;
@@ -28,7 +22,6 @@ function walk(d, out = []) {
     }
     return out;
 }
-
 const ROUTE_DIR = path.join(__dirname, '../../lib/routes');
 const routes = [];
 for (const f of walk(ROUTE_DIR)) {
@@ -45,8 +38,6 @@ for (const f of walk(ROUTE_DIR)) {
         });
     }
 }
-
-// ---- 1. 写操作必须有守卫 ----
 const WRITE_GUARDS = [
     /requireSystemAdmin/, /hasPriv\(/, /checkPriv\(/, /checkDual\(/,
     /checkPerm\(/, /UnauthorizedError/, /canManageDomain\(/, /guard\(/,
@@ -62,7 +53,6 @@ check('写操作(POST/PUT/DELETE)全部有权限守卫', () => {
     }
     if (bad.length) throw new Error(bad.join(' | '));
 });
-
 check('全部路由至少声明 auth 或有守卫（GET 允许匿名）', () => {
     const bad = routes.filter(r => r.method === 'GET'
         && !PUBLIC_ROUTES.has(r.method + ' ' + r.path)
@@ -70,8 +60,6 @@ check('全部路由至少声明 auth 或有守卫（GET 允许匿名）', () => 
         && !WRITE_GUARDS.some(g => g.test(r.tail))).map(r => r.path);
     if (bad.length) throw new Error(bad.join(' | '));
 });
-
-// ---- 2. 系统管理 8 项都有对应权限位 ----
 const SYS_PAGES = {
     '/manage/settings': PRIV.SYSTEM.EDIT_SETTINGS,
     '/manage/users': PRIV.SYSTEM.MANAGE_USERS,
@@ -88,7 +76,6 @@ check('系统管理各页均映射到具体权限位（无 MANAGE_PANEL 兜底�
         .map(([p]) => p);
     if (bad.length) throw new Error(bad.join(', '));
 });
-
 check('系统组新位已进 PRIV_GROUPS（可在权限页勾选）', () => {
     for (const k of ['MANAGE_SYS_ROLES', 'MANAGE_SYS_PERMS', 'MANAGE_IP_BANS']) {
         const hit = PRIV_GROUPS.find(g => g.bit === PRIV.SYSTEM[k]);
@@ -96,7 +83,6 @@ check('系统组新位已进 PRIV_GROUPS（可在权限页勾选）', () => {
         if (!hit.key) throw new Error(k + ' 缺少 key');
     }
 });
-
 check('路由确实用上了新位（requireSystemAdmin 传了 page）', () => {
     const files = ['manage/ip-bans.js', 'manage/system-roles.js'].map(f =>
         fs.readFileSync(path.join(ROUTE_DIR, f), 'utf8')).join('\n');
@@ -105,8 +91,6 @@ check('路由确实用上了新位（requireSystemAdmin 传了 page）', () => {
             throw new Error(page + ' 未接线');
     }
 });
-
-// ---- 3. PERM 位完整性 ----
 check('PERM 位双字表示：每项是 {hi,lo} 且只占一位', () => {
     const seen = new Map();
     for (const [g, group] of Object.entries(PERM)) {
@@ -128,22 +112,18 @@ check('PERM 位双字表示：每项是 {hi,lo} 且只占一位', () => {
         }
     }
 });
-
 check('PERM 已扩到 64 位：高字空闲，可继续加 32 个权限', () => {
     let total = 0;
     for (const [g, group] of Object.entries(PERM)) {
         if (g === 'ALL') continue;
         total += Object.keys(group).length;
     }
-    // 低字 32 位 + 高字 32 位 = 64 位上限
     if (total > 64) throw new Error('权限项超过 64 个');
-    // 高字机制可用：手工造一个高位权限并验证
     const { bits } = require('../../lib/permissions');
     const high = bits.bitByIndex(32);
     assert.ok(bits.has(high, high), '高字位应可判定');
     assert.ok(!bits.has(PERM.GENERAL.VIEW, high), '低位不应含高位');
 });
-
 check('MANAGE_PERM 与 MANAGE_ROLE 是两个独立位', () => {
     const { bits } = require('../../lib/permissions');
     if (bits.has(PERM.MANAGE.PERM, PERM.MANAGE.ROLE))
@@ -153,7 +133,6 @@ check('MANAGE_PERM 与 MANAGE_ROLE 是两个独立位', () => {
     if (!bits.has(PERM.ALL, PERM.MANAGE.PERM)) throw new Error('ALL 不含 MANAGE_PERM');
     if (!bits.has(PERM.ALL, PERM.MANAGE.ROLE)) throw new Error('ALL 不含 MANAGE_ROLE');
 });
-
 check('位序号与 PERM 表一致（严格连续，无空洞）', () => {
     const { PERM_NAMES } = require('../../lib/permissions');
     const { bits } = require('../../lib/permissions');
@@ -177,20 +156,17 @@ check('位序号与 PERM 表一致（严格连续，无空洞）', () => {
         throw new Error('PERM_NAMES(' + PERM_NAMES.length
             + ') 与 PERM 表项数(' + flat.length + ') 不符');
 });
-
 check('PERM 表无保留占位（开发阶段不留空位）', () => {
     const order = Object.keys(PERM).filter(k => k !== 'ALL');
     const reserved = order.filter(k => /^RESERVED_/.test(k));
     if (reserved.length)
         throw new Error('仍有保留位: ' + reserved.join(', '));
 });
-
 check('已移除的「查看用户私密信息」不再出现在 UI 权限项中', () => {
     const { PERM_NAMES } = require('../../lib/permissions');
     const hit = PERM_NAMES.find(p => p.name.includes('私密'));
     if (hit) throw new Error('「' + hit.name + '」仍出现在权限矩阵中');
 });
-
 check('PERM.ALL 覆盖全部已定义位', () => {
     const { hasPerm } = require('../../lib/permissions');
     for (const [g, group] of Object.entries(PERM)) {
@@ -200,8 +176,6 @@ check('PERM.ALL 覆盖全部已定义位', () => {
         }
     }
 });
-
-// ---- 4. 双检映射完整 ----
 check('DUAL_CHECK 每项都有 priv 且 perm 在 PERM 表内', () => {
     for (const [op, c] of Object.entries(DUAL_CHECK)) {
         if (!c.priv || !c.label) throw new Error(op + ' 缺 priv/label');
@@ -211,7 +185,6 @@ check('DUAL_CHECK 每项都有 priv 且 perm 在 PERM 表内', () => {
             throw new Error(op + ' 位不属于 ' + c.priv.group);
     }
 });
-
 check('双检映射的 perm 键都存在于 PERM', () => {
     const { bits } = require('../../lib/permissions');
     const valid = [];
@@ -227,8 +200,6 @@ check('双检映射的 perm 键都存在于 PERM', () => {
             throw new Error(op + ' 的 permOwn 位不在 PERM 表');
     }
 });
-
-// ---- 5. 加入设置/加入申请按要求绑定 ----
 check('加入设置与加入申请共用 MANAGE_JOIN_APPL（按需求保持绑定）', () => {
     if (DUAL_CHECK.manage_join.perm !== PERM.MANAGE.JOIN_APPL)
         throw new Error('manage_join 未绑定 MANAGE_JOIN_APPL');
@@ -236,7 +207,6 @@ check('加入设置与加入申请共用 MANAGE_JOIN_APPL（按需求保持绑�
     if (privBit !== PRIV.DOMAIN.MANAGE_JOIN)
         throw new Error('系统侧未绑定 DOMAIN.MANAGE_JOIN');
 });
-
 console.log('\n======== [审计] 权限系统 ========');
 for (const [s, n] of results) console.log(s.padEnd(5), n);
 const f = results.filter(x => x[0] === 'FAIL').length;

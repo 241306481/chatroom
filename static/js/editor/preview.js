@@ -1,4 +1,3 @@
-// 预览与字数
 window.EditorPreview = {
     attach({ root, ta, preview, counter, wrapper }) {
         function render() {
@@ -9,19 +8,15 @@ window.EditorPreview = {
                 ? window.renderContent(ta.value)
                 : esc(ta.value).replace(/\n/g, '<br>');
         }
-
         function updateCounter() {
             if (counter) counter.textContent = String(ta.value.length);
         }
-
         function refresh() {
             render();
             updateCounter();
         }
-
         ta.addEventListener('input', refresh);
         refresh();
-
         return { render, refresh, updateCounter };
     },
 };

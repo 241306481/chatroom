@@ -1,36 +1,30 @@
-// 验证新增的控制台命令
 const path = require('path');
 const { spawnSync } = require('child_process');
 const fs = require('fs');
 const ROOT = path.join(__dirname, '..', '..');
 fs.rmSync(ROOT + '/data', { recursive: true, force: true });
-
 const s = require(ROOT + '/lib/storage');
 s.ensureDirs(); s.ensureSystemDomain(); s.ensureSystemUser();
-const alice = s.createUser('alice', 'pw123456');   // 首个用户 → root, level=99
-const bob = s.createUser('bobbb', 'pw123456');      // 第二个 → 需显式 grantRole
+const alice = s.createUser('alice', 'pw123456');
+const bob = s.createUser('bobbb', 'pw123456');
 const auth = require(ROOT + '/lib/auth');
-auth.grantRole('system', bob, 'member');            // 建立成员记录（level 0）
-
+auth.grantRole('system', bob, 'member');
 const DISC = s.listDiscussions('system')[0];
 s.appendMessage('system', DISC, {
     id: s.genUuid(), uid: alice, nickname: 'alice',
     content: '第一条', at: s.nowIso(), reactions: {},
 });
 const firstMsg = s.loadAllMessages('system', DISC)[0].id;
-
 function run(lines) {
     const r = spawnSync(process.execPath, [ROOT + '/lib/console/index.js'], {
         cwd: ROOT, input: lines.join('\n') + '\nexit\n', encoding: 'utf8', timeout: 60000,
     });
     return ((r.stdout || '') + (r.stderr || '')).replace(/\x1b\[[0-9;]*m/g, '');
 }
-
 const results = [];
 function check(name, cond, detail) {
     results.push([cond ? 'PASS' : 'FAIL', name + (cond ? '' : ' -> ' + (detail || ''))]);
 }
-
 const text = run([
     'ipban list',
     'ipban add 1.2.3.4',
@@ -73,7 +67,6 @@ const text = run([
     'config',
     'help',
 ]);
-
 check('ipban list 空表', /无封禁规则/.test(text));
 check('ipban add 永久封禁', /已封禁 1\.2\.3\.4/.test(text));
 check('ipban add 通配 + 到期时间', /已封禁 10\.0\.0\.\*/.test(text) && /2099-01-01T00:00:00Z/.test(text));
@@ -90,7 +83,6 @@ check('sysrole list 列出内置角色', /root/.test(text) && /admin/.test(text)
 check('sysrole show 显示权限位', /系统角色 admin/.test(text) && /权限位/.test(text));
 check('sysrole show 未知角色报错', /系统角色不存在：nosuchrole/.test(text));
 check('sysrole members admin 为空', /该角色下没有用户/.test(text));
-
 check('exp list 有排行', /经验排行/.test(text));
 check('exp show 输出等级与进度', new RegExp('bobbb \\(' + bob + '\\)').test(text) && /Lv\./.test(text));
 check('exp show 非成员报错', /不是 system 的成员/.test(text));
@@ -102,7 +94,6 @@ check('exp add 缺域报错', /必须指定域/.test(text));
 check('exp add 未知域报错', /域不存在：nosuchdom/.test(text));
 check('exp add 管理员显式告警而非静默', /level=99|管理员/.test(text));
 check('exp add 后等级已变', /经验 0 → 500|Lv\.\d+ → Lv\./.test(text));
-
 check('msg tail 显示消息', /第一条/.test(text));
 check('msg send 追加成功并回显 msgId', /追加一条消息/.test(text) && /msgId=/.test(text));
 check('msg send 的内容可见', /控制台补发的一条/.test(text));
@@ -115,7 +106,6 @@ check('session kick 未知用户报错', /用户不存在：99999/.test(text));
 check('config 省略子命令走默认', /config|site_name|配置/i.test(text));
 check('help 覆盖全部新命令', /ipban list/.test(text) && /exp show/.test(text)
     && /sysrole list/.test(text) && /msg send/.test(text) && /session kick/.test(text));
-
 console.log('======== [回归] 控制台新增命令 ========');
 for (const [st, n] of results) console.log(st.padEnd(5), n);
 const f = results.filter(x => x[0] === 'FAIL').length;

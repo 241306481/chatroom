@@ -1,8 +1,6 @@
 'use strict';
 const net = require('net');
-
 const sleep = ms => new Promise(r => setTimeout(r, ms));
-
 async function waitForServer(port, ms = 20000) {
     const t0 = Date.now();
     while (Date.now() - t0 < ms) {
@@ -15,7 +13,6 @@ async function waitForServer(port, ms = 20000) {
     }
     throw new Error('server did not start on port ' + port);
 }
-
 function clearTlsArtifacts(root) {
     const fs = require('fs');
     const path = require('path');
@@ -24,5 +21,4 @@ function clearTlsArtifacts(root) {
         if (fs.existsSync(p)) fs.rmSync(p);
     }
 }
-
 module.exports = { sleep, waitForServer, clearTlsArtifacts };

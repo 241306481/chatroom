@@ -5,7 +5,6 @@
         const rows = Array.from(document.querySelectorAll('.discuss-row-wrap'));
         if (!rows.length) return;
         const counter = document.querySelector('.list-filter-count');
-
         function apply() {
             const q = (input.value || '').toLowerCase().trim();
             let shown = 0;

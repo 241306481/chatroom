@@ -1,13 +1,10 @@
-// 表格形状选择器
 window.EditorTable = {
     attach({ root, ta, refresh, closeAll }) {
         const shape = root.querySelector('[data-table-shape]');
         const shapeInfo = root.querySelector('[data-table-shape-info]');
         if (!shape) return;
-
         const cells = Array.from(shape.querySelectorAll('.md-editor-table-shape-col'));
         let picked = { rows: 0, cols: 0 };
-
         cells.forEach(cell => {
             cell.addEventListener('mouseenter', () => {
                 const r = parseInt(cell.dataset.row, 10);
@@ -20,7 +17,6 @@ window.EditorTable = {
                 });
                 if (shapeInfo) shapeInfo.textContent = c + ' × ' + r;
             });
-
             cell.addEventListener('click', e => {
                 e.stopPropagation();
                 if (picked.rows && picked.cols) {
@@ -30,7 +26,6 @@ window.EditorTable = {
                 }
             });
         });
-
         shape.addEventListener('mouseleave', () => {
             cells.forEach(x => x.classList.remove('active'));
             if (shapeInfo) shapeInfo.textContent = '1 × 1';

@@ -1,10 +1,7 @@
-// 编辑器初始化
 (function () {
-
     window.initContextEdit = function (root) {
         if (typeof root === 'string') root = document.querySelector(root);
         if (!root || root.dataset.ctxInit === '1') return;
-
         const ta = root.querySelector('textarea');
         const preview = root.querySelector('.md-editor-preview');
         const counter = root.querySelector('.md-editor-counter');
@@ -17,30 +14,19 @@
         const panePreview = root.querySelector('[data-pane="preview"]');
         if (!ta || !preview) return;
         root.dataset.ctxInit = '1';
-
-        // 预览
         if (window.MentionPicker) window.MentionPicker.attach(ta);
-
         const previewApi = window.EditorPreview.attach({
             root, ta, preview, counter, wrapper,
         });
-
-        // 工具栏与菜单
         const { closeAll } = window.EditorToolbar.attach({
             root, ta, refresh: previewApi.refresh,
         });
-
-        // 表格选择器
         window.EditorTable.attach({
             root, ta, refresh: previewApi.refresh, closeAll,
         });
-
-        // 尺寸拖拽
         window.EditorResize.attach({
             root, wrapper, resizeOp, paneEdit, panePreview, heightResize,
         });
-
-        // 预览开关按钮
         if (previewBtn) {
             previewBtn.addEventListener('click', e => {
                 e.stopPropagation();
@@ -49,8 +35,6 @@
                 if (!hidden) previewApi.refresh();
             });
         }
-
-        // 同步滚动
         if (syncCb) {
             let syncLock = 0;
             function syncScroll(from, to) {
@@ -69,7 +53,6 @@
             preview.addEventListener('scroll', () => syncScroll(preview, ta));
         }
     };
-
     function autoInit() {
         document.querySelectorAll('[data-context-edit]').forEach(el =>
             window.initContextEdit(el));

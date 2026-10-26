@@ -2,8 +2,6 @@
 {% from "context_edit.html" import context_edit %}
 {% block content %}
 <div class="layout-discuss">
-
-  {# ==================== 左侧：讨论列表 ==================== #}
   <nav class="sidebar-discussions">
     <h3>讨论</h3>
     {% if can_create_discuss %}
@@ -21,8 +19,6 @@
       <p class="empty" style="padding:8px 4px;font-size:12px;">暂无讨论</p>
     {% endif %}
   </nav>
-
-  {# ==================== 中间：消息区 ==================== #}
   <main class="message-area">
     <div class="discuss-header">
       <h2>
@@ -50,7 +46,6 @@
                 title="删除此讨论">删除</button>
       {% endif %}
     </div>
-
     <div class="message-list" id="messageList"
          data-total="{{ messages_total | default(0) }}"
          data-offset="{{ messages_offset | default(0) }}"
@@ -141,7 +136,6 @@
       {% endif %}
       </div>
     </div>
-
     <div class="message-input-area">
       {% if can_send %}
         {% set editorOpts = {
@@ -172,8 +166,6 @@
         </div>
       {% endif %}
   </main>
-
-  {# ==================== 右侧：公告 + 成员 ==================== #}
   <aside class="sidebar-right">
     <section class="pinned-panel">
       <h3>📌 置顶消息</h3>
@@ -202,7 +194,6 @@
         <p class="empty">暂无置顶消息</p>
       {% endif %}
     </section>
-
     <section class="members-panel">
       <h3>
         成员
@@ -216,11 +207,8 @@
       <div class="member-footer">在线 {{ online_count | default(0) }} / {{ total_count | default(0) }}</div>
     </section>
   </aside>
-
 </div>
-
-<script>
-window.__MENTION_CANDIDATES__ = [
+<script>window.__MENTION_CANDIDATES__ = [
     {% for u in all_members %}
       { id: {{ u.id | jsdump }}, nickname: {{ u.nickname | jsdump }} }{% if not loop.last %},{% endif %}
     {% endfor %}
@@ -233,7 +221,6 @@ window.__MENTION_CANDIDATES__ = [
 window.deleteCurrentDiscussion = function () {
     const dn = window.__DOMAIN__;
     const disc = window.__DISCUSS__;
-    // 用站内自定义弹窗，不用原生 confirm
     window.showConfirm('确定删除当前讨论？所有消息将丢失', { danger: true })
       .then(function (ok) {
         if (!ok) return;
@@ -250,15 +237,12 @@ window.deleteCurrentDiscussion = function () {
       })
       .catch(function () { window.showAlert('删除失败'); });
   };
-
-  // 删除按钮绑定（放在函数定义之后）
   (function () {
     var btn = document.getElementById('deleteDiscBtn');
     if (btn) btn.addEventListener('click', window.deleteCurrentDiscussion);
   })();
 </script>
-<script>
-  window.__MESSAGES__ = {{ messages | jsdump }};
+<script>  window.__MESSAGES__ = {{ messages | jsdump }};
   window.__MESSAGES_TOTAL__ = {{ messages_total | default(0) }};
   window.__MESSAGES_OFFSET__ = {{ messages_offset | default(0) }};
   window.__MESSAGES_LIMIT__ = {{ messages_limit | default(100) }};

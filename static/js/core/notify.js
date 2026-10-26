@@ -1,4 +1,3 @@
-// 左下角通知卡片
 window.showNotification = function (opts) {
     opts = opts || {};
     var container = document.getElementById('notificationContainer');
@@ -18,9 +17,7 @@ window.showNotification = function (opts) {
             '<div class="notification-content">' + esc(opts.content || '') + '</div>' +
         '</div>' +
         '<button class="notification-close" type="button">×</button>';
-
     var box = card.querySelector('.notification-avatar');
-    // 有图放 img，失败退首字
     var imgSrc = window.Avatar && opts.avatarUid
         ? window.Avatar.srcOf({ id: opts.avatarUid, avatar_ext: opts.avatarExt }) : '';
     if (imgSrc) {
@@ -34,14 +31,12 @@ window.showNotification = function (opts) {
     } else {
         paintText();
     }
-
     function paintText() {
         if (!box || box.dataset.done) return;
         box.dataset.done = '1';
         box.style.background = color;
         box.textContent = opts.avatar != null ? String(opts.avatar) : (title || '?')[0];
     }
-
     if (opts.onClick) {
         card.addEventListener('click', function (e) {
             if (e.target.classList.contains('notification-close')) return;
@@ -65,8 +60,6 @@ window.showNotification = function (opts) {
         timer = setTimeout(close, 2000);
     });
 };
-
-// 通用轻提示
 window.showToast = function (msg) {
     var t = document.createElement('div');
     t.className = 'toast';
@@ -74,8 +67,6 @@ window.showToast = function (msg) {
     document.body.appendChild(t);
     setTimeout(function () { t.remove(); }, 3000);
 };
-
-// 未读徽章 +1
 window.bumpUnreadBadge = function () {
     const anchors = document.querySelectorAll('.topbar-nav a[href="/messages"]');
     anchors.forEach(a => {

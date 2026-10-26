@@ -13,7 +13,6 @@
     · {% if mode == 'following' %}关注{% else %}粉丝{% endif %}
   </h1>
   <p class="hint">共 {{ users.length }} 人</p>
-
   {% if users and users.length %}
     <table class="user-table">
       <thead>
@@ -64,7 +63,6 @@
   {% else %}
     <p class="empty">{% if mode == 'following' %}还没有关注任何人{% else %}还没有粉丝{% endif %}</p>
   {% endif %}
-
   <p style="margin-top:24px;"><a href="/user/{{ target.id }}">← 返回个人主页</a></p>
 </div>
 {% endblock %}

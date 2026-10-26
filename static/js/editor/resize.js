@@ -1,12 +1,9 @@
-// 编辑器拖拽
 window.EditorResize = {
     attach({ root, wrapper, resizeOp, paneEdit, panePreview, heightResize }) {
         function endDrag() {
             document.body.style.cursor = '';
             document.body.style.userSelect = '';
         }
-
-// 水平拖动
         if (resizeOp && paneEdit && panePreview) {
             let dragging = false;
             resizeOp.addEventListener('mousedown', e => {
@@ -31,13 +28,10 @@ window.EditorResize = {
             document.addEventListener('mouseup', stopH);
             window.addEventListener('blur', stopH);
         }
-
-// 垂直拖动
         if (heightResize) {
             let dragging = false;
             let startY = 0, startH = 0;
             const isTop = heightResize.dataset.heightResizePos === 'top';
-
             heightResize.addEventListener('mousedown', e => {
                 dragging = true;
                 startY = e.clientY;

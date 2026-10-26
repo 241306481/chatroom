@@ -3,7 +3,6 @@
 <div class="page-container" style="max-width:1400px;">
   <h1>权限管理 · {{ domain_name }}</h1>
   <p class="hint">勾选各角色的权限，点击底部的「保存所有」按钮一次性提交</p>
-
   <form method="POST" action="/domain/{{ domain_name }}/manage/permission"
         id="permForm" onsubmit="return syncPermForm(this)">
     <table class="perm-matrix">
@@ -46,14 +45,11 @@
         {% endfor %}
       </tbody>
     </table>
-
-    {# 隐藏字段：每个可编辑角色一个（初始值兜底，提交时由 syncPermForm 重算） #}
     {% for r in roles %}
       {% if r.editable %}
         <input type="hidden" name="perm_{{ r.name }}" id="perm_value_{{ r.name }}" value="{{ r.permStr }}">
       {% endif %}
     {% endfor %}
-
     <div style="margin-top:24px;">
       <button type="submit" style="padding:10px 32px;background:#1890ff;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:15px;">
         💾 保存所有
@@ -61,16 +57,11 @@
       <a href="/domain/{{ domain_name }}/manage" style="margin-left:16px;">取消</a>
     </div>
   </form>
-
   <div style="margin-top:12px;font-size:12px;color:#888;">
     保存时会根据当前勾选状态生成权限值。若页面异常，请刷新后重试。
   </div>
 </div>
-
-<script>
-// 权限位拆成两个 32 位字：位号 0..31 落 lo，32+ 落 hi。
-// 合成时用 BigInt，普通 Number 超过 2^53 会丢精度。
-function syncPermForm(form) {
+<script>function syncPermForm(form) {
   var state = {};
   var checkboxes = form.querySelectorAll('input[type="checkbox"][data-role][data-index]');
   for (var i = 0; i < checkboxes.length; i++) {

@@ -1,10 +1,7 @@
 'use strict';
-// 有图用 img，否则首字+颜色
 (function () {
     const EXTS = { png: 1, jpg: 1, gif: 1, webp: 1 };
     const COLOR_FALLBACK = '#888';
-
-    // 与 lib/template.js 的 avatarText 过滤器保持一致
     function avatarText(nickname) {
         const chars = Array.from(String(nickname == null ? '?' : nickname));
         if (!chars.length) return '?';
@@ -16,8 +13,6 @@
         }
         return chars.slice(0, 2).join('');
     }
-
-    // 与 lib/template.js 的 avatarColor 过滤器保持一致
     function safeColor(c) {
         const s = String(c == null ? '' : c).trim();
         if (/^#[0-9a-fA-F]{3,8}$/.test(s)) return s;
@@ -26,18 +21,14 @@
         if (/^[a-zA-Z]{3,20}$/.test(s)) return s;
         return COLOR_FALLBACK;
     }
-
     function srcOf(user) {
         if (!user || !user.id || !user.avatar_ext) return '';
         const ext = String(user.avatar_ext).toLowerCase();
         if (!EXTS[ext]) return '';
         return '/avatar/' + encodeURIComponent(String(user.id)) + '/' + ext;
     }
-
-    // 造一个头像元素，样式类由调用方给
     function build(user, cls) {
         const src = srcOf(user);
-
         if (src) {
             const img = document.createElement('img');
             img.className = (cls || '') + ' avatar-img';
@@ -51,7 +42,6 @@
         }
         return fallback(user, cls);
     }
-
     function fallback(user, cls) {
         const s = document.createElement('span');
         s.className = cls || '';
@@ -59,12 +49,9 @@
         s.textContent = avatarText(user && user.nickname);
         return s;
     }
-
-    // 直接写进已有的容器（就地替换）
     function apply(container, user, cls) {
         if (!container) return;
         container.replaceWith(build(user, cls));
     }
-
     window.Avatar = { build, fallback, srcOf, apply, avatarText, safeColor };
 })();

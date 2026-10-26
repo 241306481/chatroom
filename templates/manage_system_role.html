@@ -3,7 +3,6 @@
 <div class="page-container">
   <h1>系统角色管理</h1>
   <p class="hint">内置角色不可删除，可修改权限；自定义角色可自由增删</p>
-
   <table class="role-table">
     <thead>
       <tr><th>角色</th><th>显示名</th><th>类型</th><th>操作</th></tr>
@@ -29,7 +28,6 @@
       {% endfor %}
     </tbody>
   </table>
-
   <h2 style="margin-top:24px;">创建自定义角色</h2>
   <form method="POST" action="/manage/system_roles" class="form-stack">
     <input type="hidden" name="action" value="create">
@@ -39,7 +37,6 @@
     <label>显示名<input type="text" name="display" required></label>
     <button type="submit">创建</button>
   </form>
-
   <p style="margin-top:24px;">
     <a href="/manage/permissions">→ 配置系统权限</a>
     &nbsp;·&nbsp;

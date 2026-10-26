@@ -1,7 +1,5 @@
-// 内联弹窗
 (function () {
     let root = null;
-
     function getRoot() {
         if (!root || !document.body.contains(root)) {
             root = document.createElement('div');
@@ -10,19 +8,15 @@
         }
         return root;
     }
-
     function open(cfg) {
         return new Promise(function (resolve) {
             const container = getRoot();
             const overlay = document.createElement('div');
             overlay.className = 'modal-overlay';
-
             const box = document.createElement('div');
             box.className = 'modal-box' + (cfg.danger ? ' modal-danger' : '');
             box.setAttribute('role', 'dialog');
             box.setAttribute('aria-modal', 'true');
-
-// 头部
             const header = document.createElement('div');
             header.className = 'modal-header';
             const iconEl = document.createElement('span');
@@ -34,15 +28,12 @@
             titleEl.textContent = cfg.title || (cfg.type === 'prompt' ? '输入' : '提示');
             header.appendChild(titleEl);
             box.appendChild(header);
-
-// 主体
             const body = document.createElement('div');
             body.className = 'modal-body';
             const msgEl = document.createElement('div');
             msgEl.className = 'modal-message';
             msgEl.textContent = cfg.message == null ? '' : String(cfg.message);
             body.appendChild(msgEl);
-
             let input = null;
             if (cfg.type === 'prompt') {
                 input = document.createElement('input');
@@ -53,8 +44,6 @@
                 body.appendChild(input);
             }
             box.appendChild(body);
-
-// 底部
             const footer = document.createElement('div');
             footer.className = 'modal-footer';
             let cancelBtn = null;
@@ -71,12 +60,9 @@
             okBtn.textContent = cfg.okText || '确定';
             footer.appendChild(okBtn);
             box.appendChild(footer);
-
             overlay.appendChild(box);
             container.appendChild(overlay);
             requestAnimationFrame(function () { overlay.classList.add('show'); });
-
-// 关闭逻辑
             let done = false;
             function cancelValue() {
                 return cfg.type === 'prompt' ? null : cfg.type === 'confirm' ? false : true;
@@ -115,15 +101,12 @@
                 if (e.target === overlay) close(cancelValue());
             });
             document.addEventListener('keydown', onKey, true);
-
             setTimeout(function () {
                 if (input) { input.focus(); input.select(); }
                 else okBtn.focus();
             }, 40);
         });
     }
-
-// 对外 API
     window.showModal = open;
     window.showAlert = function (message, opts) {
         return open(Object.assign({ type: 'alert', message: message }, opts || {}));
@@ -134,8 +117,6 @@
     window.showPrompt = function (message, value, opts) {
         return open(Object.assign({ type: 'prompt', message: message, value: value }, opts || {}));
     };
-
-// confirm 拦截
     document.addEventListener('click', function (e) {
         const el = e.target && e.target.closest ? e.target.closest('[data-confirm]') : null;
         if (!el) return;

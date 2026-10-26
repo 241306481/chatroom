@@ -2,7 +2,6 @@
 {% block content %}
 <div class="page-container">
   <h1>讨论 · {{ display_name }}</h1>
-
   {% if can_create %}
     <div class="inline-create-box">
       <form method="POST" action="/domain/{{ domain_name }}/discuss" class="inline-create-form">
@@ -13,13 +12,11 @@
       </form>
     </div>
   {% endif %}
-
   <div class="list-filter-bar">
     <input type="text" class="list-filter-input"
            placeholder="筛选本域讨论 ID 或标题…" autocomplete="off">
     <span class="list-filter-count"></span>
   </div>
-
   {% if discussions and discussions.length %}
     <div class="discuss-list">
       {% for d in discussions %}
@@ -54,8 +51,7 @@
     <p class="empty">暂无讨论</p>
   {% endif %}
 </div>
-<script>
-  window.deleteListItem = function (btn) {
+<script>  window.deleteListItem = function (btn) {
     const disc = btn.dataset.disc;
     if (!confirm('确定删除讨论「' + disc + '」？所有消息将丢失')) return;
     const dn = window.__DOMAIN__;

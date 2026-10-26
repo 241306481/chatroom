@@ -2,7 +2,6 @@
 {% block content %}
 <div class="page-container">
   <h1>角色管理 · {{ domain_name }}</h1>
-
   <table class="role-table">
     <thead>
       <tr><th>角色</th><th>显示名</th><th>类型</th><th>操作</th></tr>
@@ -28,7 +27,6 @@
       {% endfor %}
     </tbody>
   </table>
-
   <h2>创建自定义角色</h2>
   <form method="POST" action="/domain/{{ domain_name }}/manage/role" class="form-stack">
     <input type="hidden" name="action" value="create">
@@ -38,7 +36,6 @@
     <label>显示名<input type="text" name="display" required></label>
     <button type="submit">创建角色</button>
   </form>
-
   <p style="margin-top:24px;"><a href="/domain/{{ domain_name }}/manage">← 返回域管理</a></p>
 </div>
 {% endblock %}

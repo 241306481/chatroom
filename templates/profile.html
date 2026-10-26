@@ -25,13 +25,9 @@
       <button type="button" class="profile-edit-btn" id="profileEditBtn">✎ 编辑资料</button>
     {% endif %}
   </div>
-
-  {# ============ 查看模式 ============ #}
   <div class="profile-view" id="profileView">
     <div class="profile-bio md-body" id="bioStatic">{{ target.bio or '暂无简介' }}</div>
   </div>
-
-  {# ============ 编辑模式（仅本人） ============ #}
   {% if is_me %}
     <div class="profile-edit" id="profileEdit" hidden>
       <form method="POST" action="/user/{{ target.id }}" class="form-stack"
@@ -39,8 +35,6 @@
         <label>昵称<input type="text" name="nickname" value="{{ target.nickname }}" required
           pattern="[^0-9\s].*" maxlength="32"
           title="昵称不能以数字开头，长度 1-32"></label>
-
-        {# 头像：选中后随「保存」一起提交 #}
         {% if can_avatar %}
           <div class="profile-avatar-edit" id="avatarEditBox"
                data-has-avatar="{{ 1 if target.avatar_ext else 0 }}">
@@ -70,7 +64,6 @@
             heightResize: 'bottom'
         } %}
         {{ context_edit(editorOpts) }}
-
         <div class="profile-form-actions">
           <button type="submit" class="btn-primary">保存</button>
           <button type="button" class="btn-cancel" id="profileCancelBtn">取消</button>
@@ -78,8 +71,6 @@
       </form>
     </div>
   {% endif %}
-
-  {# ============ 关注 + 私信操作 ============ #}
   <div class="profile-actions-row">
     {% if not is_me %}
       {% if is_following %}
@@ -92,9 +83,7 @@
         </form>
       {% endif %}
     {% endif %}
-
     <a href="/messages?target={{ target.id }}" class="profile-dm-btn">✉ 发送私信</a>
-
     {% if not is_me %}
       {% if is_blocked %}
         <form method="POST" action="/user/{{ target.id }}/unblock" style="display:inline">
@@ -109,7 +98,6 @@
         </form>
       {% endif %}
     {% endif %}
-
     {% if not is_me and is_blocked_by %}
       <span class="dm-policy-hint">🚫 对方已将你拉黑</span>
     {% elif not is_me and dm_policy and dm_policy != 'everyone' %}
@@ -117,35 +105,28 @@
     {% endif %}
   </div>
 </div>
-
-<script>
-(function () {
+<script>(function () {
     function renderBio() {
         var stat = document.getElementById('bioStatic');
         if (stat && window.renderContent) {
             stat.innerHTML = window.renderContent(stat.textContent);
         }
     }
-
     function init() {
         renderBio();
-
         var editBtn   = document.getElementById('profileEditBtn');
         var cancelBtn = document.getElementById('profileCancelBtn');
         var view      = document.getElementById('profileView');
         var edit      = document.getElementById('profileEdit');
         if (!editBtn || !edit || !view) return;
-
         var ta = edit.querySelector('textarea');
         var originalBio = ta ? ta.value : '';
-
         editBtn.addEventListener('click', function () {
             view.hidden = true;
             editBtn.hidden = true;
             edit.hidden = false;
             if (ta) ta.focus();
         });
-
         if (cancelBtn) {
             cancelBtn.addEventListener('click', function () {
                 if (ta) {
@@ -157,11 +138,9 @@
                 editBtn.hidden = false;
             });
         }
-
         var err = new URL(location.href).searchParams.get('error');
         if (err && window.showAlert) window.showAlert(err);
     }
-
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', init);
     } else {
@@ -169,5 +148,6 @@
     }
 })();
 </script>
-<script src="/static/js/avatar-upload.js"></script>
+<script src="/static/js/avatar-upload.js">
+</script>
 {% endblock %}

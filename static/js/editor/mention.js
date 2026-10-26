@@ -1,21 +1,16 @@
 'use strict';
-
 (function () {
     const candidates = window.__MENTION_CANDIDATES__ || [];
     if (!candidates.length) return;
-
     function attach(ta) {
         if (!ta || ta._mentionBound) return;
         ta._mentionBound = true;
-
         const box = document.createElement('div');
         box.className = 'mention-picker';
         box.hidden = true;
         document.body.appendChild(box);
-
         let activeIdx = 0;
         let matches = [];
-
         function getQueryAndStart() {
             const pos = ta.selectionStart;
             const before = ta.value.substring(0, pos);
@@ -27,7 +22,6 @@
                 silent: m[2] === '@',
             };
         }
-
         function render() {
             if (!matches.length) { box.hidden = true; return; }
             box.innerHTML = '';
@@ -49,7 +43,6 @@
             box.style.overflowY = 'auto';
             box.hidden = false;
         }
-
         function pick(idx) {
             const info = getQueryAndStart();
             if (!info) { box.hidden = true; return; }
@@ -65,7 +58,6 @@
             ta.dispatchEvent(new Event('input', { bubbles: true }));
             box.hidden = true;
         }
-
         ta.addEventListener('input', () => {
             const info = getQueryAndStart();
             if (!info) { box.hidden = true; return; }
@@ -76,7 +68,6 @@
             activeIdx = 0;
             render();
         });
-
         ta.addEventListener('keydown', (e) => {
             if (box.hidden) return;
             if (e.key === 'ArrowDown') {
@@ -96,11 +87,9 @@
                 box.hidden = true;
             }
         });
-
         ta.addEventListener('blur', () => {
             setTimeout(() => { box.hidden = true; }, 150);
         });
     }
-
     window.MentionPicker = { attach };
 })();

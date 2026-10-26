@@ -10,7 +10,6 @@
       </button>
     </div>
   </div>
-
   <div id="uploadProgress" class="upload-progress" style="display:none;">
     <div class="progress-info">
       <span id="progressFilename">准备中…</span>
@@ -19,11 +18,9 @@
     <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
     <div class="progress-queue" id="progressQueue"></div>
   </div>
-
   <div class="file-info-bar">
     <span>共 {{ files.length }} 个文件</span>
   </div>
-
   {% if files and files.length %}
     <table class="file-table">
       <thead>
@@ -76,30 +73,7 @@
     </div>
   {% endif %}
 </div>
-
-<script>
-  function copyFileLink(btn) {
-    var url = location.origin + btn.dataset.copyUrl;
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(url).then(function () {
-        if (window.showToast) window.showToast('链接已复制');
-      }).catch(function () { fallbackCopy(url); });
-    } else {
-      fallbackCopy(url);
-    }
-  }
-  function fallbackCopy(text) {
-    var t = document.createElement('textarea');
-    t.value = text;
-    t.style.position = 'fixed';
-    t.style.opacity = '0';
-    document.body.appendChild(t);
-    t.select();
-    try { document.execCommand('copy'); if (window.showToast) window.showToast('链接已复制'); } catch (e) {}
-    t.remove();
-  }
-
-  window.addEventListener('DOMContentLoaded', function () {
+<script>  window.addEventListener('DOMContentLoaded', function () {
     initUpload({
       inputId: 'fileInput',
       uploadUrl: '/myfile/upload',

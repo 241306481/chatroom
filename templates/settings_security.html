@@ -2,11 +2,9 @@
 {% block content %}
 <div class="page-container">
   <h1>安全设置</h1>
-
   <h2 style="margin:16px 0 8px;">账号信息</h2>
   <p class="hint">昵称：{{ current_user.nickname }} · UID：{{ current_user.id }}</p>
   <p class="hint">修改简介和昵称请前往 <a href="/user/{{ current_user.id }}">个人资料</a></p>
-
   <h2 style="margin:24px 0 8px;">修改密码</h2>
   <form method="POST" action="/settings/security/password" class="form-stack">
     <label>原密码<input type="password" name="old_password" required></label>
@@ -14,7 +12,6 @@
     <label>确认新密码<input type="password" name="confirm_password" required></label>
     <button type="submit">修改密码</button>
   </form>
-
   <h2 style="margin:24px 0 8px;">会话管理</h2>
   <p class="hint">退出所有设备上的登录会话</p>
   <form method="POST" action="/settings/security/logout_all">

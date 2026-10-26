@@ -1,7 +1,3 @@
-/* ===== dark-core.css 2/6：深色模式主体：顶栏 / 页面容器 / 讨论区 / 编辑器 / 私信（原 base.css 第 104-262 行）===== */
-/* ============================================================
-   深色模式
-   ============================================================ */
 :root {
   --bg-primary: #f5f6f8;
   --bg-card: #ffffff;
@@ -14,7 +10,6 @@
   --border-subtle: #eee;
   --link-color: #1890ff;
 }
-
 html[data-theme="dark"] {
   --bg-primary: #1a1a1a;
   --bg-card: #242424;
@@ -27,13 +22,10 @@ html[data-theme="dark"] {
   --border-subtle: #333;
   --link-color: #4da3ff;
 }
-
 html[data-theme="dark"] body {
   background: var(--bg-primary);
   color: var(--text-primary);
 }
-
-/* 顶栏 */
 html[data-theme="dark"] .topbar {
   background: #242424;
   border-bottom-color: #3a3a3a;
@@ -56,8 +48,6 @@ html[data-theme="dark"] .user-dropdown a:hover {
 html[data-theme="dark"] .dropdown-nick { color: #e0e0e0; }
 html[data-theme="dark"] .dropdown-uid { color: #888; }
 html[data-theme="dark"] .dropdown-divider { background: #3a3a3a; }
-
-/* 页面容器 */
 html[data-theme="dark"] .page-container,
 html[data-theme="dark"] .announcement-panel,
 html[data-theme="dark"] .discussion-list,
@@ -65,8 +55,6 @@ html[data-theme="dark"] .sidebar-users {
   background: var(--bg-card); color: var(--text-primary);
 }
 html[data-theme="dark"] .page-container h1 { color: var(--text-primary); }
-
-/* 讨论区 */
 html[data-theme="dark"] .layout-discuss { background: var(--bg-primary); }
 html[data-theme="dark"] .sidebar-discussions {
   background: #1f1f1f; border-right-color: #3a3a3a;
@@ -96,8 +84,6 @@ html[data-theme="dark"] .member-name { color: #e0e0e0; }
 html[data-theme="dark"] .message-input-area {
   background: #262626; border-top-color: #3a3a3a;
 }
-
-/* 编辑器 */
 html[data-theme="dark"] .md-editor {
   background: #1f1f1f; border-color: #3a3a3a; color: #e0e0e0;
 }
@@ -130,8 +116,6 @@ html[data-theme="dark"] .md-editor-menu-item:hover {
 html[data-theme="dark"] .md-editor-dropdown-overlay {
   background: #2a2a2a; border-color: #3a3a3a;
 }
-
-/* 私信 */
 html[data-theme="dark"] .dm-sidebar {
   background: #1f1f1f; border-right-color: #3a3a3a;
 }
@@ -157,4 +141,3 @@ html[data-theme="dark"] .dm-search-item:hover { background: #1e3a5f; }
 html[data-theme="dark"] .dm-settings { background: #2a2a2a;
   border-color: #3a3a3a; }
 html[data-theme="dark"] .dm-settings > summary { color: #e0e0e0; }
-

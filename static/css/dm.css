@@ -40,35 +40,28 @@
   margin-bottom: auto; }
 .dm-msg { display: flex; gap: 10px; margin-bottom: 16px;
   align-items: flex-start; }
-/* 内存优化：离屏元素跳过渲染（contain-intrinsic-size 同 discuss.css） */
 .dm-msg {
   content-visibility: auto;
   contain-intrinsic-size: auto 80px;
 }
 .dm-msg.dm-me { flex-direction: row-reverse; }
-
 .dm-avatar-wrap { flex-shrink: 0; }
 .dm-avatar { display: inline-flex; align-items: center; justify-content: center;
   width: 36px; height: 36px; border-radius: 50%;
   color: #fff; font-weight: 600; font-size: 14px; }
-
 .dm-msg-body { flex: 1; min-width: 0; display: flex; flex-direction: column;
   padding-right: 46px; }
 .dm-msg.dm-me .dm-msg-body { padding-right: 0; padding-left: 46px; }
-
 .dm-msg-header { display: flex; align-items: center; gap: 8px;
   font-size: 12px; color: #888; margin-bottom: 4px; padding: 0 4px; }
 .dm-msg.dm-me .dm-msg-header { flex-direction: row-reverse; }
 .dm-nick { font-weight: 600; color: #333; }
 .dm-time { color: #999; font-size: 11px; }
-
 .dm-bubble { position: relative; width: 100%;
   padding: 10px 14px; border-radius: 12px;
   word-wrap: break-word; font-size: 14px; line-height: 1.6;
   background: #f0f0f0; color: #333; box-sizing: border-box; }
 .dm-me .dm-bubble { background: #1890ff; color: #fff; }
-
-/* 源码模式 */
 .dm-bubble[data-mode="source"] { white-space: pre-wrap; word-wrap: break-word;
   font-family: Consolas, "Courier New", monospace; font-size: 13px;
   color: #24292e; background: #f6f8fa; padding: 6px 10px;
@@ -77,8 +70,6 @@
   background: #40a9ff; padding: 6px 10px; border-radius: 4px;
   white-space: pre-wrap; word-wrap: break-word;
   font-family: Consolas, "Courier New", monospace; font-size: 13px; }
-
-/* Markdown 内部样式 */
 .dm-bubble p { margin: 0.3em 0; }
 .dm-bubble p:first-child { margin-top: 0; }
 .dm-bubble p:last-child  { margin-bottom: 0; }
@@ -128,8 +119,6 @@
   font-size: 12px; color: #999; padding: 0 4px; line-height: 1;
   opacity: 0.5; transition: opacity 0.15s, color 0.15s; }
 .msg-mini-btn:hover { opacity: 1; color: #1890ff; }
-
-/* 新消息提示条 */
 .new-msg-banner { position: absolute; left: 50%; transform: translateX(-50%);
   z-index: 50; background: #1890ff; color: #fff;
   border: none; border-radius: 20px; padding: 8px 16px;
@@ -139,18 +128,14 @@
 .new-msg-banner:hover { background: #40a9ff; }
 .new-msg-banner[hidden] { display: none; }
 .new-msg-banner .arrow { font-size: 14px; line-height: 1; }
-
 .dm-input-area > .new-msg-banner,
 .dm-input-disabled > .new-msg-banner { bottom: calc(100% + 8px); }
 .dm-main > .new-msg-banner { bottom: 12px; }
-
 .dm-user-link { display: inline-flex; align-items: center; gap: 8px;
   color: inherit; text-decoration: none;
   padding: 4px 10px; border-radius: 20px;
   transition: background 0.15s; }
 .dm-user-link:hover { background: #f0f0f0; }
-
-/* 私信气泡内的代码块样式 */
 .dm-bubble pre { background: rgba(0, 0, 0, 0.06); padding: 10px 14px;
   border-radius: 6px; overflow-x: auto; font-size: 13px;
   line-height: 1.5; font-family: Consolas, "Courier New", monospace;
@@ -160,27 +145,17 @@
 .dm-bubble code { background: rgba(0, 0, 0, 0.06); padding: 1px 5px;
   border-radius: 3px; font-family: Consolas, "Courier New", monospace;
   font-size: 13px; }
-
-/* 对方消息代码块 */
 .dm-other .dm-bubble pre { background: rgba(0, 0, 0, 0.06); color: #333; }
 .dm-other .dm-bubble pre code { background: none; color: #333; }
 .dm-other .dm-bubble code { background: rgba(0, 0, 0, 0.06); color: #333; }
-
-/* 自己消息代码块 */
 .dm-me .dm-bubble pre { background: rgba(0, 0, 0, 0.18); color: #fff; }
 .dm-me .dm-bubble pre code { background: none; color: #fff; }
 .dm-me .dm-bubble code { background: rgba(0, 0, 0, 0.18); color: #fff; }
-
-/* 空私信提示 */
 .dm-empty-hint { padding: 60px 20px; text-align: center; color: #aaa; }
 .dm-empty-hint p { font-size: 14px; }
 html[data-theme="dark"] .dm-empty-hint { color: #666; }
-
-/* 会话昵称省略 */
 .dm-conv .dm-conv-nick { min-width: 0; overflow: hidden;
   text-overflow: ellipsis; white-space: nowrap; }
-
-/* 回溯加载占位 */
 .loading-older { padding: 12px; text-align: center;
   color: #999; font-size: 13px; }
 html[data-theme="dark"] .loading-older { color: #666; }

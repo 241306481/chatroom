@@ -3,7 +3,6 @@
 <div class="page-container">
   <h1>用户最近 IP</h1>
   <p class="hint">记录每个用户最近 10 次登录使用的 IP，方便溯源与封禁。</p>
-
   {% if users and users.length %}
     <table class="user-table">
       <thead>
@@ -60,7 +59,6 @@
   {% else %}
     <p class="empty">暂无记录。用户登录后会自动记录其 IP。</p>
   {% endif %}
-
   <p style="margin-top:24px;">
     <a href="/manage">← 返回系统管理</a>
     &nbsp;·&nbsp;

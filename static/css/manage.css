@@ -59,20 +59,13 @@
   border: 1px solid #ff4d4f; color: #ff4d4f; border-radius: 4px;
   cursor: pointer; white-space: nowrap; }
 .ban-form button:hover { background: #fff1f0; }
-
 .mydomain-actions { display: flex; align-items: center; }
-
-/* 长文本单元格截断 */
 .user-table td { max-width: 280px; overflow-wrap: anywhere; }
 .user-table td.user-table-message { max-width: 320px; }
-
-/* 次要按钮（消息搜索入口） */
 .create-domain-btn.secondary {
   background: #fff; color: #1890ff !important; border: 1px solid #1890ff; }
 html[data-theme="dark"] .create-domain-btn.secondary {
   background: #2a2a2a; color: #4da3ff !important; border-color: #4da3ff; }
-
-/* 页内提示：POST 后直接重渲染，不再靠重定向带 ?ok= */
 .form-alert {
   padding: 9px 12px; margin: 12px 0; border-radius: 4px;
   font-size: 13px; border: 1px solid transparent;
@@ -81,15 +74,12 @@ html[data-theme="dark"] .create-domain-btn.secondary {
 .form-alert.err { background: #fff2f0; border-color: #ffccc7; color: #cf1322; }
 html[data-theme="dark"] .form-alert.ok { background: #14261a; border-color: #2f5c3a; color: #95de64; }
 html[data-theme="dark"] .form-alert.err { background: #2a1414; border-color: #5c2f2f; color: #ff7875; }
-
-/* 已过期的封禁规则：留着但不再生效，用黄底区分 */
 .user-table tr.row-expired td { background: #fffbe6; color: #8c8c8c; }
 html[data-theme="dark"] .user-table tr.row-expired td { background: #2b2718; color: #9a9a9a; }
 .tag-expired {
   display: inline-block; margin-left: 6px; padding: 0 6px; border-radius: 3px;
   background: #ffe58f; color: #874d00; font-size: 11px; line-height: 18px;
 }
-/* 命中当前登录者 IP：封了会把自己关在外面，优先提示 */
 .tag-banned {
   display: inline-block; margin-left: 6px; padding: 0 6px; border-radius: 3px;
   background: #ffccc7; color: #a8071a; font-size: 11px; line-height: 18px;

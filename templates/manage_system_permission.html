@@ -3,10 +3,8 @@
 <div class="page-container" style="max-width:1400px;">
   <h1>系统权限管理</h1>
   <p class="hint">勾选各角色在各组的全局权限，点击底部的「保存所有」按钮一次性提交</p>
-
   <form method="POST" action="/manage/permissions" id="permForm"
         onsubmit="return syncPermForm(this)">
-
     {% for group_name, group_data in groups %}
       {% if group_data.items and group_data.items.length %}
         <h2 class="perm-group-title">
@@ -58,7 +56,6 @@
         </table>
       {% endif %}
     {% endfor %}
-
     <div style="margin-top:24px;">
       <button type="submit" style="padding:10px 32px;background:#1890ff;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:15px;">
         💾 保存所有
@@ -67,10 +64,7 @@
     </div>
   </form>
 </div>
-
-<script>
-function syncPermForm(form) {
-  // 按 (role, group) 聚合位掩码
+<script>function syncPermForm(form) {
   var state = {};
   var cbs = form.querySelectorAll('input[type="checkbox"][data-role][data-group][data-bit]');
   for (var i = 0; i < cbs.length; i++) {
@@ -82,10 +76,8 @@ function syncPermForm(form) {
     if (!state[k]) state[k] = 0;
     if (cb.checked) state[k] = (state[k] | bit) >>> 0;
   }
-  // 移除旧的 hidden（如果有）
   var olds = form.querySelectorAll('input[type="hidden"][data-sync-hidden]');
   for (var j = 0; j < olds.length; j++) olds[j].remove();
-  // 生成新 hidden
   for (var k2 in state) {
     if (!Object.prototype.hasOwnProperty.call(state, k2)) continue;
     var h = document.createElement('input');

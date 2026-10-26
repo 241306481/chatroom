@@ -1,31 +1,25 @@
-// 私信图片默认公开 + WS 协议启动时锁死
 const assert = require('assert');
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const { spawn } = require('child_process');
-
 const ROOT = path.join(__dirname, '..', '..');
 const DATA = path.join(ROOT, 'data');
 if (fs.existsSync(DATA)) fs.rmSync(DATA, { recursive: true, force: true });
-
 const PORT = 5198;
 const { sleep, waitForServer, clearTlsArtifacts } = require('./_helpers');
 clearTlsArtifacts(ROOT);
-
 const proc = spawn(process.execPath, ['server.js'], {
     cwd: ROOT, env: { ...process.env, PORT: String(PORT) },
 });
 proc.stdout.on('data', () => {});
 const srvErr = [];
 proc.stderr.on('data', d => srvErr.push(String(d)));
-
 const results = [];
 const check = (n, f) => {
     try { f(); results.push(['PASS', n]); }
     catch (e) { results.push(['FAIL', n + ' -> ' + e.message]); }
 };
-
 function req(method, p, { body, cookie, headers } = {}) {
     return new Promise((resolve, reject) => {
         const h = Object.assign({}, headers);
@@ -52,7 +46,6 @@ function req(method, p, { body, cookie, headers } = {}) {
     });
 }
 const cookieOf = r => (r.headers['set-cookie'] || []).map(c => c.split(';')[0]).join('; ');
-
 function multipart(file) {
     const b = '----ChatTest' + Date.now();
     const head = Buffer.from(
@@ -64,15 +57,11 @@ function multipart(file) {
         ct: 'multipart/form-data; boundary=' + b,
     };
 }
-
-// 1x1 PNG
 const PNG = Buffer.from(
     'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
     'base64');
-
 (async () => {
     await waitForServer(PORT);
-
     const regA = await req('POST', '/register', {
         body: { nickname: 'dmpicA', password: 'pw123456', confirm_password: 'pw123456' },
     });
@@ -83,8 +72,6 @@ const PNG = Buffer.from(
     const B = cookieOf(regB);
     const storage = require('../../lib/storage');
     const uidA = storage.findUserByNickname('dmpicA').id;
-
-    // 前端接线
     check('私信编辑器声明图片公开', () => {
         const tpl = fs.readFileSync(path.join(ROOT, 'templates/messages.html'), 'utf8');
         assert.ok(/imageVisibility:\s*'public'/.test(tpl), 'messages.html 未声明 imageVisibility');
@@ -104,8 +91,6 @@ const PNG = Buffer.from(
         assert.ok(/\?visibility=public/.test(js), 'upload-inline.js 未拼 visibility 参数');
         assert.ok(/_upload\(f, ta, refresh, opts\)/.test(js), 'opts 未透传给 _upload');
     });
-
-    // 公开上传：对方能看
     const up = multipart({ name: 'dm.png', mime: 'image/png', data: PNG });
     const uploaded = await req('POST', '/myfile/upload?visibility=public', {
         cookie: A,
@@ -127,8 +112,6 @@ const PNG = Buffer.from(
             assert.ok(Buffer.compare(seen.body, PNG) === 0, '图片内容不一致');
         });
     }
-
-    // 不传 visibility 仍是 private（普通文件页不受影响）
     const up2 = multipart({ name: 'priv.png', mime: 'image/png', data: PNG });
     const uploaded2 = await req('POST', '/myfile/upload', {
         cookie: A,
@@ -143,8 +126,6 @@ const PNG = Buffer.from(
             assert.strictEqual(denied.status, 403);
         });
     }
-
-    // WS 协议锁：服务已按 HTTP 起好，此时补放 pem 不能把页面带到 wss
     try {
         fs.writeFileSync(path.join(ROOT, 'cert.pem'), 'dummy');
         fs.writeFileSync(path.join(ROOT, 'key.pem'), 'dummy');
@@ -158,8 +139,6 @@ const PNG = Buffer.from(
     } finally {
         clearTlsArtifacts(ROOT);
     }
-
-    // WS 协议锁
     const H = require('../../lib/ws-protocol');
     check('WS 协议可被锁定', () => {
         H.setWsProtocol('wss');
@@ -178,12 +157,9 @@ const PNG = Buffer.from(
         assert.ok(/__WS_PROTOCOL__\s*=\s*\{\{ \(ws_protocol/.test(tpl),
             'base.html 未使用服务端 ws_protocol');
     });
-
-    // 收尾
     try { proc.kill('SIGINT'); } catch (e) {}
     await sleep(800);
     try { proc.kill('SIGKILL'); } catch (e) {}
-
     for (const [st, n] of results) console.log(st + '  ' + n);
     const failed = results.filter(r => r[0] === 'FAIL').length;
     console.log('\n' + (results.length - failed) + ' passed, ' + failed + ' failed');

@@ -2,11 +2,9 @@
 {% block content %}
 <div class="page-container" style="max-width:1100px;">
   <h1>🔍 消息搜索</h1>
-
   <form method="GET" action="/search" class="search-form">
     <input type="text" name="q" value="{{ q }}" placeholder="输入关键词…" autofocus
            class="search-input">
-
     <div class="search-options">
       <label>域
         <select name="domain" id="searchDomain">
@@ -18,13 +16,11 @@
           {% endfor %}
         </select>
       </label>
-
       <label>讨论
         <select name="discuss" id="searchDiscuss">
           <option value="">全部讨论</option>
         </select>
       </label>
-
       <label>用户
         <select name="user">
           <option value="">全部用户</option>
@@ -35,9 +31,7 @@
           {% endfor %}
         </select>
       </label>
-
       </div>
-
     <details class="search-help">
       <summary>🔍 高级搜索语法</summary>
       <div class="search-help-content">
@@ -50,14 +44,11 @@
         多个条件空格分隔（AND），例：<code>from:2 in:general before:2024-06-01</code>
       </div>
     </details>
-
     <button type="submit">搜索</button>
   </form>
-
   {% if not searched %}
     <p class="hint">输入关键词开始搜索</p>
   {% endif %}
-
   {% if searched %}
     <div class="search-results-info">
       {% if total %}
@@ -66,7 +57,6 @@
         无匹配结果
       {% endif %}
     </div>
-
     {% if results and results.length %}
       <div class="search-results">
         {% for r in results %}
@@ -84,7 +74,6 @@
     {% endif %}
   {% endif %}
 </div>
-
 {% if pageCount > 1 %}
   {% set base = '/search?q=' ~ (q | urlencode) ~ '&domain=' ~ (domainFilter | urlencode) ~ '&discuss=' ~ (discFilter | urlencode) ~ '&user=' ~ (userFilter | urlencode) %}
   <nav class="pagination">
@@ -97,19 +86,15 @@
     <span class="page-info">{{ page }} / {{ pageCount }}</span>
   </nav>
 {% endif %}
-
-<script>
-  window.__SEARCH_DOMAINS__ = {{ domains | jsdump }};
+<script>  window.__SEARCH_DOMAINS__ = {{ domains | jsdump }};
   window.__SEARCH_DISCUSS__ = {{ discFilter | jsdump }};
 </script>
-<script>
-  (function () {
+<script>  (function () {
     const domainSel = document.getElementById('searchDomain');
     const discSel = document.getElementById('searchDiscuss');
     if (!domainSel || !discSel) return;
     const data = window.__SEARCH_DOMAINS__ || [];
     const current = window.__SEARCH_DISCUSS__ || '';
-
     function fill() {
       const name = domainSel.value;
       const entry = data.filter(d => d.name === name)[0];
@@ -127,7 +112,6 @@
         discSel.appendChild(o);
       });
     }
-
     fill();
     domainSel.addEventListener('change', fill);
   })();

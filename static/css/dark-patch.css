@@ -1,16 +1,9 @@
-/* ===== dark-patch.css 5/6：深色模式残留补丁（原 base.css 第 655-775 行）===== */
-/* ============================================================
-   深色模式残留补丁
-   ============================================================ */
-/* 登录 / 注册按钮 */
 html[data-theme="dark"] .nav-register-btn {
   background: #1890ff; color: #fff;
 }
 html[data-theme="dark"] .nav-login-btn {
   background: transparent; color: #4da3ff; border-color: #4da3ff;
 }
-
-/* "请先登录"提示 + /user 编辑 + 发送私信 + 简介 */
 html[data-theme="dark"] .input-disabled {
   background: #2a2a2a; color: #b0b0b0;
 }
@@ -38,8 +31,6 @@ html[data-theme="dark"] .profile-info .uid { color: #888; }
 html[data-theme="dark"] .dm-policy-hint {
   background: #2a2a2a; color: #b0b0b0;
 }
-
-/* 编辑器拖动条 */
 html[data-theme="dark"] .md-editor-resize-operate {
   background: #2a2a2a;
 }
@@ -52,8 +43,6 @@ html[data-theme="dark"] .md-editor-height-resize {
 html[data-theme="dark"] .md-editor-height-resize::before {
   background: rgba(255, 255, 255, 0.2);
 }
-
-/* 通用输入框 */
 html[data-theme="dark"] input[type="text"],
 html[data-theme="dark"] input[type="password"],
 html[data-theme="dark"] input[type="number"],
@@ -66,8 +55,6 @@ html[data-theme="dark"] input::placeholder,
 html[data-theme="dark"] textarea::placeholder {
   color: #666;
 }
-
-/* 讨论页左侧选中/未选中 */
 html[data-theme="dark"] .disc-item {
   color: #b0b0b0;
 }
@@ -77,14 +64,10 @@ html[data-theme="dark"] .disc-item:hover {
 html[data-theme="dark"] .disc-item.active {
   background: #1890ff; color: #fff;
 }
-
-/* 新建讨论按钮 */
 html[data-theme="dark"] .new-discuss-btn {
   background: #1890ff; color: #fff;
 }
 html[data-theme="dark"] .new-discuss-btn:hover { background: #40a9ff; }
-
-/* /discuss 下方列表文字 */
 html[data-theme="dark"] .discuss-id { color: #e0e0e0; }
 html[data-theme="dark"] .discuss-id:hover {
   background: #1e3a5f; color: #4da3ff;
@@ -94,29 +77,22 @@ html[data-theme="dark"] .discuss-title:hover {
   background: #1e3a5f; color: #4da3ff;
 }
 html[data-theme="dark"] .discuss-row .meta { color: #888; }
-
-/* /messages 私信设置内文字 */
 html[data-theme="dark"] .dm-settings > summary { color: #e0e0e0; }
 html[data-theme="dark"] .dm-settings-form label { color: #b0b0b0; }
 html[data-theme="dark"] .dm-settings-form button {
   background: #1890ff; color: #fff;
 }
-
-/* 编辑器"显示渲染"激活态 */
 html[data-theme="dark"] .md-editor-toolbar-item.md-editor-toolbar-active {
   background: #1e3a5f; color: #4da3ff;
 }
-
 .perm-desc { font-size: 11px; color: #999; margin-top: 2px;
   line-height: 1.4; }
 html[data-theme="dark"] .perm-desc { color: #888; }
-
 .perm-group-title { font-size: 16px; margin: 24px 0 8px;
   padding: 6px 12px; background: #f0f7ff; color: #1890ff;
   border-radius: 4px; border-left: 3px solid #1890ff; }
 html[data-theme="dark"] .perm-group-title {
   background: #1e3a5f; color: #4da3ff; border-left-color: #4da3ff; }
-
 .badge.mod { background: #52c41a; color: #fff; font-size: 10px;
   padding: 1px 5px; border-radius: 3px; margin-left: 4px;
   font-weight: 600; letter-spacing: 0.5px; }

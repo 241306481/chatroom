@@ -1,10 +1,7 @@
-/* 通用容器 */
 .page-container { max-width: 1000px; margin: 24px auto; padding: 24px;
   background: #fff; border-radius: 8px; }
 .page-container h1 { font-size: 20px; margin-bottom: 16px; }
 .page-container a { color: #1890ff; text-decoration: none; }
-
-/* 首页 */
 .layout-home { display: grid; grid-template-columns: 1fr 280px;
   gap: 16px; padding: 16px; max-width: 1200px; margin: 0 auto; }
 .main-column { display: flex; flex-direction: column; gap: 16px; }
@@ -35,8 +32,6 @@
 .sidebar-users .user-item:hover { background: #e6f7ff; }
 .online-count { margin-top: 8px; padding-top: 8px;
   border-top: 1px solid #eee; font-size: 12px; color: #888; text-align: center; }
-
-/* 通用列表项 */
 .user-item, .member-item { display: flex; align-items: center; gap: 8px;
   padding: 6px 8px; border-radius: 4px; font-size: 13px; }
 .user-item.offline, .member-item.offline { opacity: 0.5; }
@@ -46,12 +41,9 @@
 .user-level, .member-level { margin-left: auto; color: #888; font-size: 11px; }
 .member-footer { margin-top: 8px; padding-top: 8px;
   border-top: 1px solid #eee; font-size: 12px; color: #888; text-align: center; }
-
 .user-avatar-lg { display: inline-flex; align-items: center; justify-content: center;
   width: 36px; height: 36px; border-radius: 50%;
   color: #fff; font-weight: 600; font-size: 14px; flex-shrink: 0; }
-
-/* 登录/注册 */
 .login-page { display: flex; justify-content: center; align-items: center;
   min-height: calc(100vh - 48px); background: #f0f2f5; }
 .login-box { background: #fff; padding: 32px; border-radius: 8px;
@@ -65,8 +57,6 @@
 .login-form button:hover { background: #40a9ff; }
 .login-switch { margin-top: 16px; text-align: center; font-size: 13px; color: #888; }
 .login-switch a { color: #1890ff; text-decoration: none; }
-
-/* 个人主页 */
 .profile-header { display: flex; align-items: center; gap: 16px; margin-bottom: 16px; }
 .profile-avatar { width: 80px; height: 80px; border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
@@ -93,8 +83,6 @@
 .profile-dm-btn:hover { background: #e6f7ff; color: #1890ff; }
 .dm-policy-hint { font-size: 12px; color: #888; background: #f5f5f5;
   padding: 4px 10px; border-radius: 12px; }
-
-/* 通用按钮 */
 .btn-primary { padding: 8px 22px; background: #1890ff; color: #fff;
   border: none; border-radius: 4px; cursor: pointer;
   font-size: 14px; font-family: inherit; transition: background 0.15s; }
@@ -111,7 +99,6 @@
   border: 1px solid #d9d9d9; border-radius: 6px; cursor: pointer;
   font-size: 14px; font-family: inherit; transition: all 0.15s; }
 .btn-following:hover { background: #fff1f0; color: #ff4d4f; border-color: #ff4d4f; }
-
 .list-filter-bar { display: flex; align-items: center; gap: 10px;
   margin-bottom: 12px; }
 .list-filter-input { flex: 1; max-width: 320px; padding: 6px 10px;
@@ -120,7 +107,6 @@
 .list-filter-input:focus { border-color: #1890ff;
   box-shadow: 0 0 0 2px rgba(24,144,255,0.1); }
 .list-filter-count { font-size: 12px; color: #999; }
-
 .search-form { display: flex; flex-direction: column; gap: 12px;
   margin-bottom: 20px; }
 .search-input { padding: 10px 14px; font-size: 15px;
@@ -138,14 +124,11 @@
   background: #1890ff; color: #fff; border: none; border-radius: 4px;
   cursor: pointer; font-size: 14px; }
 .search-form > button:hover { background: #40a9ff; }
-
 .search-results-info { margin: 16px 0; color: #888; font-size: 13px; }
 .search-advanced-hint { margin-bottom: 16px; padding: 8px 12px;
   background: #f0f7ff; border-radius: 4px; font-size: 12px;
   color: #1890ff; font-family: Consolas, monospace; }
 .search-results { display: flex; flex-direction: column; gap: 8px; }
-
-
 .search-result { display: block; padding: 12px 16px; background: #fafafa;
   border-radius: 6px; text-decoration: none; color: #333;
   border-left: 3px solid transparent; transition: all 0.15s; }
@@ -157,12 +140,8 @@
   word-wrap: break-word;
   display: -webkit-box; -webkit-line-clamp: 3;
   -webkit-box-orient: vertical; overflow: hidden; }
-
-/* 长昵称省略 */
 .user-name { min-width: 0; overflow: hidden;
   text-overflow: ellipsis; white-space: nowrap; max-width: 160px; }
-
-/* 搜索高级语法折叠面板 */
 .search-help { margin: 8px 0 12px; font-size: 13px; }
 .search-help > summary { cursor: pointer; color: #1890ff;
   padding: 4px 0; user-select: none; }

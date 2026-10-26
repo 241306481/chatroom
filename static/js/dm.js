@@ -1,21 +1,16 @@
-// 私信 WS
 (function () {
     if (!window.MY_UID) return;
     const WS_PROTOCOL = window.__WS_PROTOCOL__ || 'ws';
     const wsUrl = `${WS_PROTOCOL}://${location.host}/ws/dm`;
     let socket = null, reconnectTimer = null;
     const onMessagesPage = !!document.getElementById('dmRoot');
-
     let _dmBannerCount = 0;
     let _dmBanner = null;
-
     function isDmAtBottom() {
         const l = document.getElementById('dmList');
         if (!l) return true;
-        // 0 为底部
         return Math.abs(l.scrollTop) <= 60;
     }
-
     function ensureDmBanner() {
         if (_dmBanner && document.body.contains(_dmBanner)) return _dmBanner;
         const host = document.querySelector('.dm-input-area')
@@ -34,7 +29,6 @@
         host.appendChild(_dmBanner);
         return _dmBanner;
     }
-
     function showDmBanner(inc) {
         const b = ensureDmBanner();
         if (!b) return;
@@ -42,12 +36,10 @@
         b.innerHTML = '<span class="arrow">↓</span> ' + _dmBannerCount + ' 条新消息';
         b.hidden = false;
     }
-
     function hideDmBanner() {
         _dmBannerCount = 0;
         if (_dmBanner) _dmBanner.hidden = true;
     }
-
     function bindDmBottomWatcher() {
         const l = document.getElementById('dmList');
         if (!l || l._dmBannerBound) return;
@@ -61,7 +53,6 @@
     } else {
         bindDmBottomWatcher();
     }
-
     function connect() {
         socket = new WebSocket(wsUrl);
         socket.onmessage = ev => {
@@ -97,7 +88,6 @@
         socket.onerror = () => {};
     }
     connect();
-
     window.sendDM = function () {
         const ta = document.getElementById('dmInput');
         const target = document.body.dataset.dmTarget;
@@ -108,15 +98,12 @@
         ta.value = '';
         ta.dispatchEvent(new Event('input', { bubbles: true }));
     };
-
     window.newDMTarget = function () {
         const picker = document.getElementById('dmNewPicker');
         const input = document.getElementById('dmSearchInput');
         const list = document.getElementById('dmSearchList');
         if (!picker || !input || !list) return;
-
         const users = window.__DM_USERS__ || [];
-
         function renderList(query) {
             const q = (query || '').toLowerCase().trim();
             let items = users;
@@ -136,7 +123,6 @@
                 const a = document.createElement('a');
                 a.className = 'dm-search-item';
                 a.href = '/messages?target=' + encodeURIComponent(u.id);
-
                 const av = window.Avatar
                     ? window.Avatar.build(u, 'avatar-circle')
                     : (function () {
@@ -146,21 +132,17 @@
                         s.textContent = (u.nickname || '?')[0];
                         return s;
                     })();
-
                 const nick = document.createElement('span');
                 nick.textContent = u.nickname || '?';
-
                 const uid = document.createElement('span');
                 uid.className = 'dm-search-uid';
                 uid.textContent = 'UID ' + u.id;
-
                 a.appendChild(av);
                 a.appendChild(nick);
                 a.appendChild(uid);
                 list.appendChild(a);
             });
         }
-
         const open = picker.hidden;
         picker.hidden = !open;
         if (open) {
@@ -169,8 +151,6 @@
             input.focus();
         }
     };
-
-    // 输入筛选
     document.addEventListener('input', function (e) {
         if (e.target && e.target.id === 'dmSearchInput') {
             const users = window.__DM_USERS__ || [];
@@ -194,7 +174,6 @@
                 const a = document.createElement('a');
                 a.className = 'dm-search-item';
                 a.href = '/messages?target=' + encodeURIComponent(u.id);
-
                 const av = window.Avatar
                     ? window.Avatar.build(u, 'avatar-circle')
                     : (function () {
@@ -204,14 +183,11 @@
                         s.textContent = (u.nickname || '?')[0];
                         return s;
                     })();
-
                 const nick = document.createElement('span');
                 nick.textContent = u.nickname || '?';
-
                 const uid = document.createElement('span');
                 uid.className = 'dm-search-uid';
                 uid.textContent = 'UID ' + u.id;
-
                 a.appendChild(av);
                 a.appendChild(nick);
                 a.appendChild(uid);
@@ -219,7 +195,6 @@
             });
         }
     });
-
     window.submitDMPolicy = function (form) {
         const data = new URLSearchParams(new FormData(form)).toString();
         fetch(form.action, {
@@ -234,22 +209,16 @@
         }).catch(() => window.showAlert('网络错误', { title: '私信设置' }));
         return false;
     };
-
 function appendDM(msg, isMe) {
         const list = document.getElementById('dmList');
         if (!list) return;
         const inner = list.querySelector('.dm-list-inner') || list;
-
-        // 插入前先判在底部
         const wasAtBottom = Math.abs(list.scrollTop) <= 60;
-
         const div = window.ChatRender && window.ChatRender.buildDMMessageEl
             ? window.ChatRender.buildDMMessageEl(Object.assign({}, msg, { is_me: !!isMe }))
             : null;
         if (!div) return;
-        // 插开头即视觉底部
         inner.insertBefore(div, inner.firstElementChild);
-
         if (wasAtBottom) {
             list.scrollTop = 0;
         }
@@ -258,7 +227,6 @@ function appendDM(msg, isMe) {
     if (ta) ta.addEventListener('keydown', e => {
         if (e.ctrlKey && e.key === 'Enter') sendDM();
     });
-    // 渲染历史并清未读
     function renderHistory() {
         document.querySelectorAll('.dm-bubble[data-raw]').forEach(function (el) {
             if (el.dataset.rendered === '1') return;

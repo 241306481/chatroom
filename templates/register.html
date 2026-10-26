@@ -1,7 +1,5 @@
 {% extends "base_simple.html" %}
-
 {% block title %}注册 - {{ site_name or '聊天室' }}{% endblock %}
-
 {% block header %}
 <header class="topbar">
   <div class="topbar-left">
@@ -15,7 +13,6 @@
   </nav>
 </header>
 {% endblock %}
-
 {% block content %}
 <div class="login-page">
   <div class="login-box">
@@ -35,13 +32,14 @@
   </div>
 </div>
 {% endblock %}
-
 {% block scripts %}
-<script src="/static/js/core/dom.js"></script>
-<script src="/static/js/core/modal.js"></script>
-<script src="/static/js/core/notify.js"></script>
-<script>
-(function () {
+<script src="/static/js/core/dom.js">
+</script>
+<script src="/static/js/core/modal.js">
+</script>
+<script src="/static/js/core/notify.js">
+</script>
+<script>(function () {
   var p = new URL(location.href).searchParams;
   var err = p.get('error');
   var rt = p.get('return_to');

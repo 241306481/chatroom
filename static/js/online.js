@@ -1,6 +1,4 @@
-// 在线状态
 window.__onlineUsers = new Set();
-
 window.setUserOnlineUI = function (el, online) {
     const dot = el.querySelector('.status-dot');
     if (dot) {
@@ -11,7 +9,6 @@ window.setUserOnlineUI = function (el, online) {
         el.classList.toggle('offline', !online);
     }
 };
-
 window.updateUserStatus = function (uid, online) {
     if (online) window.__onlineUsers.add(uid);
     else window.__onlineUsers.delete(uid);
@@ -20,7 +17,6 @@ window.updateUserStatus = function (uid, online) {
     });
     window.updateAllOnlineCounts();
 };
-
 window.applyOnlineList = function (uids) {
     uids = uids || [];
     document.querySelectorAll('[data-uid]').forEach(el => window.setUserOnlineUI(el, false));
@@ -32,7 +28,6 @@ window.applyOnlineList = function (uids) {
     });
     window.updateAllOnlineCounts();
 };
-
 window.updateAllOnlineCounts = function () {
     const memberList = document.getElementById('memberList');
     if (memberList) {
@@ -60,20 +55,16 @@ window.updateAllOnlineCounts = function () {
         });
     }
 };
-
-// 域级在线 WS
 (function () {
     const DOMAIN = window.__DOMAIN__ || '';
     if (!DOMAIN) return;
-    if (document.getElementById('messageList')) return; // 讨论页有专属 WS
+    if (document.getElementById('messageList')) return;
     if (!window.MY_UID) return;
-
     const WS_PROTOCOL = window.__WS_PROTOCOL__ || 'ws';
     const wsUrl = WS_PROTOCOL + '://' + location.host + '/ws/status/' + encodeURIComponent(DOMAIN);
     let socket = null, reconnectTimer = null;
     let failCount = 0;
     const MAX_FAILS = 3;
-
     function connect() {
         socket = new WebSocket(wsUrl);
         socket.onopen = () => {
@@ -91,7 +82,6 @@ window.updateAllOnlineCounts = function () {
                     if (typeof data.html === 'string' && data.html) {
                         list.innerHTML = data.html;
                     }
-                    // 共用 socket
                     if (typeof window.applyMemberPermissions === 'function') {
                         window.applyMemberPermissions();
                     } else if (window.__CAN_MUTE__ !== true && window.__CAN_MUTE__ !== 'true') {

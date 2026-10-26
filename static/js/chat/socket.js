@@ -1,16 +1,12 @@
-// 讨论页 WS
 (function () {
     const WS_PROTOCOL = window.__WS_PROTOCOL__ || 'ws';
     const DOMAIN = window.__DOMAIN__ || '';
     const DISCUSS = window.__DISCUSS__ || '';
     if (!DOMAIN || !DISCUSS) return;
     if (!document.getElementById('messageList')) return;
-
     const wsUrl = `${WS_PROTOCOL}://${location.host}/ws/discuss/${DOMAIN}/${DISCUSS}`;
     let socket = null;
     let reconnectTimer = null;
-
-// 对外 API
     window.ChatWS = {
         send(payload) {
             if (socket && socket.readyState === WebSocket.OPEN) {
@@ -21,7 +17,6 @@
             return socket && socket.readyState === WebSocket.OPEN;
         },
     };
-
     function applyMemberPermissions() {
         const list = document.getElementById('memberList');
         if (!list) return;
@@ -29,7 +24,6 @@
         list.querySelectorAll('.member-actions').forEach(el => el.remove());
     }
     window.applyMemberPermissions = applyMemberPermissions;
-
     function applyMembersUpdate(data) {
         const list = document.getElementById('memberList');
         if (!list) return;
@@ -41,22 +35,17 @@
             window.updateAllOnlineCounts();
         }
     }
-
-// 连接
     function connect() {
         socket = new WebSocket(wsUrl);
-
         socket.onopen = () => {
             if (reconnectTimer) { clearTimeout(reconnectTimer); reconnectTimer = null; }
             if (window.MY_UID) window.updateUserStatus(window.MY_UID, true);
             window.ChatRender.initReactions();
         };
-
         socket.onmessage = ev => {
             let data;
             try { data = JSON.parse(ev.data); } catch (e) { return; }
             const R = window.ChatRender;
-
             switch (data.type) {
                 case 'new_message': {
                     const atBottom = R.isAtBottom();
@@ -64,7 +53,6 @@
                     if (window.MY_UID && data.message.user_id !== window.MY_UID && !atBottom) {
                         R.showNewMsgBanner(1);
                     }
-                    // 列表变则重算搜索
                     if (typeof window.__chatSearchReapply === 'function') {
                         window.__chatSearchReapply();
                     }
@@ -114,33 +102,25 @@
                     break;
             }
         };
-
         socket.onclose = () => { reconnectTimer = setTimeout(connect, 3000); };
         socket.onerror = () => {};
     }
-
     connect();
-
-// 初始渲染
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', () => window.ChatRender.renderAllHistory());
     } else {
         window.ChatRender.renderAllHistory();
     }
-
-// 键盘快捷键
     const input = document.getElementById('msgInput');
     if (input) {
         input.addEventListener('keydown', e => {
             if (e.ctrlKey && e.key === 'Enter') window.sendMessage();
         });
     }
-
     (function jumpToHash() {
         const h = location.hash;
         if (!h || !h.startsWith('#msg-')) return;
         const id = h.substring(5);
-
         function tryScroll(attempts) {
             const el = document.querySelector('.message[data-id="' + id + '"]');
             if (el) {
@@ -150,10 +130,8 @@
                 return;
             }
             if (attempts <= 0) return;
-            // urgent 无延迟
             if (window.__chatLoadOlder) {
                 window.__chatLoadOlder(true);
-                // 推视口到顶作反馈
                 const list = document.getElementById('messageList');
                 if (list) list.scrollTop = -list.scrollHeight;
             }
@@ -161,21 +139,16 @@
         }
         setTimeout(() => tryScroll(30), 200);
     })();
-
-    // 分片加载更旧消息
     (function bindLoadOlder() {
         const list = document.getElementById('messageList');
         if (!list) return;
-
         let loading = false;
         let hasMoreOlder = true;
-        // oldest 计数
         const initialOffset = parseInt(list.dataset.offset || '0', 10) || 0;
         const initialLimit = parseInt(list.dataset.limit || '100', 10) || 100;
         const total = parseInt(list.dataset.total || '0', 10) || 0;
         let oldestLoaded = initialOffset + initialLimit;
         if (total > 0 && oldestLoaded >= total) hasMoreOlder = false;
-
         function showLoading() {
             const inner = list.querySelector('.message-list-inner') || list;
             if (inner.querySelector('.loading-older')) return;
@@ -184,31 +157,23 @@
             el.textContent = '正在加载…';
             inner.appendChild(el);
         }
-
         function hideLoading() {
             const inner = list.querySelector('.message-list-inner') || list;
             const el = inner.querySelector('.loading-older');
             if (el) el.remove();
         }
-
         function loadMore(urgent) {
             if (loading) return;
             if (!hasMoreOlder) return;
-
             const dn = window.__DOMAIN__;
             const disc = window.__DISCUSS__;
             if (!dn || !disc) return;
-
-            // 跳过占位
             if (!urgent) showLoading();
             loading = true;
-
             const url = '/domain/' + encodeURIComponent(dn)
                 + '/discuss/' + encodeURIComponent(disc)
                 + '/messages?offset=' + oldestLoaded + '&limit=50';
-
             const delay = urgent ? 0 : 500;
-
             setTimeout(() => {
                 fetch(url).then((r) => r.json()).then((res) => {
                     if (!urgent) hideLoading();
@@ -222,7 +187,6 @@
                             window.ChatRender.prependMessage(m);
                         }
                     });
-                    // 回溯后重算搜索
                     if (typeof window.__chatSearchReapply === 'function') {
                         window.__chatSearchReapply();
                     }
@@ -236,13 +200,9 @@
                 });
             }, delay);
         }
-
-        // 供 hash 触发
         window.__chatLoadOlder = loadMore;
-
         document.addEventListener('keydown', function (e) {
             if (e.key !== 'Home') return;
-            // 输入框内不拦截
             const tag = (e.target && e.target.tagName) || '';
             if (tag === 'INPUT' || tag === 'TEXTAREA') return;
             e.preventDefault();
@@ -260,9 +220,7 @@
             };
             loadAllOlder();
         });
-
         list.addEventListener('scroll', function () {
-            // 0 为底部
             const distanceFromTop = -(list.scrollTop);
             const maxScroll = list.scrollHeight - list.clientHeight;
             if (maxScroll - distanceFromTop < 300) {
@@ -270,7 +228,6 @@
             }
         }, { passive: true });
     })();
-    // 首屏也要过滤权限
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', window.applyMemberPermissions);
     } else {

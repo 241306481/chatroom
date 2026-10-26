@@ -1,11 +1,9 @@
 'use strict';
-
 const http = require('http');
 const https = require('https');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-
 const storage = require('./lib/storage');
 const routes = require('./lib/routes');
 const websocket = require('./lib/websocket');
@@ -13,26 +11,19 @@ const startupCheck = require('./lib/startup-check');
 const logger = require('./lib/logger');
 const backup = require('./lib/backup');
 const { registerShutdown } = require('./lib/graceful');
-
 const PORT = parseInt(process.env.PORT || '5000', 10);
 const HOST = process.env.HOST || '0.0.0.0';
 const LINE = '--------------------------------------------------';
 const RULE = '==================================================';
-
-// 启动自检
 async function runStartupCheck() {
     const check = await startupCheck.run(__dirname, storage, { port: PORT, host: HOST });
     if (!check.results.length) return;
-
     console.log(LINE);
     console.log('  启动自检');
     console.log(LINE);
     for (const l of startupCheck.format(check)) console.log('  ' + l);
     console.log(LINE);
-
     if (!check.failed.length) return;
-
-    // 同步写，避开缓冲交错
     const out = [`  启动自检未通过：${check.failed.map(f => f.name).join('、')}`];
     for (const f of check.failed) {
         if (f.detail) out.push(`    · ${f.name}：${f.detail}`);
@@ -42,8 +33,6 @@ async function runStartupCheck() {
     try { fs.writeSync(1, out.join('\n') + '\n'); } catch (e) {}
     process.exit(1);
 }
-
-// 有证书转 HTTPS
 function createServer() {
     const cert = path.join(__dirname, 'cert.pem');
     const key = path.join(__dirname, 'key.pem');
@@ -57,7 +46,6 @@ function createServer() {
         hasCert: true,
     };
 }
-
 function getLanIp() {
     for (const name of Object.keys(os.networkInterfaces())) {
         for (const iface of os.networkInterfaces()[name]) {
@@ -66,7 +54,6 @@ function getLanIp() {
     }
     return '127.0.0.1';
 }
-
 function printBanner(hasCert) {
     const proto = hasCert ? 'https' : 'http';
     const wsProto = hasCert ? 'wss' : 'ws';
@@ -83,7 +70,6 @@ function printBanner(hasCert) {
     }
     console.log(RULE + '\n');
 }
-
 function handleServerError(err) {
     console.error('[Server Error]', err.message);
     if (err.code === 'EADDRINUSE') {
@@ -93,17 +79,11 @@ function handleServerError(err) {
     }
     process.exit(1);
 }
-
-// 入口
 async function main() {
-    // 先建系统域再自检
     storage.ensureDirs();    storage.ensureSystemDomain();
     storage.ensureSystemUser();
-
     await runStartupCheck();
-
     const { server, hasCert } = createServer();
-    // 协议锁在启动这一刻，运行中补 cert.pem/key.pem 不会前后不一致
     require('./lib/ws-protocol').setWsProtocol(hasCert ? 'wss' : 'ws');
     backup.init();
     registerShutdown(server, websocket.setup(server), {
@@ -112,5 +92,4 @@ async function main() {
     server.on('error', handleServerError);
     server.listen(PORT, HOST, () => printBanner(hasCert));
 }
-
 main();

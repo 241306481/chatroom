@@ -1,5 +1,4 @@
 'use strict';
-// 选中后随「保存」提交，不立刻上传
 (function () {
     const box = document.getElementById('avatarEditBox');
     const file = document.getElementById('avatarFile');
@@ -9,10 +8,8 @@
     const picked = document.getElementById('avatarPicked');
     const removeField = document.getElementById('avatarRemove');
     if (!box || !file || !pickBtn) return;
-
     const MAX = 1024 * 1024;
     const hadAvatar = box.dataset.hasAvatar === '1';
-
     function refresh() {
         const hasNew = !!(file.files && file.files.length);
         const willRemove = removeField.value === '1';
@@ -20,15 +17,12 @@
         removeBtn.hidden = !(hadAvatar && !hasNew && !willRemove);
         cancelBtn.hidden = !(hasNew || willRemove);
     }
-
     function reset() {
         file.value = '';
         removeField.value = '0';
         refresh();
     }
-
     pickBtn.addEventListener('click', function () { file.click(); });
-
     file.addEventListener('change', function () {
         const f = file.files && file.files[0];
         if (!f) return;
@@ -48,7 +42,6 @@
         picked.textContent = '已选择：' + f.name;
         refresh();
     });
-
     if (removeBtn) {
         removeBtn.addEventListener('click', function () {
             removeField.value = '1';
@@ -57,10 +50,7 @@
         });
     }
     if (cancelBtn) cancelBtn.addEventListener('click', reset);
-
-    // 取消编辑时一并复位
     const cancelEdit = document.getElementById('profileCancelBtn');
     if (cancelEdit) cancelEdit.addEventListener('click', reset);
-
     refresh();
 })();

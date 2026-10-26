@@ -14,8 +14,6 @@
   border: 1px solid #e0e0e0; border-radius: 8px; cursor: pointer; }
 .radio-row:hover { background: #f5faff; border-color: #1890ff; }
 .radio-row input[type="radio"] { margin-top: 3px; }
-
-/* 内联创建 */
 .inline-create-box { margin-bottom: 20px; padding: 16px;
   background: #f5faff; border: 1px dashed #b3d8ff; border-radius: 8px; }
 .inline-create-form { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
@@ -29,8 +27,6 @@
   border: none; border-radius: 6px; cursor: pointer; font-size: 14px;
   font-family: inherit; transition: background 0.15s; white-space: nowrap; flex-shrink: 0; }
 .inline-create-form button:hover { background: #40a9ff; }
-
-/* 输入框下方即时红字提示（FieldError） */
 .field-error {
   margin: 4px 0 0; font-size: 12px; line-height: 1.5; color: #cf1322;
 }

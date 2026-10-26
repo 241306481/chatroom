@@ -1,11 +1,9 @@
 (function () {
     const count = parseInt(window.__UNREAD_COUNT__ || '0', 10);
     if (!count || count <= 0) return;
-
     const path = location.pathname;
     if (path.startsWith('/messages')) return;
     if (path.startsWith('/login') || path.startsWith('/register')) return;
-
     function fire() {
         if (typeof window.showNotification !== 'function') {
             setTimeout(fire, 200);
@@ -22,7 +20,6 @@
             },
         });
     }
-
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', fire);
     } else {

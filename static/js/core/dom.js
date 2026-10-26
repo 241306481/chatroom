@@ -1,7 +1,4 @@
-// 全局变量
 window.MY_UID = window.__CURRENT_UID__ || '';
-
-// HTML 转义
 window.esc = function (s) {
     return String(s == null ? '' : s)
         .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -11,18 +8,13 @@ window.escAttr = function (s) {
         .replace(/&/g, '&amp;').replace(/"/g, '&quot;')
         .replace(/</g, '&lt;').replace(/>/g, '&gt;');
 };
-
-// 渲染前清洗：剥危险标签、事件属性与 javascript: 类 URL
 const DANGEROUS_SCHEME_RE = /^(?:javascript|data|vbscript):/i;
 const URL_ATTRS = ['href', 'src', 'xlink:href', 'action', 'formaction',
     'srcset', 'poster', 'data', 'background', 'cite'];
-
 function normalizeUrlForSchemeCheck(value) {
-    // 剥控制字符与空白，绕过 `java\tscript:` 这类变形
     return String(value == null ? '' : value)
         .replace(/[\u0000-\u0020\u00a0\u2028\u2029\ufeff]/g, '');
 }
-
 function sanitize(root) {
     root.querySelectorAll('script, iframe, object, embed, link, meta, style, base, form')
         .forEach(n => n.remove());
@@ -37,36 +29,14 @@ function sanitize(root) {
         }
     });
 }
-
-// 剪贴板
 window.copyToClipboard = function (text, btn) {
-    const done = function () {
+    navigator.clipboard.writeText(text).then(function () {
         if (!btn) return;
         const old = btn.textContent;
         btn.textContent = '已复制';
         setTimeout(function () { btn.textContent = old; }, 1500);
-    };
-    function fallbackCopy(t) {
-        const ta = document.createElement('textarea');
-        ta.value = t;
-        ta.style.position = 'fixed';
-        ta.style.opacity = '0';
-        document.body.appendChild(ta);
-        ta.select();
-        try { document.execCommand('copy'); } catch (e) {}
-        ta.remove();
-    }
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(text).then(done).catch(function () {
-            fallbackCopy(text);
-            done();
-        });
-    } else {
-        fallbackCopy(text);
-        done();
-    }
+    });
 };
-
 document.addEventListener('click', function (e) {
     const t = e.target;
     if (!t || !t.closest) return;
@@ -77,12 +47,9 @@ document.addEventListener('click', function (e) {
     const code = pre.querySelector('code');
     window.copyToClipboard(code ? code.textContent : pre.textContent, btn);
 });
-
-// MD + LaTeX
 window.renderContent = function (text) {
     if (text == null) return '';
     text = String(text);
-
     const mentionPlaceholders = [];
     const processed = text.replace(/@(@?)\[(\d+)\]/g,
         (whole, at, uid) => {
@@ -90,8 +57,6 @@ window.renderContent = function (text) {
             mentionPlaceholders.push({ uid: uid, silent: at === '@' });
             return '<!--MENTION_' + idx + '-->';
         });
-
-// MD 解析
     let html;
     if (typeof marked !== 'undefined') {
         try {
@@ -103,12 +68,9 @@ window.renderContent = function (text) {
     } else {
         html = esc(processed).replace(/\n/g, '<br>');
     }
-
-// 用 template
     const tpl = document.createElement('template');
     tpl.innerHTML = html;
     const container = tpl.content;
-
     (function restoreMentions(root) {
         const walker = document.createTreeWalker(root, NodeFilter.SHOW_COMMENT, null);
         const comments = [];
@@ -129,11 +91,8 @@ window.renderContent = function (text) {
             item.comment.parentNode.replaceChild(a, item.comment);
         });
     })(container);
-
-// 转义
     sanitize(container);
-
-// KaTeX 渲染
+    if (window.highlightCode) window.highlightCode(container);
     if (window.renderMathInElement) {
         try {
             renderMathInElement(container, {
@@ -154,8 +113,6 @@ window.renderContent = function (text) {
             console.error('KaTeX render error:', e);
         }
     }
-
-// 复制按钮
     container.querySelectorAll('pre').forEach(function (pre) {
         if (pre.querySelector('.code-copy-btn')) return;
         const btn = document.createElement('button');
@@ -165,14 +122,10 @@ window.renderContent = function (text) {
         btn.title = '复制代码';
         pre.appendChild(btn);
     });
-
-// 临时容器取 HTML
     const wrap = document.createElement('div');
     wrap.appendChild(container);
     return wrap.innerHTML;
 };
-
-// 源码/渲染切换
 window.toggleSource = function (btn) {
     const wrap = btn.closest('.msg-body')
               || btn.closest('.dm-msg')
@@ -190,7 +143,6 @@ window.toggleSource = function (btn) {
         if (copyBtn) copyBtn.remove();
         el.innerHTML = window.renderContent
             ? window.renderContent(raw)
-            // 兜底分支须转义
             : esc(raw).replace(/\n/g, '<br>');
         el.dataset.mode = 'render';
         btn.textContent = '📄';

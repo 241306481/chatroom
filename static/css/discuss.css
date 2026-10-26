@@ -1,4 +1,3 @@
-/* 讨论布局 */
 .layout-discuss { display: grid; grid-template-columns: 200px 1fr 280px;
   grid-template-rows: minmax(0, 1fr);
   height: calc(100vh - 48px); overflow: hidden; }
@@ -34,9 +33,6 @@
   display: flex; flex-direction: column-reverse;
   margin-bottom: auto; }
 .message { display: flex; gap: 10px; margin-bottom: 16px; }
-/* 内存优化：离屏元素跳过渲染。
-   contain-intrinsic-size 用 auto 关键字：首次测量真实高度，之后按记忆值占位，
-   避免滚动条长度随内容高度剧变。 */
 .message {
   content-visibility: auto;
   contain-intrinsic-size: auto 100px;
@@ -74,8 +70,6 @@
   border: 1px solid #e0e0e0; border-radius: 4px; cursor: pointer;
   opacity: 0.4; transition: opacity 0.15s, background 0.15s; }
 .source-copy-btn:hover { background: #e6f7ff; color: #1890ff; }
-
-/* 右侧栏 */
 .sidebar-right { display: flex; flex-direction: column; background: #fff;
   border-left: 1px solid #e0e0e0; overflow: hidden; min-height: 0; }
 .pinned-panel { flex: 0 0 auto; max-height: 30vh; overflow-y: auto;
@@ -119,8 +113,6 @@
 .member-actions button { background: none; border: none; cursor: pointer;
   color: #888; font-size: 11px; padding: 2px 4px; }
 .member-actions button:hover { background: #f0f0f0; color: #333; }
-
-/* 讨论列表页 */
 .discuss-list { display: flex; flex-direction: column; gap: 8px; }
 .discuss-row-wrap { position: relative; display: flex; align-items: center; gap: 8px; }
 .discuss-row-wrap .discuss-row { flex: 1; min-width: 0; }
@@ -149,8 +141,6 @@
 .discuss-title.empty::before { content: ''; }
 .discuss-title.empty { color: #bbb; font-style: italic; }
 .discuss-title:hover { background: #e6f7ff; color: #1890ff; }
-
-/* 回复 */
 .msg-reply-btn { background: transparent; border: none; cursor: pointer;
   font-size: 13px; color: #888; padding: 2px 6px; border-radius: 3px;
   opacity: 0.35;
@@ -180,13 +170,9 @@ html[data-theme="dark"] .message.highlight { color: #e0e0e0; }
 @keyframes msgHighlight {
   0%   { background: #fffbe6; }
   100% { background: transparent; } }
-
-/* 回溯加载占位 */
 .loading-older { padding: 12px; text-align: center;
   color: #999; font-size: 13px; }
 html[data-theme="dark"] .loading-older { color: #666; }
-
-/* 表情 */
 .msg-reactions { display: flex; gap: 4px; margin-top: 6px; flex-wrap: wrap; }
 .reaction-btn { background: #f0f0f0; border: 1px solid #e0e0e0;
   border-radius: 12px; padding: 2px 8px; font-size: 12px; cursor: pointer;
@@ -206,8 +192,6 @@ html[data-theme="dark"] .loading-older { color: #666; }
   display: flex; align-items: center; justify-content: center;
   border-radius: 4px; line-height: 1; padding: 0; }
 .reaction-picker button:hover { background: #f0f7ff; }
-
-/* 新消息提示条 */
 .new-msg-banner { position: absolute; left: 50%; transform: translateX(-50%);
   z-index: 50; background: #1890ff; color: #fff;
   border: none; border-radius: 20px; padding: 8px 16px;
@@ -217,23 +201,17 @@ html[data-theme="dark"] .loading-older { color: #666; }
 .new-msg-banner:hover { background: #40a9ff; }
 .new-msg-banner[hidden] { display: none; }
 .new-msg-banner .arrow { font-size: 14px; line-height: 1; }
-
-/* 挂在输入区上方 */
 .message-input-area > .new-msg-banner { bottom: calc(100% + 8px); }
-/* fallback：若挂在 .message-area 上，退回到底部 12px */
 .message-area > .new-msg-banner { bottom: 12px; }
-
 .msg-revoked { color: #999; font-style: italic; }
 .msg-revoked .revoked-nick { color: #1890ff; font-style: normal; font-weight: 600; }
 .msg-reply-quote-deleted,
 .msg-reply-quote-revoked { opacity: 0.6; cursor: default; }
 .msg-reply-quote-deleted .reply-quote-content,
 .msg-reply-quote-revoked .reply-quote-content { color: #999; }
-
 .mention-link { color: #1890ff; text-decoration: none; }
 .mention-link:hover { text-decoration: underline; }
 .mention-link.mention-silent { color: #888; }
-
 .inline-search-wrap { display: flex; align-items: center; gap: 6px;
   margin-left: auto; margin-right: 12px; }
 .inline-search-input { width: 180px; padding: 4px 10px;
@@ -247,8 +225,5 @@ html[data-theme="dark"] .loading-older { color: #666; }
 .inline-search-count { font-size: 12px; color: #999; white-space: nowrap; }
 .message.inline-search-hit { background: #fffbe6;
   box-shadow: inset 3px 0 0 #faad14; border-radius: 4px; }
-
-
-/* 长昵称省略 */
 .msg-nick { max-width: 160px; overflow: hidden;
   text-overflow: ellipsis; white-space: nowrap; vertical-align: middle; }

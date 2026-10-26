@@ -1,4 +1,3 @@
-// 文件上传
 window.initUpload = function (opts) {
     var MAX_MB = opts.maxMb || 50;
     var MAX_BYTES = MAX_MB * 1024 * 1024;
@@ -9,7 +8,6 @@ window.initUpload = function (opts) {
     var progressPercent = document.getElementById('progressPercent');
     var progressFilename = document.getElementById('progressFilename');
     var progressQueue = document.getElementById('progressQueue');
-
     input.addEventListener('change', function () {
         var allFiles = Array.from(this.files);
         if (allFiles.length === 0) return;
@@ -39,13 +37,11 @@ window.initUpload = function (opts) {
         if (rejected.length > 0) {
             progressFilename.textContent = rejected.length + ' 个文件超限已跳过，上传其余 ' + accepted.length + ' 个';
         }
-        failedCount = 0;   // 每次新的一批上传重新计数
+        failedCount = 0;
         uploadSequential(accepted, 0);
         this.value = '';
     });
-
     var failedCount = 0;
-
     function finishAll(files) {
         var okCount = files.length - failedCount;
         if (failedCount > 0) {
@@ -53,7 +49,6 @@ window.initUpload = function (opts) {
             progressPercent.textContent = Math.round(okCount / files.length * 100) + '%';
             progressFill.style.width = (okCount / files.length * 100) + '%';
             window.showAlert(failedCount + ' 个文件上传失败，详见下方队列');
-            // 部分成功才刷新
             if (okCount > 0) setTimeout(function () { location.reload(); }, 1500);
             return;
         }
@@ -62,7 +57,6 @@ window.initUpload = function (opts) {
         progressFill.style.width = '100%';
         setTimeout(function () { location.reload(); }, 800);
     }
-
     function uploadSequential(files, index) {
         if (index >= files.length) {
             finishAll(files);
@@ -101,7 +95,6 @@ window.initUpload = function (opts) {
         };
         xhr.send(fd);
     }
-
     function humanSize(bytes) {
         if (bytes < 1024) return bytes + ' B';
         if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';

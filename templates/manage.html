@@ -2,7 +2,6 @@
 {% block content %}
 <div class="page-container">
   <h1>系统管理</h1>
-
   {% if is_system_admin %}
     <div class="manage-entries">
       <a href="/manage/settings" class="manage-entry">
@@ -41,7 +40,6 @@
       </a>
     </div>
   {% endif %}
-
   <h2 style="margin-top:32px;">我管理的域</h2>
   {% if domains and domains.length %}
     <div class="manage-list">

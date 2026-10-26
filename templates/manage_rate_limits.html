@@ -13,7 +13,6 @@
   <p class="hint">
     每用户 uid 这一维是按账号算的，换 IP 依然受限，所以 cookie 被搬到别处也用不了多久。
   </p>
-
   <h2 style="margin-top:24px;">各操作限制</h2>
   <form method="POST" action="/manage/rate_limits">
     <input type="hidden" name="action" value="save">
@@ -43,7 +42,6 @@
       <button type="submit">保存限流配置</button>
     </div>
   </form>
-
   <h2 style="margin-top:32px;">实时计数</h2>
   <p class="hint">只显示当前窗口内还有效的记录，按次数从多到少。共 {{ sessionCount }} 个在线会话。</p>
   {% for a in actions %}
@@ -74,7 +72,6 @@
     {% endif %}
   {% endfor %}
   {% if not actions %}<p class="empty">暂无配置</p>{% endif %}
-
   <div style="margin-top:20px;display:flex;gap:10px;">
     <form method="POST" action="/manage/rate_limits">
       <input type="hidden" name="action" value="reset">
@@ -82,7 +79,6 @@
               data-confirm="确定清空所有限流计数？">清空全部计数</button>
     </form>
   </div>
-
   <h2 style="margin-top:32px;">会话绑定</h2>
   <p class="hint">
     一个登录会话通常会在多个 IP、多个浏览器上使用（手机切 WiFi、同时用电脑和手机），
@@ -103,7 +99,6 @@
     </label>
     <button type="submit">保存绑定设置</button>
   </form>
-
   <p style="margin-top:24px;"><a href="/manage">← 返回系统管理</a></p>
 </div>
 {% endblock %}

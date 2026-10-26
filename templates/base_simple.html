@@ -4,8 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>{% block title %}{{ site_name or "聊天室" }}{% endblock %}</title>
-<script>
-  (function () {
+<script>  (function () {
     try {
       var t = localStorage.getItem('chatroom_theme')
           || (window.matchMedia
@@ -20,7 +19,6 @@
 {% block head %}{% endblock %}
 </head>
 <body>
-
 {% block header %}
 <header class="topbar">
   <div class="topbar-left">
@@ -34,20 +32,15 @@
   </nav>
 </header>
 {% endblock %}
-
 {% block content %}{% endblock %}
-
 {% block scripts %}{% endblock %}
-
-<script>
-  (function () {
+<script>  (function () {
     var KEY = 'chatroom_theme';
     var stored = localStorage.getItem(KEY);
     var theme = stored || (window.matchMedia
         && window.matchMedia('(prefers-color-scheme: dark)').matches
         ? 'dark' : 'light');
     document.documentElement.setAttribute('data-theme', theme);
-
     function updateButton() {
       var btn = document.getElementById('themeToggle');
       if (!btn) return;
@@ -56,7 +49,6 @@
       btn.title = cur === 'dark' ? '切换为浅色' : '切换为深色';
     }
     updateButton();
-
     document.addEventListener('click', function (e) {
       var btn = e.target.closest && e.target.closest('#themeToggle');
       if (!btn) return;

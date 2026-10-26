@@ -5,14 +5,12 @@
         return '/myfile/upload'
             + (visibility === 'public' ? '?visibility=public' : '');
     }
-
     function getViewUrl(fileId) {
         const dn = window.__DOMAIN__;
         const uid = window.MY_UID || window.__CURRENT_UID__ || '';
         if (dn) return location.origin + '/domain/' + encodeURIComponent(dn) + '/files/' + fileId;
         return location.origin + '/myfile/' + encodeURIComponent(uid) + '/' + fileId;
     }
-
     window.EditorUpload = {
         pickAndUpload(ta, refresh, opts) {
             const input = document.createElement('input');
@@ -20,7 +18,6 @@
             input.accept = 'image/*';
             input.style.display = 'none';
             document.body.appendChild(input);
-
             let settled = false;
             const cleanup = function () {
                 if (settled) return;
@@ -33,7 +30,6 @@
                     if (!input.files || input.files.length === 0) cleanup();
                 }, 300);
             };
-
             input.addEventListener('change', function () {
                 const f = input.files && input.files[0];
                 settled = true;
@@ -42,11 +38,9 @@
                 if (!f) return;
                 window.EditorUpload._upload(f, ta, refresh, opts);
             });
-
             window.addEventListener('focus', onFocusBack);
             input.click();
         },
-
         _upload(file, ta, refresh, opts) {
             const fd = new FormData();
             fd.append('file', file);

@@ -1,25 +1,9 @@
-/* Chatroom 2.0 样式入口 */
-/* ============================================================
-   导入顺序即层叠顺序，不可随意调整。
-
-   base.css / dark-core.css / dark-ui.css / contrast.css / dark-patch.css / dark-polish.css
-   是原 36KB 单文件 base.css 的连续区间切分（切分点 103 / 262 / 515 / 654 / 775 / 928），
-   拼回去与原文件逐字节一致，因此这里的顺序必须保持原样。
-
-   原因：深色段与「文字对比度」段有 12 处同选择器不同取值的冲突
-   （如 html[data-theme="dark"] .login-box 的 background），
-   原本靠文件内先后决定谁生效——重排会静默改变这 12 处的渲染结果。
-
-   注意：CSS 只支持斜杠星号注释，不支持双斜杠。
-   上一版用 // 写注释，导致 @import 被整个忽略（所有样式失效），
-   而页面只是「看起来没样式」，没有任何报错。
-   ============================================================ */
-@import url('./base.css');          /*  1-103  重置与通用元素 */
-@import url('./dark-core.css');     /* 104-262  深色：顶栏/容器/讨论/编辑器/私信 */
-@import url('./dark-ui.css');       /* 263-515  深色：文件/成员/管理/表单/搜索/弹窗 */
-@import url('./contrast.css');      /* 516-654  登录页 + 文字过暗覆盖 */
-@import url('./dark-patch.css');    /* 655-775  深色残留补丁 */
-@import url('./dark-polish.css');   /* 776-928  深色补漏 P0 / P1 补齐 */
+@import url('./base.css');
+@import url('./dark-core.css');
+@import url('./dark-ui.css');
+@import url('./contrast.css');
+@import url('./dark-patch.css');
+@import url('./dark-polish.css');
 @import url('./topbar.css');
 @import url('./layout.css');
 @import url('./avatar.css');
