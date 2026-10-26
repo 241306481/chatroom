@@ -152,61 +152,12 @@ html[data-theme="dark"] a { color: #4da3ff; }
 html[data-theme="dark"] p { color: #e0e0e0; }
 html[data-theme="dark"] strong { color: #e0e0e0; }
 html[data-theme="dark"] small { color: #888; }
-html[data-theme="dark"] .msg-content pre,
-html[data-theme="dark"] .announcement-content pre,
-html[data-theme="dark"] .pinned-content pre {
-  background: #0d1117 !important;
-  color: #e6edf3 !important;
-}
-html[data-theme="dark"] .msg-content pre code,
-html[data-theme="dark"] .announcement-content pre code,
-html[data-theme="dark"] .pinned-content pre code {
-  background: none !important;
-  color: #e6edf3 !important;
-}
-html[data-theme="dark"] .msg-content code {
-  background: #2a2a2a !important;
-  color: #e6edf3 !important;
-}
-html[data-theme="dark"] .dm-other .dm-bubble pre {
-  background: #0d1117 !important;
-  color: #e6edf3 !important;
-}
-html[data-theme="dark"] .dm-other .dm-bubble pre code {
-  background: none !important;
-  color: #e6edf3 !important;
-}
-html[data-theme="dark"] .dm-other .dm-bubble code {
-  background: rgba(255, 255, 255, 0.1) !important;
-  color: #e6edf3 !important;
-}
-html[data-theme="dark"] .dm-me .dm-bubble pre {
-  background: rgba(0, 0, 0, 0.18) !important;
-  color: #fff !important;
-}
-html[data-theme="dark"] .dm-me .dm-bubble pre code {
-  background: none !important;
-  color: #fff !important;
-}
-html[data-theme="dark"] .dm-me .dm-bubble code {
-  background: rgba(0, 0, 0, 0.18) !important;
-  color: #fff !important;
-}
 html[data-theme="dark"] .msg-content[data-mode="source"],
 html[data-theme="dark"] .dm-bubble[data-mode="source"],
 html[data-theme="dark"] .pinned-content[data-mode="source"] {
   background: #0d1117 !important;
   color: #e6edf3 !important;
   font-family: Consolas, "Courier New", monospace;
-}
-html[data-theme="dark"] .md-editor-preview pre {
-  background: #0d1117 !important; color: #e6edf3 !important;
-}
-html[data-theme="dark"] .md-editor-preview code {
-  background: #2a2a2a !important; color: #e6edf3 !important;
-}
-html[data-theme="dark"] .md-editor-preview pre code {
-  background: none !important;
 }
 html[data-theme="dark"] .dm-me .dm-bubble[data-mode="source"] {
   background: #177ddc !important;

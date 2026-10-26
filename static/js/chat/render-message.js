@@ -118,7 +118,7 @@
                 + '<button type="button" class="msg-mini-btn" '
                 + 'onclick="toggleSource(this)" title="查看源码">📄</button>'
               + '</div>'
-              + '<div class="dm-bubble" data-raw="' + rawAttr + '">'
+              + '<div class="dm-bubble md-body" data-raw="' + rawAttr + '">'
                 + contentHtml
               + '</div>'
             + '</div>';

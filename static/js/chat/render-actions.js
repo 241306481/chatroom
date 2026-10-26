@@ -85,12 +85,16 @@
         }
         item.className = 'pinned-item' + (msg && msg.is_system ? ' system-pin' : '');
         const canPin = window.__CAN_PIN__ === true;
+        const raw = msg ? (msg.content || '') : '';
         item.innerHTML =
-            '<div class="pinned-content">' + esc(msg ? msg.content : '') + '</div>' +
+            '<div class="pinned-content md-body" data-raw="' + escAttr(raw) + '"></div>' +
             '<div class="pinned-meta">' + esc(msg ? msg.nickname : '') + '</div>' +
             (canPin
                 ? '<div class="pinned-actions"><button type="button" title="取消置顶" onclick="unpinMessage(\'' + id + '\')">📌</button></div>'
                 : '');
+        const content = item.querySelector('.pinned-content');
+        content.innerHTML = window.renderContent ? window.renderContent(raw) : esc(raw);
+        content.dataset.rendered = '1';
     }
     function renderReaction(container, msgId, emoji, count, mine) {
         let b = container.querySelector('[data-emoji="' + CSS.escape(emoji) + '"]');

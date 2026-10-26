@@ -53,14 +53,6 @@ html[data-theme="dark"] .ban-form .ban-until {
 html[data-theme="dark"] .search-advanced-hint {
   background: #1e3a5f; color: #4da3ff; }
 html[data-theme="dark"] .search-options label { color: #b0b0b0; }
-html[data-theme="dark"] .md-editor-preview table th,
-html[data-theme="dark"] .md-editor-preview table td {
-  border-color: #3a3a3a; }
-html[data-theme="dark"] .dm-bubble blockquote {
-  border-left-color: rgba(255, 255, 255, 0.3); }
-html[data-theme="dark"] .dm-bubble table th,
-html[data-theme="dark"] .dm-bubble table td {
-  border-color: rgba(255, 255, 255, 0.3); }
 html[data-theme="dark"] .md-editor-table-shape-col {
   background: #2a2a2a; border-color: #555; }
 html[data-theme="dark"] .online-count,
@@ -109,3 +101,14 @@ html[data-theme="dark"] .progress-queue-item {
   background: #2a2a2a; color: #b0b0b0;
 }
 html[data-theme="dark"] .file-icon-cell { opacity: 0.6; }
+html[data-theme="dark"] .dm-me .dm-bubble { color: #fff; }
+html[data-theme="dark"] .dm-me .dm-bubble p,
+html[data-theme="dark"] .dm-me .dm-bubble strong,
+html[data-theme="dark"] .dm-me .dm-bubble h1,
+html[data-theme="dark"] .dm-me .dm-bubble h2,
+html[data-theme="dark"] .dm-me .dm-bubble h3,
+html[data-theme="dark"] .dm-me .dm-bubble h4,
+html[data-theme="dark"] .dm-me .dm-bubble h5,
+html[data-theme="dark"] .dm-me .dm-bubble h6,
+html[data-theme="dark"] .dm-me .dm-bubble a,
+html[data-theme="dark"] .dm-me .dm-bubble :not(pre) > code { color: #fff; }
