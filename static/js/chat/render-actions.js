@@ -11,13 +11,17 @@
     function applyRevoke(data) {
         const el = document.querySelector('.message[data-id="' + data.message_id + '"]');
         if (!el) return;
+        el.classList.add('revoked-msg');
         const content = el.querySelector('.msg-content');
         if (content) {
             content.classList.add('msg-revoked');
+            content.classList.remove('md-body');
             content.removeAttribute('data-raw');
-            content.innerHTML = '<span class="revoked-nick">'
-                + esc(data.revoked_by_nickname || '?')
-                + '</span> 撤回了一条消息';
+            content.removeAttribute('data-mode');
+            content.removeAttribute('style');
+            content.innerHTML = '<a class="revoked-nick" href="/user/'
+                + escAttr(data.revoked_by) + '">'
+                + esc(data.revoked_by_nickname) + '</a> 撤回了一条消息';
         }
         const actions = el.querySelector('.msg-actions');
         if (actions) {
@@ -93,7 +97,7 @@
                 ? '<div class="pinned-actions"><button type="button" title="取消置顶" onclick="unpinMessage(\'' + id + '\')">📌</button></div>'
                 : '');
         const content = item.querySelector('.pinned-content');
-        content.innerHTML = window.renderContent ? window.renderContent(raw) : esc(raw);
+        content.innerHTML = window.renderContent(raw);
         content.dataset.rendered = '1';
     }
     function renderReaction(container, msgId, emoji, count, mine) {

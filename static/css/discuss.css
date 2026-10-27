@@ -203,8 +203,17 @@ html[data-theme="dark"] .loading-older { color: #666; }
 .new-msg-banner .arrow { font-size: 14px; line-height: 1; }
 .message-input-area > .new-msg-banner { bottom: calc(100% + 8px); }
 .message-area > .new-msg-banner { bottom: 12px; }
-.msg-revoked { color: #999; font-style: italic; }
-.msg-revoked .revoked-nick { color: #1890ff; font-style: normal; font-weight: 600; }
+.message.revoked-msg { position: relative; justify-content: center; margin-bottom: 12px; }
+.message.revoked-msg .msg-avatar,
+.message.revoked-msg .msg-reply-quote,
+.message.revoked-msg .msg-reactions { display: none; }
+.message.revoked-msg .msg-header { position: absolute; right: 0; top: 50%;
+  transform: translateY(-50%); margin: 0; }
+.message.revoked-msg .msg-header > :not(.msg-actions) { display: none; }
+.message.revoked-msg .msg-body { flex: 0 1 auto; text-align: center; }
+.msg-revoked { color: #999; font-style: italic; font-size: 12px; }
+.msg-revoked .revoked-nick { color: #1890ff; font-style: normal; font-weight: 600;
+  text-decoration: none; }
 .msg-reply-quote-deleted,
 .msg-reply-quote-revoked { opacity: 0.6; cursor: default; }
 .msg-reply-quote-deleted .reply-quote-content,

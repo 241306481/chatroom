@@ -72,8 +72,6 @@
 .md-body .line-numbers-rows > span::before {
   content: counter(linenumber); display: block; padding-right: 0.8em;
 }
-.md-body pre.hide-numbers { padding-left: 1em; }
-.md-body pre.hide-numbers .line-numbers-rows { visibility: hidden; }
 .md-body .line-highlight {
   position: absolute; left: 0; right: 0; z-index: 0; pointer-events: none;
   top: calc(1em + (var(--start) - 1) * 1.5em);

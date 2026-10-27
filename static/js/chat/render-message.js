@@ -1,13 +1,5 @@
 (function () {
     const R = window.ChatRender = window.ChatRender || {};
-    function safeColor(c) {
-        const s = String(c || '');
-        if (/^#[0-9a-fA-F]{3,8}$/.test(s)) return s;
-        if (/^hsl\(\s*-?\d+(\.\d+)?\s*,\s*\d+(\.\d+)?%\s*,\s*\d+(\.\d+)?%\s*\)$/.test(s)) return s;
-        if (/^rgba?\([0-9,\s.]+\)$/.test(s)) return s;
-        if (/^[a-zA-Z]{3,20}$/.test(s)) return s;
-        return '#888';
-    }
     function buildMessageEl(msg) {
         const escSingle = function (s) {
             return String(s == null ? '' : s)
@@ -22,6 +14,7 @@
         const div = document.createElement('div');
         div.className = 'message';
         if (msg.is_system) div.classList.add('system-msg');
+        if (msg.revoked) div.classList.add('revoked-msg');
         div.dataset.id = msg.id;
         if (msg.id) div.id = 'msg-' + msg.id;
         if (msg.reply_to) div.dataset.replyTo = msg.reply_to;
@@ -32,10 +25,8 @@
         const showPin = canPin && !msg.revoked;
         const showDelete = canDeleteAny || isOwn;
         const revoked = !!msg.revoked;
-        const nick = window.Avatar
-            ? window.Avatar.avatarText(msg.nickname)
-            : (msg.nickname || '?')[0];
-        const color = safeColor(msg.avatar_color);
+        const nick = window.Avatar.avatarText(msg.nickname);
+        const color = window.Avatar.safeColor(msg.avatar_color);
         const mid = escSingle(msg.id);
         const canReply = !!document.getElementById('msgInput') && !revoked;
         const replyBtn = canReply
@@ -66,7 +57,7 @@
             ? `<div class="msg-reactions" id="reactions-${mid}" data-reactions="${escAttr(msg.reactions_json || '{}')}"></div>`
             : '';
         const contentHtml = revoked
-            ? `<div class="msg-content msg-revoked"><span class="revoked-nick">${esc(msg.revoked_by_nickname || msg.nickname)}</span> 撤回了一条消息</div>`
+            ? `<div class="msg-content msg-revoked"><a class="revoked-nick" href="/user/${escAttr(msg.revoked_by)}">${esc(msg.revoked_by_nickname)}</a> 撤回了一条消息</div>`
             : `<div class="msg-content md-body" data-raw="${escAttr(msg.content)}">${window.renderContent(msg.content)}</div>`;
         div.innerHTML = `
             <div class="msg-avatar" style="background:${color}">${esc(nick)}</div>
@@ -96,15 +87,11 @@
         const div = document.createElement('div');
         div.className = 'dm-msg ' + (isMe ? 'dm-me' : 'dm-other');
         div.dataset.id = msg.id;
-        const contentHtml = window.renderContent
-            ? window.renderContent(msg.content)
-            : esc(msg.content);
-        const rawAttr = window.escAttr ? window.escAttr(msg.content) : esc(msg.content);
+        const contentHtml = window.renderContent(msg.content);
+        const rawAttr = escAttr(msg.content);
         const nick = msg.nickname || msg.from_nickname || '?';
-        const color = safeColor(msg.avatar_color || msg.from_avatar_color);
-        const firstChar = window.Avatar
-            ? window.Avatar.avatarText(nick)
-            : (nick[0] || '?');
+        const color = window.Avatar.safeColor(msg.avatar_color || msg.from_avatar_color);
+        const firstChar = window.Avatar.avatarText(nick);
         div.innerHTML =
             '<div class="dm-avatar-wrap">'
               + '<span class="dm-avatar" style="background:' + esc(color) + '">'
@@ -126,7 +113,6 @@
         return div;
     }
 function swapAvatar(div, msg, sel) {
-    if (!window.Avatar) return;
     const ext = msg.avatar_ext || msg.from_avatar_ext || '';
     const uid = msg.user_id || msg.from;
     if (!ext || !uid) return;

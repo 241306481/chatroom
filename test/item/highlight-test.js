@@ -46,8 +46,8 @@ check('html：标签与属性值', () => {
     assert.ok(r.html.includes('tok-str'));
 });
 check('未知语言按纯文本并保留行号', () => {
-    const a = render('text', '<b>x</b>');
-    const b = render('unknown', '<b>x</b>');
+    const a = render('text', '<b>x</b>', 'line-numbers');
+    const b = render('unknown', '<b>x</b>', 'line-numbers');
     assert.ok(!a.html.includes('tok-'));
     assert.ok(!b.html.includes('tok-'));
     assert.ok(a.pre.classList.contains('line-numbers'));
@@ -60,14 +60,29 @@ check('无语言默认按 C++ 高亮', () => {
     assert.ok(r.html.includes('tok-kw'));
     assert.strictEqual(r.pre.dataset.lang, 'cpp');
 });
-check('默认隐藏行号与 lines= 行高亮', () => {
-    const r = render('cpp', 'a\nb\nc\nd\ne\nf', 'lines=5-6');
+check('默认不生成行号', () => {
+    const r = render('cpp', 'a\nb\nc');
+    assert.ok(!r.pre.classList.contains('line-numbers'));
+    assert.ok(!r.html.includes('line-numbers-rows'));
+});
+check('line-numbers 参数显示行号', () => {
+    const r = render('cpp', 'a\nb', 'line-numbers');
     assert.ok(r.pre.classList.contains('line-numbers'));
-    assert.ok(r.pre.classList.contains('hide-numbers'));
     assert.strictEqual((r.html.match(/line-numbers-rows/g) || []).length, 1);
-    assert.strictEqual((r.html.match(/<span><\/span>/g) || []).length, 6);
+    assert.strictEqual((r.html.match(/<span><\/span>/g) || []).length, 2);
+});
+check('lines= 只高亮不生成行号', () => {
+    const r = render('cpp', 'a\nb\nc\nd\ne\nf', 'lines=5-6');
+    assert.ok(!r.pre.classList.contains('line-numbers'));
+    assert.ok(!r.html.includes('line-numbers-rows'));
     assert.ok(r.pre.inserted.includes('data-range="5-6"'));
     assert.ok(r.pre.inserted.includes('--start:5;--end:6;'));
+});
+check('line-numbers 与 lines= 同时显示行号', () => {
+    const r = render('cpp', 'a\nb\nc\nd\ne\nf', 'line-numbers lines=5-6');
+    assert.ok(r.pre.classList.contains('line-numbers'));
+    assert.ok(r.html.includes('line-numbers-rows'));
+    assert.ok(r.pre.inserted.includes('data-range="5-6"'));
 });
 console.log('\n======== [回归] 代码高亮 ========');
 for (const [s, n] of results) console.log(s.padEnd(5), n);

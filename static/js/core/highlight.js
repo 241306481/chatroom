@@ -150,14 +150,13 @@
         return out;
     }
     function addLineNumbers(pre, code, count) {
-        if (count < 1 || !pre.classList) return;
+        if (count < 1) return;
         pre.classList.add('line-numbers');
         let rows = '';
         for (let i = 0; i < count; i++) rows += '<span></span>';
         code.innerHTML += '<span class="line-numbers-rows" aria-hidden="true">' + rows + '</span>';
     }
     function addRanges(pre, spec, count) {
-        if (!pre.insertAdjacentHTML) return;
         let html = '';
         ranges(spec, count).forEach(function (r) {
             html += '<div class="line-highlight" aria-hidden="true" data-range="'
@@ -169,24 +168,23 @@
     window.highlightCode = function (root) {
         root.querySelectorAll('pre > code').forEach(function (code) {
             const pre = code.parentElement;
-            if (!pre || (pre.dataset && pre.dataset.highlighted === '1')) return;
+            if (pre.dataset.highlighted === '1') return;
             const m = /(?:^|\s)language-([^\s]+)/.exec(code.className);
-            const fenceLang = pre.dataset && pre.dataset.lang ? pre.dataset.lang : '';
+            const fenceLang = pre.dataset.lang || '';
             if (!m && !fenceLang) return;
             const raw = (m ? m[1] : fenceLang).toLowerCase();
-            if (pre.dataset) pre.dataset.lang = raw;
+            pre.dataset.lang = raw;
             const lang = ALIAS[raw] !== undefined ? ALIAS[raw] : raw;
-            const options = pre.dataset && pre.dataset.codeOptions ? pre.dataset.codeOptions : '';
+            const options = pre.dataset.codeOptions || '';
             const text = code.textContent.replace(/\n$/, '');
             const count = text === '' ? 0 : text.split('\n').length;
             if (lang && LANG[lang]) code.innerHTML = highlight(code.textContent, lang);
-            if (!/\bno-line-numbers\b/.test(options)) {
+            if (/(?:^|\s)line-numbers(?:\s|$)/.test(options)) {
                 addLineNumbers(pre, code, count);
-                if (pre.classList) pre.classList.add('hide-numbers');
             }
             const lines = /(?:^|\s)lines=([\d,\-\s]+)/.exec(options);
             if (lines) addRanges(pre, lines[1], count);
-            if (pre.dataset) pre.dataset.highlighted = '1';
+            pre.dataset.highlighted = '1';
         });
     };
 })();

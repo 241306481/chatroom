@@ -112,10 +112,76 @@ clearTlsArtifacts(ROOT);
         assert.strictEqual(storage.findMessage('system', 'general', msgId).pinned, true);
     });
     await check('讨论区：撤回（own）', async () => {
+        const p = waitFor(wsB, d => d.type === 'message_revoked' && d.message_id === msgId);
         wsA.send(JSON.stringify({ type: 'revoke', message_id: msgId }));
-        await sleep(500);
+        const d = await p;
+        assert.strictEqual(d.revoked_by, uidA);
+        assert.strictEqual(d.content, undefined, '撤回广播包含原文');
+        assert.strictEqual(d.message, undefined, '撤回广播包含消息对象');
+        assert.ok(!JSON.stringify(d).includes('hello world'), '撤回广播泄露原文');
         const m = storage.findMessage('system', 'general', msgId);
         assert.strictEqual(m.revoked, true, '撤回未生效');
+    });
+    await check('讨论区：撤回提示不按普通消息排版', () => {
+        const tpl = fs.readFileSync(path.join(ROOT, 'templates/discuss.html'), 'utf8');
+        const msgJs = fs.readFileSync(path.join(ROOT, 'static/js/chat/render-message.js'), 'utf8');
+        const actJs = fs.readFileSync(path.join(ROOT, 'static/js/chat/render-actions.js'), 'utf8');
+        const css = fs.readFileSync(path.join(ROOT, 'static/css/discuss.css'), 'utf8');
+        assert.ok(tpl.includes('revoked-msg'), '模板缺少 revoked-msg');
+        assert.ok(tpl.includes('class="revoked-nick" href="/user/'), '模板撤回昵称缺少用户链接');
+        assert.ok(!tpl.includes('msg.revoked_by or msg.user_id'), '模板保留兼容回退');
+        assert.ok(msgJs.includes("classList.add('revoked-msg')"), '消息渲染缺少 revoked-msg');
+        assert.ok(msgJs.includes('class="revoked-nick" href="/user/'), '消息渲染撤回昵称缺少用户链接');
+        assert.ok(!msgJs.includes('msg.revoked_by || msg.user_id'), '消息渲染保留兼容回退');
+        assert.ok(actJs.includes("classList.add('revoked-msg')"), '撤回更新缺少 revoked-msg');
+        assert.ok(actJs.includes('class="revoked-nick" href="/user/'), '撤回更新昵称缺少用户链接');
+        assert.ok(css.includes('.message.revoked-msg .msg-header > :not(.msg-actions)'),
+            '撤回提示未隐藏消息头内容');
+        assert.ok(!/\.msg-revoked \.revoked-nick:hover\s*\{[^}]*underline/.test(css),
+            '撤回昵称链接仍有下划线');
+    });
+    await check('讨论区：撤回后接口不返回原文', async () => {
+        const r = await req('GET',
+            '/domain/system/discuss/general/messages?limit=50&offset=0', { cookie: A });
+        assert.strictEqual(r.status, 200);
+        assert.ok(!r.body.includes('hello world'), '消息接口泄露撤回原文');
+        const data = JSON.parse(r.body);
+        const m = data.messages.find(x => x.id === msgId);
+        assert.ok(m, '撤回消息缺失');
+        assert.strictEqual(m.revoked, true);
+        assert.strictEqual(m.content, '');
+        assert.strictEqual(m.reply_to, '');
+        assert.strictEqual(m.reply_info, null);
+        assert.strictEqual(m.reactions_json, '{}');
+        assert.deepStrictEqual(m.mentions, []);
+        assert.strictEqual(m.revoked_by, uidA);
+        assert.strictEqual(m.revoked_by_nickname, 'alice99');
+    });
+    await check('讨论区：撤回后页面不泄露原文且有用户链接', async () => {
+        const r = await req('GET', '/domain/system/discuss/general', { cookie: A });
+        assert.strictEqual(r.status, 200);
+        assert.ok(!r.body.includes('hello world'), '页面泄露撤回原文');
+        assert.ok(r.body.includes('撤回了一条消息'));
+        assert.ok(r.body.includes('class="revoked-nick" href="/user/' + uidA + '"'),
+            '撤回提示缺少用户链接');
+    });
+    await check('讨论区：回复撤回消息不携带原文', async () => {
+        const p = waitFor(wsA, d => d.type === 'new_message' && d.message.reply_to === msgId);
+        wsB.send(JSON.stringify({
+            type: 'message', content: 'reply after revoke', reply_to: msgId,
+        }));
+        const d = await p;
+        assert.deepStrictEqual(d.message.reply_info, { id: msgId, revoked: true });
+        assert.ok(!JSON.stringify(d.message).includes('hello world'), '回复信息泄露撤回原文');
+    });
+    await check('讨论区：撤回后不可置顶或回应', async () => {
+        const before = JSON.stringify(storage.findMessage('system', 'general', msgId).reactions || {});
+        wsA.send(JSON.stringify({ type: 'pin', message_id: msgId }));
+        wsA.send(JSON.stringify({ type: 'reaction', message_id: msgId, emoji: '👍' }));
+        await sleep(400);
+        const m = storage.findMessage('system', 'general', msgId);
+        assert.strictEqual(m.pinned, false, '撤回消息被重新置顶');
+        assert.strictEqual(JSON.stringify(m.reactions || {}), before, '撤回消息仍可添加回应');
     });
     await check('讨论区：删除（own）', async () => {
         const m2 = { id: 'del-me-1', user_id: uidA, nickname: 'alice99', content: 'x', created_at: storage.nowIso() };
@@ -181,9 +247,17 @@ await check('讨论区：经验立即反映在存储中（无缓冲）', async (
             assert.ok(js.includes(sel), 'JS 未查询 ' + sel);
         }
     });
-    await check('编辑器：预览兜底分支已转义（无 XSS）', () => {
+    await check('编辑器：预览统一使用 Markdown 渲染', () => {
         const src = fs.readFileSync(path.join(ROOT, 'static/js/editor/preview.js'), 'utf8');
-        assert.ok(/esc\(ta\.value\)/.test(src), 'preview 兜底未转义');
+        assert.ok(/tpl\.innerHTML = window\.renderContent\(text\)/.test(src),
+            'preview 未使用统一渲染');
+        assert.ok(!/esc\(ta\.value\)/.test(src), 'preview 仍保留兼容兜底');
+    });
+    await check('编辑器：预览按顶层节点增量更新', () => {
+        const src = fs.readFileSync(path.join(ROOT, 'static/js/editor/preview.js'), 'utf8');
+        assert.ok(/function patchNodes/.test(src), 'preview 缺少节点 diff');
+        assert.ok(/preview\.insertBefore/.test(src), 'preview 未插入变化节点');
+        assert.ok(!/preview\.innerHTML\s*=/.test(src), 'preview 仍在全量重载');
     });
     await check('编辑器：Markdown 转义兜底一致', () => {
         const src = fs.readFileSync(path.join(ROOT, 'static/js/core/dom.js'), 'utf8');
