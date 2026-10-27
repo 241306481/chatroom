@@ -30,6 +30,17 @@
     function rawTagClosed(line, tag) {
         return new RegExp('</' + tag + '>', 'i').test(line);
     }
+    function closeAfterFence(lines, start, fence, closeRe) {
+        let closed = false;
+        for (let i = start; i < lines.length; i++) {
+            if (!closed) {
+                if (fenceClosed(lines[i], fence)) closed = true;
+                continue;
+            }
+            if (closeRe.test(lines[i])) return true;
+        }
+        return false;
+    }
     function findClose(lines, start, count) {
         const closeRe = new RegExp('^ {0,3}:{' + count + '}\\s*$');
         let fence = null;
@@ -37,7 +48,12 @@
         for (let i = start; i < lines.length; i++) {
             const line = lines[i];
             if (fence) {
-                if (fenceClosed(line, fence)) fence = null;
+                if (fenceClosed(line, fence)) {
+                    fence = null;
+                } else if (closeRe.test(line)
+                    && !closeAfterFence(lines, i + 1, fence, closeRe)) {
+                    return i;
+                }
                 continue;
             }
             if (raw) {
@@ -261,6 +277,12 @@
         if (!rows.length) return;
         const occ = rows.map(() => []);
         const meta = new Map();
+        function textOf(cell) {
+            return String(cell.textContent == null ? '' : cell.textContent).trim();
+        }
+        function spanOf(cell, key) {
+            return Number(cell[key]) || 1;
+        }
         function occupy(cell, r0, c0, rs, cs) {
             for (let r = r0; r < r0 + rs && r < occ.length; r++) {
                 if (!occ[r]) occ[r] = [];
@@ -268,38 +290,68 @@
             }
             meta.set(cell, { r: r0, c: c0, rowSpan: rs, colSpan: cs });
         }
+        function removeCell(cell) {
+            meta.delete(cell);
+            if (cell.remove) cell.remove();
+        }
+        function planExpand(target, info, rs, cs, ignore) {
+            const covered = [];
+            for (let r = info.r; r < info.r + rs && r < occ.length; r++) {
+                for (let c = info.c; c < info.c + cs; c++) {
+                    const hit = occ[r] && occ[r][c];
+                    if (!hit || hit === target || hit === ignore) continue;
+                    const hi = meta.get(hit);
+                    const inside = hi && hi.r >= info.r && hi.c >= info.c
+                        && hi.r + hi.rowSpan <= info.r + rs
+                        && hi.c + hi.colSpan <= info.c + cs;
+                    if (!inside || textOf(hit) !== '') return null;
+                    if (covered.indexOf(hit) < 0) covered.push(hit);
+                }
+            }
+            return covered;
+        }
+        function mergeMarker(cell, r, c, marker) {
+            let target = null;
+            if (marker === '<' && c > 0) {
+                if (occ[r][c]) return false;
+                target = occ[r][c - 1];
+            } else if (marker === '^' && r > 0
+                && (!rows[r - 1] || !rows[r].parentElement
+                    || rows[r - 1].parentElement === rows[r].parentElement)) {
+                target = occ[r - 1] && occ[r - 1][c];
+                if (occ[r][c] && occ[r][c] !== target) target = null;
+            }
+            const info = target && meta.get(target);
+            if (!info) return false;
+            const rs = info.rowSpan + (marker === '^' ? 1 : 0);
+            const cs = info.colSpan + (marker === '<' ? 1 : 0);
+            const covered = planExpand(target, info, rs, cs, cell);
+            if (!covered) return false;
+            covered.forEach(removeCell);
+            occupy(target, info.r, info.c, rs, cs);
+            target.rowSpan = rs;
+            target.colSpan = cs;
+            removeCell(cell);
+            return true;
+        }
         for (let r = 0; r < rows.length; r++) {
             const cells = Array.from(rows[r].cells || []);
             let c = 0;
             for (const cell of cells) {
-                while (occ[r][c]) c++;
-                const text = String(cell.textContent == null ? '' : cell.textContent).trim();
+                const rs = spanOf(cell, 'rowSpan');
+                const cs = spanOf(cell, 'colSpan');
+                const text = textOf(cell);
                 const plain = !cell.children || cell.children.length === 0;
-                if (plain && text === '^' && r > 0) {
-                    const target = occ[r - 1] && occ[r - 1][c];
-                    const info = target && meta.get(target);
-                    if (info) {
-                        info.rowSpan += 1;
-                        target.rowSpan = info.rowSpan;
-                        occupy(target, info.r, info.c, info.rowSpan, info.colSpan);
-                        if (cell.remove) cell.remove();
-                        continue;
-                    }
+                if (plain && (text === '<' || text === '^')
+                    && mergeMarker(cell, r, c, text)) {
+                    c += cs;
+                    continue;
                 }
-                if (plain && text === '<' && c > 0) {
-                    const target = occ[r][c - 1];
-                    const info = target && meta.get(target);
-                    if (info) {
-                        info.colSpan += 1;
-                        target.colSpan = info.colSpan;
-                        occupy(target, info.r, info.c, info.rowSpan, info.colSpan);
-                        if (cell.remove) cell.remove();
-                        continue;
-                    }
+                if (occ[r][c]) {
+                    removeCell(cell);
+                } else {
+                    occupy(cell, r, c, rs, cs);
                 }
-                const rs = Number(cell.rowSpan) || 1;
-                const cs = Number(cell.colSpan) || 1;
-                occupy(cell, r, c, rs, cs);
                 c += cs;
             }
         }

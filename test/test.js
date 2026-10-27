@@ -84,6 +84,10 @@ for (const s of SUITES) {
     }
     console.log(`${s.padEnd(26)} ${line}`);
 }
+for (const d of ['data', 'logs', 'evil', 'evil.json', 'cert.pem', 'key.pem']) {
+    const p = path.join(ROOT, d);
+    if (fs.existsSync(p)) fs.rmSync(p, { recursive: true, force: true });
+}
 if (skipWhy.length) {
     console.log('-'.repeat(50));
     console.log(`跳过 ${skip} 项（不计入失败）：`);

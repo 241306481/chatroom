@@ -3,3 +3,4 @@ data/
 logs/
 cert.pem
 key.pem
+tmp/

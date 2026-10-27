@@ -60,6 +60,28 @@ check('HTML 预格式化块内的 ::: 不按容器解析', () => {
     assert.ok(html.includes(':::info'));
     assert.ok(!html.includes('<details'));
 });
+check('Callout：未闭合代码围栏遇到 ::: 时正常闭合', () => {
+    const f = String.fromCharCode(96).repeat(3);
+    const html = md.parse(':::info\n' + f + 'cpp\n:::');
+    assert.ok(html.includes('<details class="info"><summary>提示</summary>'));
+    assert.ok(html.includes('<pre class="pre language-cpp"'));
+    assert.ok(!html.includes(':::info'));
+    assert.ok(!html.includes('language-cpp">:::\n</code>'));
+});
+check('Callout：未闭合代码围栏后的结束围栏留在容器外', () => {
+    const f = String.fromCharCode(96).repeat(3);
+    const html = md.parse(':::info\n' + f + 'cpp\n:::\n' + f);
+    assert.ok(html.includes('<details class="info"><summary>提示</summary>'));
+    const blocks = html.match(/<pre class="pre language-cpp"/g) || [];
+    assert.strictEqual(blocks.length, 2);
+    assert.ok(html.indexOf('</details>') < html.lastIndexOf('<pre class="pre language-cpp"'));
+});
+check('Callout：闭合代码围栏内的 ::: 不提前结束容器', () => {
+    const f = String.fromCharCode(96).repeat(3);
+    const html = md.parse(':::info\n' + f + 'md\n:::\n' + f + '\n:::');
+    assert.ok(html.includes('<details class="info"><summary>提示</summary>'));
+    assert.ok(html.includes('<code class="language-md">:::\n</code>'));
+});
 check('左对齐 / 居中 / 右对齐', () => {
     for (const dir of ['left', 'center', 'right']) {
         const html = md.parse(':::align{' + dir + '}\n内容\n:::');
@@ -121,13 +143,38 @@ check('表格合并：< 向左合并为 colspan', () => {
     assert.strictEqual(r0.length, 1);
 });
 check('表格合并：混合合并后列位置正确', () => {
-    const r0 = [cell('a'), cell('b'), cell('c')];
-    const r1 = [cell('^'), cell('<'), cell('d')];
+    const r0 = [cell('a'), cell('<'), cell('b')];
+    const r1 = [cell('^'), cell(''), cell('c')];
     md.mergeTable(table([r0, r1]));
     assert.strictEqual(r0[0].rowSpan, 2);
     assert.strictEqual(r0[0].colSpan, 2);
+    assert.strictEqual(r0.length, 2);
     assert.strictEqual(r1.length, 1);
-    assert.strictEqual(r1[0].textContent, 'd');
+    assert.strictEqual(r1[0].textContent, 'c');
+});
+check('表格合并：重叠合并被忽略且不留下空列', () => {
+    const rows = [
+        [cell('1'), cell('<'), cell(''), cell(''), cell(''), cell('')],
+        [cell('^'), cell('<'), cell(''), cell(''), cell(''), cell('')],
+        [cell('^'), cell(''), cell(''), cell(''), cell(''), cell('')],
+    ];
+    md.mergeTable(table(rows));
+    assert.strictEqual(rows[0][0].textContent, '1');
+    assert.strictEqual(rows[0][0].rowSpan, 3);
+    assert.strictEqual(rows[0][0].colSpan, 2);
+    assert.strictEqual(rows[0].length, 5);
+    assert.strictEqual(rows[1].length, 4);
+    assert.strictEqual(rows[2].length, 4);
+    assert.ok(!rows[1].some(c => c.textContent === '<'));
+});
+check('表格合并：^ 不跨表头与表体合并', () => {
+    const t = table([[cell('a')], [cell('^')]]);
+    t.rows[0].parentElement = { section: 'head' };
+    t.rows[1].parentElement = { section: 'body' };
+    md.mergeTable(t);
+    assert.strictEqual(t.rows[0].cells[0].rowSpan, 1);
+    assert.strictEqual(t.rows[1].cells.length, 1);
+    assert.strictEqual(t.rows[1].cells[0].textContent, '^');
 });
 check('页面顺序：marked 后加载 markdown.js，再加载 dom.js', () => {
     const base = fs.readFileSync(path.join(ROOT, 'templates/base.html'), 'utf8');
