@@ -233,10 +233,13 @@
   <div class="md-editor-content">
     <div class="md-editor-content-wrapper" data-wrapper>
       <div class="md-editor-pane" data-pane="edit">
-        <textarea id="{{ _id }}" class="md-editor-textarea"
-                  {% if _name %}name="{{ _name }}"{% endif %}
-                  {% if _placeholder %}placeholder="{{ _placeholder }}"{% endif %}
-                  rows="{{ _rows }}">{{ _value | e }}</textarea>
+        <div class="md-editor-source">
+          <div class="md-editor-line-numbers" data-line-numbers aria-hidden="true"></div>
+          <textarea id="{{ _id }}" class="md-editor-textarea"
+                    {% if _name %}name="{{ _name }}"{% endif %}
+                    {% if _placeholder %}placeholder="{{ _placeholder }}"{% endif %}
+                    rows="{{ _rows }}">{{ _value | e }}</textarea>
+        </div>
       </div>
       <div class="md-editor-resize-operate" data-resize></div>
       <div class="md-editor-pane" data-pane="preview">
@@ -251,6 +254,10 @@
   {% endif %}
   <div class="md-editor-footer">
     <div class="md-editor-footer-left">
+      <div class="md-editor-footer-item">
+        <label class="md-editor-footer-label">行数：</label>
+        <span class="md-editor-line-count" data-line-count>1</span>
+      </div>
       <div class="md-editor-footer-item">
         <label class="md-editor-footer-label">字数：</label>
         <span class="md-editor-counter">0</span>

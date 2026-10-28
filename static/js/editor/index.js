@@ -5,6 +5,8 @@
         const ta = root.querySelector('textarea');
         const preview = root.querySelector('.md-editor-preview');
         const counter = root.querySelector('.md-editor-counter');
+        const lineNumbers = root.querySelector('[data-line-numbers]');
+        const lineCount = root.querySelector('[data-line-count]');
         const syncCb = root.querySelector('.md-editor-sync');
         const previewBtn = root.querySelector('[data-action="toggle-preview"]');
         const wrapper = root.querySelector('[data-wrapper]');
@@ -16,7 +18,7 @@
         root.dataset.ctxInit = '1';
         if (window.MentionPicker) window.MentionPicker.attach(ta);
         const previewApi = window.EditorPreview.attach({
-            root, ta, preview, counter, wrapper,
+            root, ta, preview, counter, lineNumbers, lineCount, wrapper,
         });
         const { closeAll } = window.EditorToolbar.attach({
             root, ta, refresh: previewApi.refresh,

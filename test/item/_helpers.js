@@ -18,7 +18,20 @@ function clearTlsArtifacts(root) {
     const path = require('path');
     for (const f of ['cert.pem', 'key.pem']) {
         const p = path.join(root, f);
-        if (fs.existsSync(p)) fs.rmSync(p);
+        if (fs.existsSync(p)) {
+            try { fs.rmSync(p); } catch (e) {}
+        }
     }
 }
-module.exports = { sleep, waitForServer, clearTlsArtifacts };
+function clearTestArtifacts(root) {
+    const fs = require('fs');
+    const path = require('path');
+    for (const d of ['data', 'logs', 'evil', 'evil.json']) {
+        const p = path.join(root, d);
+        if (fs.existsSync(p)) {
+            try { fs.rmSync(p, { recursive: true, force: true }); } catch (e) {}
+        }
+    }
+    clearTlsArtifacts(root);
+}
+module.exports = { sleep, waitForServer, clearTlsArtifacts, clearTestArtifacts };

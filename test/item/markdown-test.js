@@ -60,6 +60,13 @@ check('HTML 预格式化块内的 ::: 不按容器解析', () => {
     assert.ok(html.includes(':::info'));
     assert.ok(!html.includes('<details'));
 });
+check('Callout：未闭合容器渲染到文末', () => {
+    const html = md.parse(':::info');
+    assert.ok(html.includes('<details class="info"><summary>提示</summary></details>'));
+    assert.ok(!html.includes('<p>:::info</p>'));
+    const body = md.parse(':::info\n内容');
+    assert.ok(body.includes('<details class="info"><summary>提示</summary><p>内容</p>'));
+});
 check('Callout：未闭合代码围栏遇到 ::: 时正常闭合', () => {
     const f = String.fromCharCode(96).repeat(3);
     const html = md.parse(':::info\n' + f + 'cpp\n:::');

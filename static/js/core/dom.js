@@ -11,6 +11,11 @@ window.escAttr = function (s) {
 const DANGEROUS_SCHEME_RE = /^(?:javascript|data|vbscript):/i;
 const URL_ATTRS = ['href', 'src', 'xlink:href', 'action', 'formaction',
     'srcset', 'poster', 'data', 'background', 'cite', 'srcdoc'];
+const BLOCKED_TAGS = ['script', 'iframe', 'object', 'embed', 'link', 'meta', 'style',
+    'base', 'form', 'title', 'textarea', 'xmp', 'plaintext', 'noembed', 'noframes',
+    'noscript', 'template'];
+const BLOCKED_SELECTOR = BLOCKED_TAGS.join(',');
+const INLINE_PARENTS = 'p, li, td, th, summary, h1, h2, h3, h4, h5, h6';
 function normalizeUrlForSchemeCheck(value) {
     return String(value == null ? '' : value)
         .replace(/[\u0000-\u0020\u00a0\u2028\u2029\ufeff]/g, '');
@@ -20,10 +25,65 @@ function unsafeStyle(value) {
     return /expression\s*\(|javascript\s*:|vbscript\s*:|behavior\s*:|-moz-binding|@import|position\s*:\s*(?:fixed|sticky)/i
         .test(css);
 }
+function escapeTagText(html) {
+    return String(html == null ? '' : html)
+        .replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+}
+function markdownInline(src) {
+    const win = typeof window !== 'undefined' ? window : null;
+    if (!win) return escapeTagText(src);
+    try {
+        if (win.marked && typeof win.marked.parseInline === 'function') {
+            return win.marked.parseInline(src);
+        }
+        if (win.LuoguMarkdown && typeof win.LuoguMarkdown.parse === 'function') {
+            return win.LuoguMarkdown.parse(src);
+        }
+        if (win.marked && typeof win.marked.parse === 'function') {
+            return win.marked.parse(src, { gfm: true, breaks: false });
+        }
+    } catch (e) {}
+    return escapeTagText(src);
+}
+function renderBlockedNode(node) {
+    const doc = node.ownerDocument;
+    const win = typeof window !== 'undefined' ? window : null;
+    if (!doc || !win) return null;
+    const tags = [];
+    const src = String(node.outerHTML || '').replace(
+        /<(?:"[^"]*"|'[^']*'|[^'">])*>/g,
+        tag => {
+            tags.push(tag);
+            return '\uE000' + (tags.length - 1) + '\uE001';
+        });
+    const inline = node.parentElement && typeof node.parentElement.closest === 'function'
+        && node.parentElement.closest(INLINE_PARENTS);
+    let html;
+    if (inline) {
+        html = markdownInline(src);
+    } else if (win.LuoguMarkdown && typeof win.LuoguMarkdown.parse === 'function') {
+        html = win.LuoguMarkdown.parse(src);
+    } else if (win.marked && typeof win.marked.parse === 'function') {
+        html = win.marked.parse(src, { gfm: true, breaks: false });
+    } else {
+        html = escapeTagText(src);
+    }
+    html = String(html).replace(/\uE000(\d+)\uE001/g,
+        (all, i) => escapeTagText(tags[+i] || ''));
+    const tpl = doc.createElement('template');
+    tpl.innerHTML = html;
+    return tpl.content;
+}
 function sanitize(root) {
-    root.querySelectorAll('script, iframe, object, embed, link, meta, style, base, form, '
-        + 'title, textarea, xmp, plaintext, noembed, noframes, noscript, template')
-        .forEach(n => n.remove());
+    const blocked = Array.from(root.querySelectorAll(BLOCKED_SELECTOR));
+    for (const node of blocked) {
+        if (node.parentElement && typeof node.parentElement.closest === 'function'
+            && node.parentElement.closest(BLOCKED_SELECTOR)) continue;
+        const content = renderBlockedNode(node);
+        if (content && typeof node.replaceWith === 'function') node.replaceWith(content);
+        else if (typeof node.remove === 'function') node.remove();
+    }
     root.querySelectorAll('*').forEach(el => {
         for (const attr of Array.from(el.attributes)) {
             const name = attr.name.toLowerCase();

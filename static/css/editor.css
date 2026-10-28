@@ -40,13 +40,28 @@
 .md-editor-content-wrapper.md-editor-preview-hidden [data-pane="edit"] { flex: 1 1 100% !important; }
 .md-editor-pane { flex: 1 1 0; min-width: 0; overflow: hidden;
   display: flex; flex-direction: column; }
-.md-editor-textarea { width: 100%; flex: 1; min-height: 0;
+.md-editor-source { display: flex; flex: 1; min-height: 0; background: #fff; }
+.md-editor-line-numbers { flex: 0 0 auto; width: 3.5ch; box-sizing: border-box;
+  padding: 10px 8px 10px 10px; overflow: hidden; border-right: 1px solid #eee;
+  background: #fafafa; color: #aaa; text-align: right; user-select: none;
+  font-size: 14px; font-family: inherit; line-height: 1.6;
+  font-variant-numeric: tabular-nums; }
+.md-editor-line-numbers > span { display: block; height: 1.6em; }
+.md-editor-line-measure { position: fixed; top: 0; left: -99999px;
+  visibility: hidden; pointer-events: none; box-sizing: content-box;
+  padding: 0; border: 0; white-space: pre-wrap; overflow-wrap: break-word;
+  word-break: normal; }
+.md-editor-line-measure > div { min-height: 1.6em; white-space: pre-wrap;
+  overflow-wrap: break-word; word-break: normal; }
+.md-editor-textarea { width: auto; flex: 1 1 0; min-width: 0; min-height: 0;
   padding: 10px 12px; border: none; outline: none; resize: none;
   font-size: 14px; font-family: inherit; line-height: 1.6;
-  background: #fff; color: #333; overflow-y: auto; }
+  background: #fff; color: #333; overflow-y: auto; overflow-x: auto;
+  white-space: pre-wrap; overflow-wrap: break-word; }
 .md-editor-textarea::placeholder { color: #bbb; }
 .md-editor-preview { flex: 1; min-height: 0; overflow-y: auto;
-  padding: 10px 12px; background: #fafafa; line-height: 1.6; word-wrap: break-word; }
+  padding: 10px 12px; background: #fff; line-height: 1.6; word-wrap: break-word; }
+.md-editor .md-editor-preview pre { background: #f4f4f4; }
 .md-editor-preview:empty::before { content: '预览区（输入后显示渲染结果）';
   color: #ccc; font-style: italic; }
 .md-editor-resize-operate { width: 5px; background: #f0f0f0;
@@ -74,7 +89,8 @@
 .md-editor-footer-item { display: inline-flex; align-items: center; gap: 4px; }
 .md-editor-footer-label { cursor: pointer; user-select: none;
   display: inline-flex; align-items: center; gap: 4px; }
-.md-editor-counter { color: #555; }
+.md-editor-counter,
+.md-editor-line-count { color: #555; font-variant-numeric: tabular-nums; }
 .md-editor-sync { margin: 0; }
 .md-editor-submit { padding: 5px 18px; background: #1890ff; color: #fff;
   border: none; border-radius: 4px; cursor: pointer; font-size: 13px;

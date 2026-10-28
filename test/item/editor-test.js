@@ -4,16 +4,16 @@ const fs = require('fs');
 const path = require('path');
 const { spawn } = require('child_process');
 const { WebSocket } = require('ws');
+const { sleep, waitForServer, clearTestArtifacts } = require('./_helpers');
 const ROOT = path.join(__dirname, '..', '..');
 const DATA = path.join(ROOT, 'data');
-if (fs.existsSync(DATA)) fs.rmSync(DATA, { recursive: true, force: true });
+clearTestArtifacts(ROOT);
 const PORT = 5190;
 const proc = spawn(process.execPath, ['server.js'],
     { cwd: ROOT, env: { ...process.env, PORT } });
 proc.stdout.on('data', () => {});
 const srvErr = [];
 proc.stderr.on('data', d => srvErr.push(String(d)));
-const { sleep, waitForServer, clearTlsArtifacts } = require('./_helpers');
 const results = [];
 const check = async (n, f) => {
     try { await f(); results.push(['PASS', n]); }
@@ -67,7 +67,6 @@ function waitFor(ws, pred, ms = 10000) {
         ws.on('message', h);
     });
 }
-clearTlsArtifacts(ROOT);
 (async () => {
     await waitForServer(PORT);
     const storage = require('../../lib/storage');
@@ -239,13 +238,42 @@ await check('讨论区：经验立即反映在存储中（无缓冲）', async (
     await check('编辑器：模板与 JS 的选择器契约一致', () => {
         const tpl = fs.readFileSync(path.join(ROOT, 'templates/context_edit.html'), 'utf8');
         for (const sel of ['data-wrapper', 'data-resize', 'data-pane="edit"',
-            'data-pane="preview"', 'md-editor-preview', 'md-editor-counter']) {
+            'data-pane="preview"', 'md-editor-preview', 'md-editor-counter',
+            'md-editor-line-numbers', 'data-line-numbers', 'data-line-count',
+            'md-editor-line-count']) {
             assert.ok(tpl.includes(sel), '模板缺少 ' + sel);
         }
         const js = fs.readFileSync(path.join(ROOT, 'static/js/editor/index.js'), 'utf8');
-        for (const sel of ['[data-wrapper]', '[data-resize]', '[data-pane="edit"]']) {
+        for (const sel of ['[data-wrapper]', '[data-resize]', '[data-pane="edit"]',
+            '[data-line-numbers]', '[data-line-count]']) {
             assert.ok(js.includes(sel), 'JS 未查询 ' + sel);
         }
+    });
+    await check('编辑器：源码行标、行数和字数同步更新', () => {
+        const src = fs.readFileSync(path.join(ROOT, 'static/js/editor/preview.js'), 'utf8');
+        assert.ok(/function updateStats/.test(src), 'preview 缺少源码统计');
+        assert.ok(/function measureLineRows/.test(src), '行号未按折行测量');
+        assert.ok(/lineNumbers\.replaceChildren/.test(src), '行号未按行重建');
+        assert.ok(/lineNumbers\.scrollTop = ta\.scrollTop/.test(src), '行号未跟随源码滚动');
+        assert.ok(/lineCount\.textContent = String\(lines\.length\)/.test(src), '行数未更新');
+        assert.ok(/counter\.textContent = String\(text\.length\)/.test(src), '字数未更新');
+        assert.ok(/ResizeObserver/.test(src), '行号未跟随宽度变化重算');
+        const tpl = fs.readFileSync(path.join(ROOT, 'templates/context_edit.html'), 'utf8');
+        assert.ok(!/wrap="off"/.test(tpl), '源码区不应禁用折行');
+        const css = fs.readFileSync(path.join(ROOT, 'static/css/editor.css'), 'utf8');
+        assert.ok(/\.md-editor-line-numbers/.test(css), '缺少行号样式');
+        assert.ok(/\.md-editor-source \{/.test(css), '缺少源码容器样式');
+        assert.ok(/\.md-editor-line-measure/.test(css), '缺少折行测量容器');
+        assert.ok(/white-space: pre-wrap/.test(css), '源码区应保留折行');
+    });
+    await check('编辑器：预览区与源码区同底色', () => {
+        const css = fs.readFileSync(path.join(ROOT, 'static/css/editor.css'), 'utf8');
+        assert.ok(/\.md-editor-textarea \{[^}]*background: #fff;/s.test(css),
+            '源码区底色不是白色');
+        assert.ok(/\.md-editor-preview \{[^}]*background: #fff;/s.test(css),
+            '预览区底色未与源码区一致');
+        assert.ok(/\.md-editor \.md-editor-preview pre \{[^}]*background: #f4f4f4;/s.test(css),
+            '预览区代码块缺少独立底色');
     });
     await check('编辑器：预览统一使用 Markdown 渲染', () => {
         const src = fs.readFileSync(path.join(ROOT, 'static/js/editor/preview.js'), 'utf8');
@@ -253,10 +281,14 @@ await check('讨论区：经验立即反映在存储中（无缓冲）', async (
             'preview 未使用统一渲染');
         assert.ok(!/esc\(ta\.value\)/.test(src), 'preview 仍保留兼容兜底');
     });
-    await check('编辑器：预览按顶层节点增量更新', () => {
+    await check('编辑器：预览按节点复用增量更新', () => {
         const src = fs.readFileSync(path.join(ROOT, 'static/js/editor/preview.js'), 'utf8');
         assert.ok(/function patchNodes/.test(src), 'preview 缺少节点 diff');
-        assert.ok(/preview\.insertBefore/.test(src), 'preview 未插入变化节点');
+        assert.ok(/function patchChildren/.test(src), 'preview 缺少递归更新');
+        assert.ok(/function morphNode/.test(src), 'preview 缺少节点复用');
+        assert.ok(/\.insertBefore\(/.test(src), 'preview 未插入变化节点');
+        assert.ok(/DETAILS/.test(src) && /keepOpen/.test(src), 'preview 未保留 details 展开状态');
+        assert.ok(!/outerHTML/.test(src), 'preview 仍按整块替换节点');
         assert.ok(!/preview\.innerHTML\s*=/.test(src), 'preview 仍在全量重载');
     });
     await check('编辑器：Markdown 转义兜底一致', () => {
@@ -287,10 +319,13 @@ await check('讨论区：经验立即反映在存储中（无缓冲）', async (
     console.log(results.length - f + ' passed, ' + f + ' failed');
     proc.kill();
     await sleep(300);
+    clearTestArtifacts(ROOT);
     process.exit(f ? 1 : 0);
-})().catch(e => {
+})().catch(async e => {
     console.error('SUITE ERROR', e && e.message);
     console.log(results.map(r => r.join(' ')).join('\n'));
     proc.kill();
+    await sleep(300);
+    clearTestArtifacts(ROOT);
     process.exit(2);
 });

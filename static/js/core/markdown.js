@@ -243,11 +243,8 @@
                 out.push(line);
                 continue;
             }
-            const end = findClose(lines, i + 1, m[1].length);
-            if (end < 0) {
-                out.push(line);
-                continue;
-            }
+            let end = findClose(lines, i + 1, m[1].length);
+            if (end < 0) end = lines.length;
             const inner = lines.slice(i + 1, end).join('\n');
             out.push(addBlock(blocks, token,
                 renderContainer(m[2], m[3], m[4], inner, blocks, token)));

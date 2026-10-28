@@ -22,6 +22,33 @@ function mkRoot(tags) {
         querySelectorAll(sel) { return sel.includes(',') ? [] : nodes; },
     };
 }
+function mkBlockedRoot(html, inline) {
+    const doc = {
+        createElement() {
+            return {
+                set innerHTML(v) { this._html = v; },
+                get innerHTML() { return this._html; },
+                get content() { return { html: this._html }; },
+            };
+        },
+    };
+    const node = {
+        outerHTML: html,
+        ownerDocument: doc,
+        parentElement: {
+            closest(sel) { return inline && sel.includes('summary') ? {} : null; },
+        },
+        attributes: [],
+        replaceWith(content) { this.replacedWith = content.html; },
+        remove() { this.removed = true; },
+    };
+    return {
+        node,
+        root: {
+            querySelectorAll(sel) { return sel.includes(',') ? [node] : []; },
+        },
+    };
+}
 function loadSanitize() {
     const i0 = L.findIndex((l) => l.startsWith('const DANGEROUS_SCHEME_RE'));
     let i1 = -1;
@@ -101,7 +128,7 @@ check('on* 事件属性被剥掉', () => {
         assert.strictEqual(r.nodes[0].attributes.length, 0, attr + ' 未被剥掉');
     }
 });
-check('危险标签整节点移除', () => {
+check('无 DOM 渲染环境时危险标签兜底移除', () => {
     for (const tag of ['script', 'iframe', 'object', 'embed', 'link', 'meta', 'base', 'form']) {
         let removed = false;
         SAN.sanitize({
@@ -111,6 +138,38 @@ check('危险标签整节点移除', () => {
             },
         });
         assert.ok(removed, tag + ' 未触发移除');
+    }
+});
+check('被屏蔽 HTML 转义后按 Markdown 渲染', () => {
+    const prevWindow = global.window;
+    global.window = { marked: require(path.join(ROOT, 'static/markdown/marked.min.js')) };
+    try {
+        for (const tag of ['script', 'iframe', 'object', 'embed', 'link', 'meta',
+            'base', 'form', 'style', 'noscript', 'template']) {
+            const { node, root } = mkBlockedRoot('<' + tag + '>x</' + tag + '>', false);
+            SAN.sanitize(root);
+            assert.ok(!node.removed, tag + ' 被直接删除');
+            assert.ok(node.replacedWith && node.replacedWith.includes('&lt;' + tag + '&gt;'),
+                tag + ' 未转义为文本');
+            assert.ok(!node.replacedWith.includes('<' + tag), tag + ' 仍保留原始标签');
+        }
+        const block = mkBlockedRoot('<script>**bold**</script>', false);
+        SAN.sanitize(block.root);
+        assert.ok(block.node.replacedWith.includes('<strong>bold</strong>'),
+            '块级屏蔽标签内的 Markdown 未渲染');
+        const inline = mkBlockedRoot('<script>**bold**</script>', true);
+        SAN.sanitize(inline.root);
+        assert.ok(inline.node.replacedWith.includes('<strong>bold</strong>'),
+            '行内屏蔽标签内的 Markdown 未渲染');
+        assert.ok(!/^<p>/.test(inline.node.replacedWith),
+            '行内屏蔽标签不应生成段落');
+        const attr = mkBlockedRoot('<iframe src="https://example.com">x</iframe>', false);
+        SAN.sanitize(attr.root);
+        assert.ok(!/href=/.test(attr.node.replacedWith),
+            '屏蔽标签属性不应被误渲染为链接');
+    } finally {
+        if (prevWindow === undefined) delete global.window;
+        else global.window = prevWindow;
     }
 });
 console.log('\n======== [回归] 前端清洗 sanitize ========');
