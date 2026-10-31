@@ -30,8 +30,15 @@ function req(method, p, { body, cookie } = {}) {
         }
         const r = http.request({ host: '127.0.0.1', port: PORT, method, path: p, headers: h },
             res => {
-                let d = ''; res.on('data', c => d += c);
-                res.on('end', () => resolve({ status: res.statusCode, headers: res.headers, body: d }));
+                const chunks = [];
+                res.on('data', c => chunks.push(c));
+                res.on('end', () => {
+                    const rawBody = Buffer.concat(chunks);
+                    resolve({
+                        status: res.statusCode, headers: res.headers,
+                        body: rawBody.toString('utf8'), rawBody,
+                    });
+                });
             });
         r.on('error', reject);
         if (payload) r.write(payload);
@@ -92,6 +99,16 @@ function waitFor(ws, pred, ms = 10000) {
             assert.ok(html.includes('data-batch-form'), p + ' 缺少批量表单');
             assert.ok(html.includes('data-batch-check'), p + ' 缺少选择框');
         }
+        for (const p of ['templates/myfile.html', 'templates/domain_files.html']) {
+            const html = read(p);
+            assert.ok(html.includes('width:72px;'), p + ' 文件第一列宽度不足');
+            assert.ok(html.includes('class="file-icon"'), p + ' 缺少文件图标包装');
+            assert.ok(html.includes('/batch/download'), p + ' 缺少批量下载按钮');
+            assert.ok(html.includes('data-batch-action="delete"'), p + ' 缺少批量删除按钮');
+        }
+        const manageDiscuss = read('templates/manage_discussions.html');
+        assert.ok(manageDiscuss.includes('data-batch-action="batch-delete"'));
+        assert.ok(manageDiscuss.includes('data-confirm="确定删除选中的讨论及全部消息？"'));
         const discuss = read('templates/discuss.html');
         assert.ok(discuss.includes('id="messageBatchBar"'));
         assert.ok(discuss.includes('batchDeleteSelected()'));
@@ -133,6 +150,36 @@ function waitFor(ws, pred, ms = 10000) {
         assert.strictEqual(r.status, 302);
         assert.strictEqual(storage.getUserFile(uidA, f1.id).visibility, 'public');
         assert.strictEqual(storage.getUserFile(uidA, f2.id).visibility, 'public');
+    });
+    await check('文件：批量下载为 ZIP', async () => {
+        const r = await req('POST', '/myfile/batch/download', {
+            cookie: A, body: { ids: f1.id + ',' + f2.id },
+        });
+        assert.strictEqual(r.status, 200);
+        assert.match(r.headers['content-type'] || '', /^application\/zip/);
+        assert.match(r.headers['content-disposition'] || '', /^attachment;/);
+        assert.strictEqual(r.rawBody.readUInt32LE(0), 0x04034B50);
+        assert.ok(r.rawBody.includes(Buffer.from('zlphz.txt')));
+        assert.ok(r.rawBody.includes(Buffer.from('betz.txt')));
+    });
+    await check('文件：批量删除任一无效则整体不执行', async () => {
+        const d1 = storage.addUserFile(uidA, {
+            filename: 'del-a.txt', mime: 'text/plain', buffer: Buffer.from('a'),
+        });
+        const d2 = storage.addUserFile(uidA, {
+            filename: 'del-b.txt', mime: 'text/plain', buffer: Buffer.from('b'),
+        });
+        let r = await req('POST', '/myfile/batch', {
+            cookie: A, body: { ids: d1.id + ',missing-file', action: 'delete' },
+        });
+        assert.strictEqual(r.status, 302);
+        assert.ok(storage.getUserFile(uidA, d1.id), '无效选择时不应删除');
+        r = await req('POST', '/myfile/batch', {
+            cookie: A, body: { ids: d1.id + ',' + d2.id, action: 'delete' },
+        });
+        assert.strictEqual(r.status, 302);
+        assert.strictEqual(storage.getUserFile(uidA, d1.id), null);
+        assert.strictEqual(storage.getUserFile(uidA, d2.id), null);
     });
     await check('文件：批量操作任一无效则整体不执行', async () => {
         const before = storage.getUserFile(uidA, f1.id).filename;
@@ -176,6 +223,30 @@ function waitFor(ws, pred, ms = 10000) {
         assert.match(r.headers['content-disposition'] || '', /^inline/);
         assert.ok(!/sandbox/.test(r.headers['content-security-policy'] || ''));
     });
+    await check('域文件：批量下载为 ZIP', async () => {
+        const r = await req('POST', '/domain/system/files/batch/download', {
+            cookie: A, body: { ids: df1.id + ',' + df2.id },
+        });
+        assert.strictEqual(r.status, 200);
+        assert.match(r.headers['content-type'] || '', /^application\/zip/);
+        assert.strictEqual(r.rawBody.readUInt32LE(0), 0x04034B50);
+        assert.ok(r.rawBody.includes(Buffer.from('new-report-a.pdf')));
+        assert.ok(r.rawBody.includes(Buffer.from('report-b.pdf')));
+    });
+    await check('域文件：批量删除', async () => {
+        const d1 = storage.addDomainFile('system', {
+            filename: 'del-a.txt', mime: 'text/plain', buffer: Buffer.from('a'), uploader: uidA,
+        });
+        const d2 = storage.addDomainFile('system', {
+            filename: 'del-b.txt', mime: 'text/plain', buffer: Buffer.from('b'), uploader: uidA,
+        });
+        const r = await req('POST', '/domain/system/files/batch', {
+            cookie: A, body: { ids: d1.id + ',' + d2.id, action: 'delete' },
+        });
+        assert.strictEqual(r.status, 302);
+        assert.strictEqual(storage.getDomainFile('system', d1.id), null);
+        assert.strictEqual(storage.getDomainFile('system', d2.id), null);
+    });
     storage.saveDiscussion('system', 'batch-disc', {
         name: 'batch-disc', title: 'Hello World', created_at: storage.nowIso(),
     });
@@ -197,6 +268,28 @@ function waitFor(ws, pred, ms = 10000) {
         const cfg = storage.loadDiscussion('system', 'batch-disc');
         assert.strictEqual(cfg.title, 'Hi World');
         assert.strictEqual(cfg.name, 'batch-disc');
+    });
+    storage.saveDiscussion('system', 'batch-del-a', {
+        name: 'batch-del-a', title: 'A', created_at: storage.nowIso(),
+    });
+    storage.saveDiscussion('system', 'batch-del-b', {
+        name: 'batch-del-b', title: 'B', created_at: storage.nowIso(),
+    });
+    await check('讨论：批量删除任一无效则整体不执行', async () => {
+        const r = await req('POST', '/domain/system/manage/discussions', {
+            cookie: A, body: { ids: 'batch-del-a,general', action: 'batch-delete' },
+        });
+        assert.strictEqual(r.status, 302);
+        assert.ok(storage.loadDiscussion('system', 'batch-del-a').name);
+        assert.ok(storage.loadDiscussion('system', 'general').name);
+    });
+    await check('讨论：批量删除', async () => {
+        const r = await req('POST', '/domain/system/manage/discussions', {
+            cookie: A, body: { ids: 'batch-del-a,batch-del-b', action: 'batch-delete' },
+        });
+        assert.strictEqual(r.status, 302);
+        assert.ok(!storage.loadDiscussion('system', 'batch-del-a').name);
+        assert.ok(!storage.loadDiscussion('system', 'batch-del-b').name);
     });
     const wsA = await openRetry(() => new WebSocket(`ws://127.0.0.1:${PORT}/ws/discuss/system/general`,
         { headers: { Cookie: A } }));

@@ -29,6 +29,10 @@ html[data-theme="dark"] .batch-form button {
 html[data-theme="dark"] .batch-form button:hover {
   background: #1e3a5f; border-color: #4da3ff; color: #4da3ff;
 }
+html[data-theme="dark"] .batch-form button.danger { color: #ff7875; }
+html[data-theme="dark"] .batch-form button.danger:hover {
+  background: #3a1f1f; border-color: #ff7875; color: #ff7875;
+}
 html[data-theme="dark"] .pinned-badge {
   background: #2a2410; color: #d4a72c; border-color: #8c6a12;
 }

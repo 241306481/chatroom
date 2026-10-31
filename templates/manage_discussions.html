@@ -2,7 +2,7 @@
 {% block content %}
 <div class="page-container" data-batch-scope>
   <h1>讨论管理 · {{ domain_name }}</h1>
-  {% if discussions and discussions.length and (can_pin_discuss or can_edit_discuss) %}
+  {% if discussions and discussions.length and (can_pin_discuss or can_edit_discuss or can_delete_discuss) %}
     <div class="batch-toolbar">
       <form method="POST" action="/domain/{{ domain_name }}/manage/discussions"
             class="batch-form" data-batch-form>
@@ -24,6 +24,10 @@
           <input type="text" name="value" placeholder="前缀/后缀">
           <button type="submit" data-batch-action="batch-title">批量改标题</button>
         {% endif %}
+        {% if can_delete_discuss %}
+          <button type="submit" class="danger" data-batch-action="batch-delete"
+                  data-confirm="确定删除选中的讨论及全部消息？">批量删除</button>
+        {% endif %}
       </form>
     </div>
   {% endif %}
@@ -31,7 +35,7 @@
     <table class="user-table">
       <thead>
         <tr>
-          {% if can_pin_discuss or can_edit_discuss %}
+          {% if can_pin_discuss or can_edit_discuss or can_delete_discuss %}
             <th style="width:44px;"><input type="checkbox" class="batch-check"
                   data-batch-all title="全选" aria-label="全选"></th>
           {% endif %}
@@ -44,7 +48,7 @@
       <tbody>
         {% for d in discussions %}
           <tr>
-            {% if can_pin_discuss or can_edit_discuss %}
+            {% if can_pin_discuss or can_edit_discuss or can_delete_discuss %}
               <td>
                 <input type="checkbox" class="batch-check" data-batch-check
                        value="{{ d.id }}" aria-label="选择 {{ d.id }}">

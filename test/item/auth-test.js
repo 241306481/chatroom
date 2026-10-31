@@ -66,6 +66,15 @@ clearTlsArtifacts(ROOT);
             cookie: ROOT_C, xff: ADMIN_IP });
     const delRule = async (rule) => req('POST', '/manage/ip_bans',
         { body: { action: 'remove', rule }, cookie: ROOT_C, xff: ADMIN_IP });
+    await check('登录/注册页导航按钮在右侧操作区', () => {
+        for (const file of ['login.html', 'register.html']) {
+            const html = fs.readFileSync(path.join(ROOT, 'templates', file), 'utf8');
+            assert.ok(html.includes('class="topbar-actions"'), file + ' 未使用右侧操作区');
+            assert.ok(!html.includes('class="topbar-nav"'), file + ' 仍使用普通导航样式');
+            assert.ok(html.includes('class="nav-login-btn"'), file + ' 缺少登录按钮样式');
+            assert.ok(html.includes('class="nav-register-btn"'), file + ' 缺少注册按钮样式');
+        }
+    });
     await check('#4 "2026-10-14T12:00"（无秒无 Z）被接受并规范化', () => {
         assert.strictEqual(auth.normalizeUntil('2026-10-14T12:00'), '2026-10-14T12:00:00Z');
     });

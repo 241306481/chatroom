@@ -24,6 +24,25 @@
         const { closeAll } = window.EditorToolbar.attach({
             root, ta, refresh: previewApi.refresh,
         });
+        ta.addEventListener('paste', e => {
+            const data = e.clipboardData;
+            if (!data) return;
+            const isImage = file => file && (/^image\//i.test(file.type)
+                || /\.(png|jpe?g|gif|webp|bmp|avif)$/i.test(file.name || ''));
+            let files = Array.from(data.items || [])
+                .filter(item => item.kind === 'file')
+                .map(item => {
+                    try { return item.getAsFile(); } catch (err) { return null; }
+                })
+                .filter(isImage);
+            if (!files.length) files = Array.from(data.files || []).filter(isImage);
+            if (!files.length) return;
+            e.preventDefault();
+            if (!window.EditorUpload) return;
+            window.EditorUpload.pasteFiles(files, ta, previewApi.refresh, {
+                kind: 'image', visibility: root.dataset.imageVisibility,
+            });
+        });
         window.EditorTable.attach({
             root, ta, refresh: previewApi.refresh, closeAll,
         });

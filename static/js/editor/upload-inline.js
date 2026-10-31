@@ -71,36 +71,49 @@
             window.addEventListener('focus', onFocusBack);
             input.click();
         },
+        pasteFiles(files, ta, refresh, opts) {
+            const list = Array.from(files || []).filter(file => file
+                && (/^image\//i.test(file.type)
+                    || /\.(png|jpe?g|gif|webp|bmp|avif)$/i.test(file.name || '')));
+            if (!list.length) return Promise.resolve(0);
+            return list.reduce((chain, file) =>
+                chain.then(() => this._upload(file, ta, refresh, opts)), Promise.resolve())
+                .then(() => list.length);
+        },
         _upload(file, ta, refresh, opts) {
             const kind = (opts && opts.kind) || 'image';
             const fd = new FormData();
             fd.append('file', file);
             const xhr = new XMLHttpRequest();
-            xhr.open('POST', getUploadUrl(opts && opts.visibility));
-            xhr.onload = function () {
-                let res = null;
-                try { res = JSON.parse(xhr.responseText); } catch (e) {}
-                if (!res || !res.ok || !res.file) {
-                    const err = (res && res.error) || '上传失败';
-                    const title = kind === 'image' ? '上传图片' : '上传附件';
-                    if (window.showAlert) window.showAlert(err, { title });
-                    else alert(err);
-                    return;
-                }
-                const url = getViewUrl(res.file.id);
-                const name = String(res.file.filename || (kind === 'image' ? '图片' : '附件'))
-                    .replace(/[\[\]]/g, '_');
-                const md = '![' + name + '](' + url + ')';
-                if (window.EditorUtils && window.EditorUtils.insertAt) {
-                    window.EditorUtils.insertAt(ta, md);
-                }
-                if (refresh) refresh();
-            };
-            xhr.onerror = function () {
-                const title = kind === 'image' ? '上传图片' : '上传附件';
-                if (window.showAlert) window.showAlert('网络错误', { title });
-            };
-            xhr.send(fd);
+            const title = kind === 'image' ? '上传图片' : '上传附件';
+            return new Promise(resolve => {
+                xhr.open('POST', getUploadUrl(opts && opts.visibility));
+                xhr.onload = function () {
+                    let res = null;
+                    try { res = JSON.parse(xhr.responseText); } catch (e) {}
+                    if (!res || !res.ok || !res.file) {
+                        const err = (res && res.error) || '上传失败';
+                        if (window.showAlert) window.showAlert(err, { title });
+                        else alert(err);
+                        resolve(false);
+                        return;
+                    }
+                    const url = getViewUrl(res.file.id);
+                    const name = String(res.file.filename || (kind === 'image' ? '图片' : '附件'))
+                        .replace(/[\[\]]/g, '_');
+                    const md = '![' + name + '](' + url + ')';
+                    if (window.EditorUtils && window.EditorUtils.insertAt) {
+                        window.EditorUtils.insertAt(ta, md);
+                    }
+                    if (refresh) refresh();
+                    resolve(true);
+                };
+                xhr.onerror = function () {
+                    if (window.showAlert) window.showAlert('网络错误', { title });
+                    resolve(false);
+                };
+                xhr.send(fd);
+            });
         },
     };
 })();

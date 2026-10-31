@@ -91,6 +91,16 @@ const PNG = Buffer.from(
         assert.ok(/\?visibility=public/.test(js), 'upload-inline.js 未拼 visibility 参数');
         assert.ok(/_upload\(f, ta, refresh, opts\)/.test(js), 'opts 未透传给 _upload');
     });
+    check('编辑器支持直接粘贴图片', () => {
+        const idx = fs.readFileSync(path.join(ROOT, 'static/js/editor/index.js'), 'utf8');
+        const up = fs.readFileSync(path.join(ROOT, 'static/js/editor/upload-inline.js'), 'utf8');
+        assert.ok(/addEventListener\('paste'/.test(idx), 'index.js 未监听 paste');
+        assert.ok(/clipboardData/.test(idx), 'index.js 未读取剪贴板');
+        assert.ok(/visibility:\s*root\.dataset\.imageVisibility/.test(idx), '粘贴上传未透传 visibility');
+        assert.ok(/pasteFiles\(files, ta, previewApi\.refresh/.test(idx), '粘贴未调用上传组件');
+        assert.ok(/pasteFiles\(files, ta, refresh, opts\)/.test(up), 'upload-inline.js 缺少 pasteFiles');
+        assert.ok(/_upload\(file, ta, refresh, opts\)/.test(up), 'pasteFiles 未复用 _upload');
+    });
     const up = multipart({ name: 'dm.png', mime: 'image/png', data: PNG });
     const uploaded = await req('POST', '/myfile/upload?visibility=public', {
         cookie: A,

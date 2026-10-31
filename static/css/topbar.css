@@ -1,4 +1,4 @@
-.topbar { display: flex; justify-content: space-between; align-items: center;
+.topbar { display: flex; justify-content: flex-start; align-items: center;
   height: 48px; padding: 0 20px; background: #fff;
   border-bottom: 1px solid #e0e0e0; position: sticky; top: 0; z-index: 100; }
 .topbar-left { display: flex; align-items: center; gap: 10px; }
@@ -7,8 +7,9 @@
 .join-btn { padding: 3px 12px; background: #1890ff; color: #fff;
   border-radius: 4px; font-size: 12px; text-decoration: none; margin-left: 8px; }
 .join-btn:hover { background: #40a9ff; }
-.topbar-nav { display: flex; align-items: center; gap: 4px; }
-.topbar-actions { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+.topbar-nav { display: flex; align-items: center; gap: 4px; margin-left: 16px; }
+.topbar-actions { display: flex; align-items: center; gap: 4px;
+  flex-shrink: 0; margin-left: auto; }
 .topbar-nav > a { padding: 6px 12px; color: #555; text-decoration: none;
   font-size: 14px; border-radius: 4px; transition: background 0.15s; }
 .topbar-nav > a:hover { background: #f0f7ff; color: #1890ff; }
@@ -56,8 +57,8 @@
     text-overflow: ellipsis; }
   .domain-badge { display: none; }
   .join-btn { flex: 0 0 auto; margin-left: 0; padding: 3px 8px; font-size: 11px; }
-  .topbar-nav { flex: 1 1 auto; min-width: 0; overflow-x: auto;
-    scrollbar-width: none; }
+  .topbar-nav { flex: 1 1 auto; min-width: 0; margin-left: 0;
+    overflow-x: auto; scrollbar-width: none; }
   .topbar-nav::-webkit-scrollbar { display: none; }
   .topbar-nav > a { flex: 0 0 auto; padding: 6px 8px; font-size: 13px;
     white-space: nowrap; }

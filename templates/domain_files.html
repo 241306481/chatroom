@@ -41,6 +41,11 @@
         <input type="text" name="replace" placeholder="替换为">
         <input type="text" name="value" placeholder="前缀/后缀">
         <button type="submit" data-batch-action="rename">批量重命名</button>
+        <button type="submit"
+                formaction="/domain/{{ domain_name }}/files/batch/download"
+                data-batch-action="download">批量下载</button>
+        <button type="submit" data-batch-action="delete" class="danger"
+                data-confirm="确定删除选中的文件？">批量删除</button>
       </form>
     </div>
   {% endif %}
@@ -48,7 +53,7 @@
     <table class="file-table">
       <thead>
         <tr>
-          <th style="width:56px;"><input type="checkbox" class="batch-check"
+          <th style="width:72px;"><input type="checkbox" class="batch-check"
                 data-batch-all title="全选" aria-label="全选"></th>
           <th>文件名</th>
           <th style="width:80px;">大小</th>
@@ -65,7 +70,7 @@
                 <input type="checkbox" class="batch-check" data-batch-check
                        value="{{ f.id }}" aria-label="选择 {{ f.filename }}">
               {% endif %}
-              {{ f.icon }}
+              <span class="file-icon">{{ f.icon }}</span>
             </td>
             <td class="file-name-cell">
               {% if f.pinned %}<span class="pinned-badge">置顶</span>{% endif %}
