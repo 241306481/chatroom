@@ -99,6 +99,187 @@ function sanitize(root) {
         }
     });
 }
+const FILE_KINDS = {
+    pdf: 'pdf',
+    doc: 'word', docx: 'word', odt: 'word', rtf: 'word',
+    xls: 'sheet', xlsx: 'sheet', ods: 'sheet', csv: 'sheet',
+};
+const FILE_KIND_LABELS = { pdf: 'PDF', word: 'Word', sheet: '表格', file: '文件' };
+const FILE_KIND_ICONS = { pdf: '📕', word: '📘', sheet: '📗', file: '📄' };
+function fileExtension(value) {
+    const text = String(value == null ? '' : value).split(/[?#]/)[0];
+    const m = /\.([a-z0-9]{1,10})$/i.exec(text);
+    return m ? m[1].toLowerCase() : '';
+}
+function fileKind(label, url) {
+    const fromLabel = fileExtension(label);
+    if (FILE_KINDS[fromLabel]) return FILE_KINDS[fromLabel];
+    const fromUrl = fileExtension(String(url == null ? '' : url));
+    return FILE_KINDS[fromUrl] || '';
+}
+function parsedFileUrl(raw) {
+    try {
+        return new URL(String(raw == null ? '' : raw), window.location.href);
+    } catch (e) {
+        return null;
+    }
+}
+function safeFileUrl(raw, kind) {
+    const parsed = parsedFileUrl(raw);
+    if (!parsed) return false;
+    if (parsed.origin === window.location.origin) return true;
+    return parsed.protocol === 'https:' && kind === 'pdf';
+}
+function fileDownloadUrl(raw) {
+    const parsed = parsedFileUrl(raw);
+    if (!parsed || parsed.origin !== window.location.origin) return '';
+    if (!/\/(?:file|files|myfile)\/[^/]+$/.test(parsed.pathname)) return '';
+    return parsed.pathname.replace(/\/$/, '') + '/download' + parsed.search;
+}
+function fileNameFromUrl(raw) {
+    const parsed = parsedFileUrl(raw);
+    if (!parsed) return '文件';
+    const part = parsed.pathname.split('/').filter(Boolean).pop() || '';
+    try { return decodeURIComponent(part) || '文件'; } catch (e) { return part || '文件'; }
+}
+function fileCardLink(text, href, className) {
+    const a = document.createElement('a');
+    a.className = className;
+    a.href = href;
+    a.textContent = text;
+    const parsed = parsedFileUrl(href);
+    if (parsed && parsed.origin !== window.location.origin) {
+        a.target = '_blank';
+        a.rel = 'noopener noreferrer';
+    }
+    return a;
+}
+function buildFileBody(card) {
+    if (card.dataset.fileBody === '1') return;
+    card.dataset.fileBody = '1';
+    const body = card.querySelector('.md-file-body');
+    if (!body) return;
+    const kind = card.dataset.fileKind || 'file';
+    if (kind === 'pdf') {
+        const frame = document.createElement('iframe');
+        frame.className = 'md-file-embed';
+        frame.src = card.dataset.fileUrl;
+        frame.title = card.dataset.fileLabel || 'PDF 预览';
+        frame.loading = 'lazy';
+        frame.referrerPolicy = 'no-referrer';
+        body.appendChild(frame);
+        const hint = document.createElement('span');
+        hint.className = 'md-file-preview-hint';
+        hint.textContent = '若浏览器不支持内嵌预览，请点击“打开”查看。';
+        body.appendChild(hint);
+        return;
+    }
+    const note = document.createElement('span');
+    note.className = 'md-file-preview-note';
+    note.textContent = kind === 'word'
+        ? 'Word 文档暂不支持在线预览，请打开或下载查看。'
+        : kind === 'sheet'
+            ? '表格文件暂不支持在线预览，请打开或下载查看。'
+            : '此文件暂不支持在线预览，请打开或下载查看。';
+    body.appendChild(note);
+}
+function makeFileCard(label, url, expanded) {
+    const kind = fileKind(label, url) || 'file';
+    const card = document.createElement('span');
+    card.className = 'md-file-card md-file-' + kind
+        + (expanded ? ' md-file-expanded' : '');
+    card.dataset.fileKind = kind;
+    card.dataset.fileUrl = url;
+    card.dataset.fileLabel = label || fileNameFromUrl(url);
+    const row = document.createElement('span');
+    row.className = 'md-file-row';
+    const icon = document.createElement('span');
+    icon.className = 'md-file-icon';
+    icon.textContent = FILE_KIND_ICONS[kind] || FILE_KIND_ICONS.file;
+    const name = fileCardLink(card.dataset.fileLabel, url, 'md-file-name');
+    const kindLabel = document.createElement('span');
+    kindLabel.className = 'md-file-kind';
+    kindLabel.textContent = FILE_KIND_LABELS[kind] || FILE_KIND_LABELS.file;
+    const actions = document.createElement('span');
+    actions.className = 'md-file-actions';
+    actions.appendChild(fileCardLink('打开', url, 'md-file-action'));
+    const download = fileDownloadUrl(url);
+    if (download) {
+        const dl = fileCardLink('下载', download, 'md-file-action');
+        dl.setAttribute('download', '');
+        actions.appendChild(dl);
+    }
+    const toggle = document.createElement('button');
+    toggle.type = 'button';
+    toggle.className = 'md-file-toggle';
+    toggle.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+    toggle.textContent = expanded ? '收起' : '展开';
+    actions.appendChild(toggle);
+    const body = document.createElement('span');
+    body.className = 'md-file-body';
+    row.appendChild(icon);
+    row.appendChild(name);
+    row.appendChild(kindLabel);
+    row.appendChild(actions);
+    card.appendChild(row);
+    card.appendChild(body);
+    if (expanded) buildFileBody(card);
+    return card;
+}
+function enhanceFileCards(root) {
+    root.querySelectorAll('img').forEach(img => {
+        img.setAttribute('loading', 'lazy');
+        img.setAttribute('decoding', 'async');
+        if (img.closest('code, pre')) return;
+        const label = img.getAttribute('alt') || '';
+        const src = img.getAttribute('src') || '';
+        const kind = fileKind(label, src);
+        if (!kind || !safeFileUrl(src, kind)) return;
+        if (!img.parentNode) return;
+        img.replaceWith(makeFileCard(label || fileNameFromUrl(src), src, true));
+    });
+    root.querySelectorAll('a[href]').forEach(a => {
+        if (a.closest('code, pre')) return;
+        const prev = a.previousSibling;
+        if (!prev || prev.nodeType !== 3 || !/@$/.test(prev.nodeValue || '')) return;
+        const label = a.textContent || '';
+        const url = a.getAttribute('href') || '';
+        const kind = fileKind(label, url) || 'file';
+        if (!safeFileUrl(url, kind)) return;
+        if (!a.parentNode) return;
+        if (prev.nodeValue.length === 1) prev.remove();
+        else prev.nodeValue = prev.nodeValue.slice(0, -1);
+        a.replaceWith(makeFileCard(label || fileNameFromUrl(url), url, false));
+    });
+}
+function scrollParentOf(el) {
+    let parent = el.parentElement;
+    while (parent) {
+        const style = window.getComputedStyle(parent);
+        if (/(auto|scroll)/.test(String(style.overflowY || ''))
+            && parent.scrollHeight > parent.clientHeight) return parent;
+        parent = parent.parentElement;
+    }
+    return null;
+}
+function toggleFileCard(btn) {
+    const card = btn.closest('.md-file-card');
+    if (!card) return;
+    const scroller = scrollParentOf(card);
+    const before = card.getBoundingClientRect().top;
+    const expanded = card.classList.toggle('md-file-expanded');
+    btn.textContent = expanded ? '收起' : '展开';
+    btn.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+    if (expanded) buildFileBody(card);
+    const after = card.getBoundingClientRect().top;
+    if (scroller) scroller.scrollTop += after - before;
+    else if (window.scrollBy) window.scrollBy(0, after - before);
+}
+window.FileCards = {
+    enhance: enhanceFileCards,
+    ensureBody: buildFileBody,
+    toggle: toggleFileCard,
+};
 window.copyToClipboard = function (text, btn) {
     navigator.clipboard.writeText(text).then(function () {
         if (!btn) return;
@@ -112,6 +293,16 @@ window.copyToClipboard = function (text, btn) {
         setTimeout(function () { btn.textContent = old; }, 1500);
     });
 };
+document.addEventListener('click', function (e) {
+    const t = e.target;
+    if (!t || !t.closest) return;
+    const toggle = t.closest('.md-file-toggle');
+    if (toggle) {
+        e.preventDefault();
+        toggleFileCard(toggle);
+        return;
+    }
+});
 document.addEventListener('click', function (e) {
     const t = e.target;
     if (!t || !t.closest) return;
@@ -167,6 +358,7 @@ window.renderContent = function (text) {
         });
     })(container);
     sanitize(container);
+    enhanceFileCards(container);
     if (window.highlightCode) window.highlightCode(container);
     if (window.renderMathInElement) {
         try {

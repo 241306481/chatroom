@@ -1,13 +1,29 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="page-container">
+<div class="page-container" data-batch-scope>
   <h1>加入申请 · {{ display_name }}</h1>
   {% if applications and applications.length %}
+    <div class="batch-toolbar">
+      <form method="POST" action="/domain/{{ domain_name }}/manage/applications"
+            class="batch-form" data-batch-form>
+        <input type="hidden" name="ids" data-batch-ids>
+        <input type="hidden" name="action" data-batch-action-field>
+        <span class="batch-count" data-batch-count>已选 0 个</span>
+        <button type="submit" data-batch-action="approve">批量通过</button>
+        <button type="submit" data-batch-action="reject"
+                data-confirm="确定拒绝选中的申请？">批量拒绝</button>
+      </form>
+    </div>
+  {% endif %}
+  {% if applications and applications.length %}
     <table class="user-table">
-      <thead><tr><th>用户</th><th>UID</th><th>说明</th><th>时间</th><th>操作</th></tr></thead>
+      <thead><tr><th style="width:44px;"><input type="checkbox" class="batch-check"
+        data-batch-all title="全选" aria-label="全选"></th><th>用户</th><th>UID</th><th>说明</th><th>时间</th><th>操作</th></tr></thead>
       <tbody>
         {% for a in applications %}
           <tr>
+            <td><input type="checkbox" class="batch-check" data-batch-check
+                       value="{{ a.uid }}" aria-label="选择 {{ a.nickname }}"></td>
             <td>{{ a.nickname }}</td>
             <td>{{ a.uid }}</td>
             <td class="user-table-message">{{ a.message }}</td>

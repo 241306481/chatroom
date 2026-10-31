@@ -38,6 +38,14 @@
 .md-editor-content-wrapper.md-editor-preview-hidden [data-pane="preview"],
 .md-editor-content-wrapper.md-editor-preview-hidden [data-resize] { display: none; }
 .md-editor-content-wrapper.md-editor-preview-hidden [data-pane="edit"] { flex: 1 1 100% !important; }
+.md-editor-content-wrapper.md-editor-edit-hidden [data-pane="edit"],
+.md-editor-content-wrapper.md-editor-edit-hidden [data-resize] { display: none; }
+.md-editor-content-wrapper.md-editor-edit-hidden [data-pane="preview"] {
+  flex: 1 1 100% !important; }
+.md-editor-content-wrapper.md-editor-edit-hidden [data-pane="edit"],
+.md-editor-content-wrapper.md-editor-edit-hidden [data-resize] { display: none; }
+.md-editor-content-wrapper.md-editor-edit-hidden [data-pane="preview"] {
+  flex: 1 1 100% !important; }
 .md-editor-pane { flex: 1 1 0; min-width: 0; overflow: hidden;
   display: flex; flex-direction: column; }
 .md-editor-source { display: flex; flex: 1; min-height: 0; background: #fff; }
@@ -96,10 +104,16 @@
   border: none; border-radius: 4px; cursor: pointer; font-size: 13px;
   font-family: inherit; transition: background 0.15s; }
 .md-editor-submit:hover { background: #40a9ff; }
+.md-editor-help-btn { color: #555; }
+.md-editor-help-btn:hover { background: #e6f7ff; color: #1890ff; }
 @media (max-width: 720px) {
   .md-editor-content-wrapper { flex-direction: column; }
   .md-editor-content-wrapper [data-resize] { display: none; }
   .md-editor-pane { flex: none !important; height: 50%; }
+  .md-editor-content-wrapper.md-editor-preview-hidden [data-pane="edit"],
+  .md-editor-content-wrapper.md-editor-edit-hidden [data-pane="preview"] {
+    height: 100%;
+  }
   .md-editor-height-resize { display: none; }
 }
 .mention-picker { position: fixed; z-index: 100000;

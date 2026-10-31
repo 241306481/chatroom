@@ -1,3 +1,5 @@
+.mobile-discuss-radio { display: none; }
+.mobile-discuss-tabs { display: none; }
 .layout-discuss { display: grid; grid-template-columns: 200px 1fr 280px;
   grid-template-rows: minmax(0, 1fr);
   height: calc(100vh - 48px); overflow: hidden; }
@@ -48,6 +50,23 @@
   margin-bottom: 4px; align-items: center; }
 .msg-nick { font-weight: 600; color: #333; }
 .pin-icon { color: #faad14; }
+.msg-batch-toggle { padding: 3px 9px; border: 1px solid #d9d9d9;
+  border-radius: 4px; background: #fff; color: #555; cursor: pointer;
+  font-size: 12px; }
+.msg-batch-toggle:hover { border-color: #1890ff; color: #1890ff; }
+.message-batch-bar { display: flex; flex-wrap: wrap; align-items: center;
+  gap: 8px; padding: 8px 12px; background: #f0f7ff;
+  border-bottom: 1px solid #d6e8ff; font-size: 13px; }
+.message-batch-bar[hidden] { display: none; }
+.message-batch-bar button { padding: 4px 9px; border: 1px solid #d9d9d9;
+  border-radius: 4px; background: #fff; color: #333; cursor: pointer;
+  font-size: 12px; }
+.message-batch-bar button:hover { border-color: #1890ff; color: #1890ff; }
+.message-batch-bar button.danger { color: #ff4d4f; }
+.msg-check { display: none; width: 15px; height: 15px; margin-top: 11px;
+  cursor: pointer; flex-shrink: 0; }
+.msg-batch-mode .msg-check { display: inline-block; }
+.message.selected { background: #e6f7ff; border-radius: 6px; padding: 8px; }
 .msg-actions { margin-left: auto; opacity: 0.35; transition: opacity 0.15s;
   display: flex; gap: 4px; }
 .message:hover .msg-actions { opacity: 1; }
@@ -236,3 +255,48 @@ html[data-theme="dark"] .loading-older { color: #666; }
   box-shadow: inset 3px 0 0 #faad14; border-radius: 4px; }
 .msg-nick { max-width: 160px; overflow: hidden;
   text-overflow: ellipsis; white-space: nowrap; vertical-align: middle; }
+@media (max-width: 720px) {
+  .mobile-discuss-radio { display: block; position: absolute;
+    width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+  .mobile-discuss-tabs { display: flex; height: 40px;
+    background: #fafafa; border-bottom: 1px solid #e0e0e0; }
+  .mobile-discuss-tabs label { flex: 1; display: flex; align-items: center;
+    justify-content: center; cursor: pointer; font-size: 13px; color: #666;
+    border-right: 1px solid #e0e0e0; }
+  .mobile-discuss-tabs label:last-child { border-right: none; }
+  #mobilePaneDiscuss:checked ~ .mobile-discuss-tabs label[for="mobilePaneDiscuss"],
+  #mobilePaneChat:checked ~ .mobile-discuss-tabs label[for="mobilePaneChat"],
+  #mobilePaneSide:checked ~ .mobile-discuss-tabs label[for="mobilePaneSide"] {
+    background: #fff; color: #1890ff; font-weight: 600;
+    box-shadow: inset 0 -2px 0 #1890ff;
+  }
+  #mobilePaneDiscuss:focus-visible ~ .mobile-discuss-tabs label[for="mobilePaneDiscuss"],
+  #mobilePaneChat:focus-visible ~ .mobile-discuss-tabs label[for="mobilePaneChat"],
+  #mobilePaneSide:focus-visible ~ .mobile-discuss-tabs label[for="mobilePaneSide"] {
+    outline: 2px solid #1890ff; outline-offset: -3px;
+  }
+  .layout-discuss { display: block; height: calc(100vh - 88px);
+    height: calc(100dvh - 88px); }
+  .sidebar-discussions, .message-area, .sidebar-right {
+    display: none; height: 100%; }
+  #mobilePaneDiscuss:checked ~ .layout-discuss .sidebar-discussions { display: block; }
+  #mobilePaneChat:checked ~ .layout-discuss .message-area { display: flex; }
+  #mobilePaneSide:checked ~ .layout-discuss .sidebar-right { display: flex; }
+  .sidebar-discussions { border-right: none; }
+  .sidebar-right { border-left: none; }
+  .discuss-header { flex-wrap: wrap; gap: 8px; padding: 10px 12px; }
+  .discuss-header h2 { flex: 1 1 100%; min-width: 0; font-size: 15px;
+    overflow-wrap: anywhere; }
+  .discuss-header-title { margin-left: 4px; }
+  .inline-search-wrap { flex: 1 1 150px; min-width: 0; margin: 0; }
+  .inline-search-input, .inline-search-input:focus { width: 100%; }
+  .online-badge { flex: 0 0 auto; }
+  .msg-batch-toggle, .manage-link, .delete-disc-btn { flex: 0 0 auto; }
+  .message-list { padding: 12px; }
+  .message-input-area {
+    padding: 8px 8px calc(8px + env(safe-area-inset-bottom, 0px)); }
+  .msg-nick { max-width: 100px; }
+  .message-batch-bar { padding: 8px; gap: 6px; }
+  .message-batch-bar .batch-count { flex: 1 1 100%; min-width: 0; }
+  .message-batch-bar button { flex: 0 1 auto; }
+}

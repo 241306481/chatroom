@@ -25,6 +25,9 @@
     function applyDelete(messageId) {
         const el = document.querySelector('.message[data-id="' + messageId + '"]');
         if (el) el.remove();
+        const pin = document.querySelector(
+            '.pinned-item[data-id="' + messageId + '"]');
+        if (pin) pin.remove();
         updateReplyQuotes(messageId, false);
     }
     function updateReplyQuotes(messageId, revoked) {

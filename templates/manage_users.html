@@ -1,13 +1,29 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="page-container" style="max-width: 1200px;">
+<div class="page-container" style="max-width: 1200px;" data-batch-scope>
   <h1>用户管理（全局）</h1>
   <p class="hint">封禁后该用户无法登录；管理员拥有系统管理权限</p>
+  {% if users and users.length %}
+    <div class="batch-toolbar">
+      <form method="POST" action="/manage/users/batch" class="batch-form" data-batch-form>
+        <input type="hidden" name="ids" data-batch-ids>
+        <input type="hidden" name="action" data-batch-action-field>
+        <span class="batch-count" data-batch-count>已选 0 个</span>
+        <input type="text" name="reason" placeholder="封禁原因">
+        <span style="font-size:11px;color:#888;">留空=永久</span>
+        <input type="datetime-local" name="until_local" style="font-size:12px;">
+        <button type="submit" data-batch-action="ban"
+                data-confirm="封禁选中的用户？">批量封禁</button>
+        <button type="submit" data-batch-action="unban">批量解封</button>
+      </form>
+    </div>
+  {% endif %}
   {% if users and users.length %}
     <table class="user-table">
       <thead>
         <tr>
-          <th style="width:56px;"></th>
+          <th style="width:72px;"><input type="checkbox" class="batch-check"
+                data-batch-all title="全选" aria-label="全选"></th>
           <th>昵称</th>
           <th>UID</th>
           <th>状态</th>
@@ -20,6 +36,10 @@
         {% for u in users %}
           <tr data-uid="{{ u.id }}" {% if u.banned %}class="row-banned"{% endif %}>
             <td>
+              {% if not u.is_superuser %}
+                <input type="checkbox" class="batch-check" data-batch-check
+                       value="{{ u.id }}" aria-label="选择 {{ u.nickname }}">
+              {% endif %}
               <img class="user-avatar-lg avatar-img" src="{{ u | avatarSrc }}"
                        onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex'"
                        alt="" loading="lazy"

@@ -113,6 +113,8 @@ function httpsGet(p, cookie) {
         }
         res();
     });
+    const bootT0 = Date.now();
+    while (Date.now() - bootT0 < 5000 && !/Protocol: https \/ wss/.test(boot)) await sleep(50);
     await check('★ 检测到证书后自动启用 HTTPS/WSS', () => {
         assert.ok(/Protocol: https \/ wss/.test(boot), '未切换到 https/wss:\n' + boot.slice(0, 400));
     });

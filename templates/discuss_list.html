@@ -23,6 +23,7 @@
         <div class="discuss-row-wrap">
           <a href="/domain/{{ domain_name }}/discuss/{{ d.id }}" class="discuss-row">
             <div class="discuss-row-left">
+              {% if d.pinned %}<span class="pinned-badge">置顶</span>{% endif %}
               <span class="discuss-id"
                     data-old-id="{{ d.id }}"
                     data-value="{{ d.id }}"

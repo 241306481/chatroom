@@ -57,6 +57,10 @@
     {% endif %}
     {% if nav and nav.is_logged_in %}
       <a href="/mydomain">我的域</a>
+    {% endif %}
+  </nav>
+  <div class="topbar-actions">
+    {% if nav and nav.is_logged_in %}
       <div class="user-menu-wrapper">
         <div class="user-avatar-btn" id="userMenuBtn" data-uid="{{ current_user.id }}">
           <img class="avatar-circle avatar-img" src="{{ current_user | avatarSrc }}"
@@ -107,7 +111,7 @@
     {% endif %}
     <button type="button" class="theme-toggle" id="themeToggle"
             title="切换主题" aria-label="切换主题">🌙</button>
-  </nav>
+  </div>
 </header>
 <main class="app-main">
 {% block content %}{% endblock %}
@@ -121,6 +125,8 @@
   window.__CAN_PIN__ = {{ 'true' if can_pin else 'false' }};
   window.__CAN_MUTE__ = {{ 'true' if can_mute else 'false' }};
   window.__CAN_DELETE_ANY__ = {{ 'true' if can_delete_any else 'false' }};
+  window.__CAN_DELETE_OWN__ = {{ 'true' if can_delete_own else 'false' }};
+  window.__CAN_BATCH__ = {{ 'true' if can_pin or can_delete_any or can_delete_own else 'false' }};
   window.__CAN_ADD_REACTION__ = {{ 'true' if can_add_reaction else 'false' }};
   window.__CAN_REVOKE_OWN__ = {{ 'true' if can_revoke_own else 'false' }};
   window.__CAN_REVOKE_ANY__ = {{ 'true' if can_revoke_any else 'false' }};
@@ -226,6 +232,8 @@
 </script>
 <script src="/static/js/chat/actions.js">
 </script>
+<script src="/static/js/chat/batch-messages.js">
+</script>
 <script src="/static/js/chat/socket.js">
 </script>
 <script src="/static/js/chat/inline-search.js">
@@ -237,6 +245,8 @@
 <script src="/static/js/copy-link.js">
 </script>
 <script src="/static/js/file-visibility.js">
+</script>
+<script src="/static/js/batch-select.js">
 </script>
 <script>  (function () {
     var KEY = 'chatroom_theme';

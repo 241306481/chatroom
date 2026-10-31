@@ -83,7 +83,7 @@ const PNG = Buffer.from(
     check('工具栏把 visibility 传给上传组件', () => {
         const js = fs.readFileSync(path.join(ROOT, 'static/js/editor/toolbar.js'), 'utf8');
         assert.ok(/dataset\.imageVisibility/.test(js), 'toolbar.js 未读取 imageVisibility');
-        assert.ok(/pickAndUpload\(ta, refresh, \{ visibility/.test(js),
+        assert.ok(/pickAndUpload\(ta, refresh,\s*\{\s*(?:kind:[^,]+,\s*)?visibility/.test(js),
             'toolbar.js 未把 visibility 传给 pickAndUpload');
     });
     check('上传组件会带上 visibility=public', () => {

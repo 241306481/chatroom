@@ -44,3 +44,34 @@
   padding: 4px 8px; font-size: 12px; color: #666;
   background: #fafafa; border-radius: 4px; }
 .progress-queue-item .queue-status { color: #999; }
+.batch-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
+  padding: 10px 12px; margin: 8px 0; border: 1px solid #e5e7eb;
+  border-radius: 6px; background: #fafafa; }
+.batch-form { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.batch-count { font-size: 13px; color: #666; min-width: 84px; }
+.batch-form input[type="text"],
+.batch-form select { padding: 5px 7px; border: 1px solid #d9d9d9;
+  border-radius: 4px; font-size: 12px; background: #fff; }
+.batch-form input[type="text"] { width: 116px; }
+.batch-form button { padding: 5px 10px; border: 1px solid #d9d9d9;
+  border-radius: 4px; background: #fff; color: #333; cursor: pointer;
+  font-size: 12px; }
+.batch-form button:hover { background: #e6f7ff; border-color: #1890ff;
+  color: #1890ff; }
+.batch-check { width: 15px; height: 15px; cursor: pointer;
+  vertical-align: middle; margin-right: 6px; }
+.pinned-badge { display: inline-block; margin-right: 6px; padding: 1px 5px;
+  border-radius: 3px; background: #fff7e6; color: #d46b08;
+  border: 1px solid #ffd591; font-size: 11px; vertical-align: middle; }
+@media (max-width: 720px) {
+  .file-page { padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px)); }
+  .batch-toolbar { padding: 8px; gap: 6px; }
+  .batch-form { width: 100%; }
+  .batch-form input[type="text"] {
+    width: auto; flex: 1 1 calc(50% - 4px); min-width: 0;
+  }
+  .batch-form select { flex: 1 1 100%; min-width: 0; }
+  .batch-count { min-width: 0; }
+  .batch-form button { flex: 0 1 auto; }
+  .file-table { display: block; overflow-x: auto; white-space: nowrap; }
+}

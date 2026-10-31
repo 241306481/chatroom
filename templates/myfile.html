@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="page-container file-page">
+<div class="page-container file-page" data-batch-scope>
   <div class="file-header">
     <h1>📁 我的文件</h1>
     <div>
@@ -22,10 +22,36 @@
     <span>共 {{ files.length }} 个文件</span>
   </div>
   {% if files and files.length %}
+    <div class="batch-toolbar">
+      <form method="POST" action="/myfile/batch" class="batch-form" data-batch-form>
+        <input type="hidden" name="ids" data-batch-ids>
+        <input type="hidden" name="action" data-batch-action-field>
+        <input type="hidden" name="visibility">
+        <span class="batch-count" data-batch-count>已选 0 个</span>
+        <button type="submit" data-batch-action="pin">置顶</button>
+        <button type="submit" data-batch-action="unpin">取消置顶</button>
+        <select name="mode" title="重命名方式">
+          <option value="replace">查找替换</option>
+          <option value="prefix">统一前缀</option>
+          <option value="suffix">统一后缀</option>
+        </select>
+        <input type="text" name="find" placeholder="查找">
+        <input type="text" name="replace" placeholder="替换为">
+        <input type="text" name="value" placeholder="前缀/后缀">
+        <button type="submit" data-batch-action="rename">批量重命名</button>
+        <button type="submit" data-batch-action="visibility"
+                data-batch-visibility="public">设为公开</button>
+        <button type="submit" data-batch-action="visibility"
+                data-batch-visibility="private">设为隐藏</button>
+      </form>
+    </div>
+  {% endif %}
+  {% if files and files.length %}
     <table class="file-table">
       <thead>
         <tr>
-          <th style="width:40px;"></th>
+          <th style="width:56px;"><input type="checkbox" class="batch-check"
+                data-batch-all title="全选" aria-label="全选"></th>
           <th>文件名</th>
           <th style="width:80px;">大小</th>
           <th style="width:170px;">上传时间</th>
@@ -35,8 +61,13 @@
       <tbody>
         {% for f in files %}
           <tr>
-            <td class="file-icon-cell">{{ f.icon }}</td>
+            <td class="file-icon-cell">
+              <input type="checkbox" class="batch-check" data-batch-check
+                     value="{{ f.id }}" aria-label="选择 {{ f.filename }}">
+              {{ f.icon }}
+            </td>
             <td class="file-name-cell">
+              {% if f.pinned %}<span class="pinned-badge">置顶</span>{% endif %}
               <span class="file-name-editable"
                     data-file-id="{{ f.id }}"
                     data-value="{{ f.filename }}"

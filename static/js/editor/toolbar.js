@@ -22,7 +22,7 @@ window.EditorToolbar = {
         document.addEventListener('click', closeAll);
         root.querySelectorAll('[data-action]').forEach(el => {
             const action = el.dataset.action;
-            if (action === 'dropdown' || action === 'toggle-preview') return;
+            if (action === 'dropdown' || action === 'mode') return;
             el.addEventListener('click', e => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -72,7 +72,15 @@ function handleAction(action, el, ta, refresh) {
         if (window.EditorUpload) {
             const root = el.closest('.md-editor');
             const visibility = root && root.dataset.imageVisibility;
-            window.EditorUpload.pickAndUpload(ta, refresh, { visibility });
+            window.EditorUpload.pickAndUpload(ta, refresh,
+                { kind: 'image', visibility });
+        }
+    } else if (action === 'file-upload') {
+        if (window.EditorUpload) {
+            const root = el.closest('.md-editor');
+            const visibility = root && root.dataset.imageVisibility;
+            window.EditorUpload.pickAndUpload(ta, refresh,
+                { kind: 'file', visibility });
         }
     } else if (action === 'undo') {
         ta.focus();

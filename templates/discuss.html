@@ -1,6 +1,14 @@
 {% extends "base.html" %}
 {% from "context_edit.html" import context_edit %}
 {% block content %}
+<input type="radio" name="mobileDiscussPane" id="mobilePaneDiscuss" class="mobile-discuss-radio" aria-label="讨论">
+<input type="radio" name="mobileDiscussPane" id="mobilePaneChat" class="mobile-discuss-radio" aria-label="聊天" checked>
+<input type="radio" name="mobileDiscussPane" id="mobilePaneSide" class="mobile-discuss-radio" aria-label="置顶与成员">
+<nav class="mobile-discuss-tabs" aria-label="讨论视图">
+  <label for="mobilePaneDiscuss">讨论</label>
+  <label for="mobilePaneChat">聊天</label>
+  <label for="mobilePaneSide">置顶/成员</label>
+</nav>
 <div class="layout-discuss">
   <nav class="sidebar-discussions">
     <h3>讨论</h3>
@@ -11,6 +19,7 @@
       {% for disc in discussions %}
         <a href="/domain/{{ domain_name }}/discuss/{{ disc.id }}"
            class="disc-item {% if disc.active %}active{% endif %}">
+          {% if disc.pinned %}<span class="pinned-badge">置顶</span>{% endif %}
           <span class="disc-item-id">#{{ disc.id }}</span>
           {% if disc.title %}<span class="disc-item-title">{{ disc.title }}</span>{% endif %}
         </a>
@@ -37,6 +46,9 @@
         <span class="inline-search-count"></span>
       </div>
       <span class="online-badge">● {{ online_count | default(0) }}/{{ total_count | default(0) }}</span>
+      {% if can_pin or can_delete_any or can_delete_own %}
+        <button type="button" class="msg-batch-toggle" id="batchToggleBtn">选择</button>
+      {% endif %}
       {% if can_manage_discuss %}
         <a href="/domain/{{ domain_name }}/manage/discussions" class="manage-link">管理</a>
       {% endif %}
@@ -45,6 +57,18 @@
                 data-disc-name="{{ discuss_name }}"
                 title="删除此讨论">删除</button>
       {% endif %}
+    </div>
+    <div class="message-batch-bar" id="messageBatchBar" hidden>
+      <label><input type="checkbox" id="batchAll"> 全选</label>
+      <span class="batch-count" id="batchCount">已选 0 条</span>
+      {% if can_pin %}
+        <button type="button" onclick="batchPinSelected(true)">置顶</button>
+        <button type="button" onclick="batchPinSelected(false)">取消置顶</button>
+      {% endif %}
+      {% if can_delete_any or can_delete_own %}
+        <button type="button" class="danger" onclick="batchDeleteSelected()">删除</button>
+      {% endif %}
+      <button type="button" onclick="toggleMessageBatch(false)">取消选择</button>
     </div>
     <div class="message-list" id="messageList"
          data-total="{{ messages_total | default(0) }}"
@@ -55,6 +79,10 @@
         {% for msg in messages | reverse %}
           <div class="message {% if msg.pinned %}pinned{% endif %} {% if msg.is_system %}system-msg{% endif %} {% if msg.revoked %}revoked-msg{% endif %}"
                data-id="{{ msg.id }}" {% if msg.reply_to %}data-reply-to="{{ msg.reply_to }}"{% endif %} id="msg-{{ msg.id }}">
+            {% if can_pin or can_delete_any or can_delete_own %}
+              <input type="checkbox" class="msg-check" data-msg-check
+                     value="{{ msg.id }}" aria-label="选择消息">
+            {% endif %}
             {% set av = msg | avatarSrc(msg.user_id) %}
             {% if av %}<img class="msg-avatar avatar-img" src="{{ av }}"
                      onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex'"

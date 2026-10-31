@@ -8,7 +8,8 @@
         const lineNumbers = root.querySelector('[data-line-numbers]');
         const lineCount = root.querySelector('[data-line-count]');
         const syncCb = root.querySelector('.md-editor-sync');
-        const previewBtn = root.querySelector('[data-action="toggle-preview"]');
+        const modeBtns = Array.from(
+            root.querySelectorAll('[data-action="mode"]'));
         const wrapper = root.querySelector('[data-wrapper]');
         const resizeOp = root.querySelector('[data-resize]');
         const heightResize = root.querySelector('[data-height-resize]');
@@ -29,13 +30,22 @@
         window.EditorResize.attach({
             root, wrapper, resizeOp, paneEdit, panePreview, heightResize,
         });
-        if (previewBtn) {
-            previewBtn.addEventListener('click', e => {
+        if (modeBtns.length) {
+            function setMode(mode) {
+                if (['source', 'split', 'preview'].indexOf(mode) < 0) mode = 'split';
+                root.dataset.editorMode = mode;
+                wrapper.classList.toggle('md-editor-preview-hidden', mode === 'source');
+                wrapper.classList.toggle('md-editor-edit-hidden', mode === 'preview');
+                modeBtns.forEach(btn =>
+                    btn.classList.toggle('md-editor-toolbar-active',
+                        btn.dataset.mode === mode));
+                if (mode !== 'source') previewApi.refresh();
+            }
+            modeBtns.forEach(btn => btn.addEventListener('click', e => {
                 e.stopPropagation();
-                const hidden = wrapper.classList.toggle('md-editor-preview-hidden');
-                previewBtn.classList.toggle('md-editor-toolbar-active', !hidden);
-                if (!hidden) previewApi.refresh();
-            });
+                setMode(btn.dataset.mode);
+            }));
+            setMode(root.dataset.editorMode || 'split');
         }
         if (syncCb) {
             let syncLock = 0;

@@ -235,17 +235,59 @@ await check('讨论区：经验立即反映在存储中（无缓冲）', async (
         assert.strictEqual(r.status, 200);
     });
     dmA.close(); dmB.close();
+    await check('帮助页可用', async () => {
+        const r = await req('GET', '/help', { cookie: A });
+        assert.strictEqual(r.status, 200, '登录后应可访问 /help');
+        const anon = await req('GET', '/help');
+        assert.ok([302, 403].includes(anon.status), '匿名 /help 未被权限审计约束');
+        assert.ok(r.body.includes('<h1>帮助中心</h1>'), '帮助页标题缺失');
+        assert.ok(r.body.includes('id="editor"'), '帮助页缺少编辑器章节锚点');
+    });
+    await check('编辑器：三态切换契约正确', () => {
+        const js = fs.readFileSync(path.join(ROOT, 'static/js/editor/index.js'), 'utf8');
+        const css = fs.readFileSync(path.join(ROOT, 'static/css/editor.css'), 'utf8');
+        assert.ok(/function setMode/.test(js), '缺少 setMode');
+        assert.ok(/'source', 'split', 'preview'/.test(js), 'mode 不满足');
+        assert.ok(/md-editor-preview-hidden', mode === 'source'/.test(js), 'source mode 未控制预览');
+        assert.ok(/md-editor-edit-hidden', mode === 'preview'/.test(js), 'preview mode 未控制源码');
+        assert.ok(/btn\.dataset\.mode === mode/.test(js), 'mode 按钮未同步 active');
+        assert.ok(/\.md-editor-content-wrapper\.md-editor-edit-hidden \[data-pane="edit"\]/.test(css),
+            '缺少 preview 模式样式');
+        assert.ok(/\.md-editor-content-wrapper\.md-editor-edit-hidden \[data-pane="preview"\]/.test(css),
+            'preview 模式没有铺满');
+        const tpl = fs.readFileSync(path.join(ROOT, 'templates/context_edit.html'), 'utf8');
+        assert.ok(/\/help#editor/.test(tpl), '编辑器缺少帮助链接');
+    });
+    await check('编辑器：附件与上下文上传契约正确', () => {
+        const tpl = fs.readFileSync(path.join(ROOT, 'templates/context_edit.html'), 'utf8');
+        assert.ok(/data-action="file-upload"/.test(tpl), '缺少附件上传入口');
+        assert.ok(/!name="file"/.test(tpl) === false, '模板不应上传表单');
+        const js = fs.readFileSync(path.join(ROOT, 'static/js/editor/upload-inline.js'), 'utf8');
+        assert.ok(/kind === 'image'/.test(js), 'image kind 缺失');
+        assert.ok(/kind === 'file'/.test(js), '缺少普通文件 kind');
+        assert.ok(/input\.accept = 'image\/\*'/.test(js), '图片仍应筛选 image/*');
+        assert.ok(/addDMAttachment/.test(fs.readFileSync(
+                path.join(ROOT, 'lib/storage/dm-attachments.js'), 'utf8')),
+            'DM 附件存储缺失');
+        assert.ok(/addDiscussAttachment/.test(fs.readFileSync(
+                path.join(ROOT, 'lib/storage/discuss-attachments.js'), 'utf8')),
+            '讨论附件存储缺失');
+        const routes = fs.readFileSync(path.join(ROOT, 'lib/routes/help.js'), 'utf8');
+        assert.ok(/route\('GET', '\/help'/.test(routes), '帮助路由缺失');
+        assert.ok(/\{\s*auth:\s*true\s*\}/.test(routes), '帮助路由缺少 auth 声明');
+    });
     await check('编辑器：模板与 JS 的选择器契约一致', () => {
         const tpl = fs.readFileSync(path.join(ROOT, 'templates/context_edit.html'), 'utf8');
         for (const sel of ['data-wrapper', 'data-resize', 'data-pane="edit"',
             'data-pane="preview"', 'md-editor-preview', 'md-editor-counter',
             'md-editor-line-numbers', 'data-line-numbers', 'data-line-count',
-            'md-editor-line-count']) {
+            'md-editor-line-count', 'data-action="mode"', 'data-mode="source"',
+            'data-mode="split"', 'data-mode="preview"', 'data-action="file-upload"']) {
             assert.ok(tpl.includes(sel), '模板缺少 ' + sel);
         }
         const js = fs.readFileSync(path.join(ROOT, 'static/js/editor/index.js'), 'utf8');
         for (const sel of ['[data-wrapper]', '[data-resize]', '[data-pane="edit"]',
-            '[data-line-numbers]', '[data-line-count]']) {
+            '[data-line-numbers]', '[data-line-count]', '[data-action="mode"]']) {
             assert.ok(js.includes(sel), 'JS 未查询 ' + sel);
         }
     });

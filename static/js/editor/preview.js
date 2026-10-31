@@ -37,12 +37,24 @@ window.EditorPreview = {
                 return;
             }
             const keepOpen = oldNode.tagName === 'DETAILS' && oldNode.open;
+            const keepFileOpen = oldNode.classList
+                && oldNode.classList.contains('md-file-card')
+                && oldNode.classList.contains('md-file-expanded');
             syncAttrs(oldNode, newNode);
             if (oldNode.tagName === 'DETAILS'
                 && (keepOpen || newNode.hasAttribute('open'))) {
                 oldNode.open = true;
             }
             patchChildren(oldNode, Array.from(newNode.childNodes));
+            if (keepFileOpen) {
+                oldNode.classList.add('md-file-expanded');
+                if (window.FileCards) window.FileCards.ensureBody(oldNode);
+                const toggle = oldNode.querySelector('.md-file-toggle');
+                if (toggle) {
+                    toggle.textContent = '收起';
+                    toggle.setAttribute('aria-expanded', 'true');
+                }
+            }
         }
         function buildNodes(text) {
             const tpl = document.createElement('template');

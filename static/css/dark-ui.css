@@ -15,6 +15,38 @@ html[data-theme="dark"] .file-action-btn {
 html[data-theme="dark"] .file-action-btn:hover {
   background: #1e3a5f; border-color: #4da3ff; color: #4da3ff;
 }
+html[data-theme="dark"] .batch-toolbar {
+  background: #242424; border-color: #3a3a3a;
+}
+html[data-theme="dark"] .batch-count { color: #b0b0b0; }
+html[data-theme="dark"] .batch-form input[type="text"],
+html[data-theme="dark"] .batch-form select {
+  background: #1f1f1f; color: #e0e0e0; border-color: #3a3a3a;
+}
+html[data-theme="dark"] .batch-form button {
+  background: #2a2a2a; color: #e0e0e0; border-color: #3a3a3a;
+}
+html[data-theme="dark"] .batch-form button:hover {
+  background: #1e3a5f; border-color: #4da3ff; color: #4da3ff;
+}
+html[data-theme="dark"] .pinned-badge {
+  background: #2a2410; color: #d4a72c; border-color: #8c6a12;
+}
+html[data-theme="dark"] .msg-batch-toggle {
+  background: #2a2a2a; color: #e0e0e0; border-color: #3a3a3a;
+}
+html[data-theme="dark"] .msg-batch-toggle:hover,
+html[data-theme="dark"] .message-batch-bar button:hover {
+  background: #1e3a5f; border-color: #4da3ff; color: #4da3ff;
+}
+html[data-theme="dark"] .message-batch-bar {
+  background: #1a2f4a; border-bottom-color: #2a4a6f;
+}
+html[data-theme="dark"] .message-batch-bar button {
+  background: #2a2a2a; color: #e0e0e0; border-color: #3a3a3a;
+}
+html[data-theme="dark"] .message-batch-bar button.danger { color: #ff7875; }
+html[data-theme="dark"] .message.selected { background: #1e3a5f; }
 html[data-theme="dark"] .user-table th { background: #242424; color: #b0b0b0; }
 html[data-theme="dark"] .user-table td { color: #e0e0e0; border-bottom-color: #2a2a2a; }
 html[data-theme="dark"] .user-table tr:hover td { background: #1e3a5f; }
@@ -118,10 +150,10 @@ html[data-theme="dark"] .announcement-item.system-ann {
   background: #1e3a5f;
 }
 html[data-theme="dark"] .announcement-meta { color: #888; }
-html[data-theme="dark"] .topbar-nav .nav-login-btn {
+html[data-theme="dark"] .topbar-actions .nav-login-btn {
   color: #4da3ff; border-color: #4da3ff;
 }
-html[data-theme="dark"] .topbar-nav .nav-register-btn {
+html[data-theme="dark"] .topbar-actions .nav-register-btn {
   background: #1890ff; color: #fff; border-color: #1890ff;
 }
 html[data-theme="dark"] .login-box h1,

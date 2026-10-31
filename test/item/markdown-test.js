@@ -211,6 +211,38 @@ check('代码块：未知语言保留原标记', () => {
     assert.ok(html.includes('language-unknown'));
     assert.ok(!html.includes('language-cpp'));
 });
+check('文件卡片：展开/紧凑语法与安全外部 PDF 契约', () => {
+    const src = fs.readFileSync(path.join(ROOT, 'static/js/core/dom.js'), 'utf8');
+    assert.ok(/function enhanceFileCards/.test(src), '缺少文件卡片增强');
+    assert.ok(/function fileKind/.test(src), '缺少文件类型识别');
+    assert.ok(/function safeFileUrl/.test(src), '缺少文件 URL 白名单');
+    assert.ok(/parsed\.protocol === 'https:' && kind === 'pdf'/.test(src),
+        '外部文件只应允许 HTTPS PDF');
+    assert.ok(/prev\.nodeType !== 3/.test(src) && /\/@\$\/\.test/.test(src),
+        '紧凑卡片未识别 @ 前缀');
+    assert.ok(/createFileCard|makeFileCard/.test(src), '缺少卡片 DOM 构造');
+    assert.ok(/createElement\('iframe'\)/.test(src), 'PDF 未使用内嵌预览');
+    assert.ok(/md-file-expanded/.test(src), '缺少展开状态');
+    assert.ok(/scrollTop \+= after - before/.test(src), '切换时未补偿滚动位置');
+    assert.ok(/img\.setAttribute\('loading', 'lazy'\)/.test(src), '图片缺 lazy');
+    assert.ok(/img\.setAttribute\('decoding', 'async'\)/.test(src), '图片缺 async');
+});
+check('文件卡片：图片尺寸与 PDF 内嵌样式', () => {
+    const css = fs.readFileSync(path.join(ROOT, 'static/css/markdown.css'), 'utf8');
+    assert.ok(/\.md-body img \{[^}]*max-width: 100%;[^}]*max-height: min\(60vh, 480px\)/s.test(css),
+        '图片尺寸限制不正确');
+    assert.ok(/\.md-file-embed \{[^}]*height: min\(60vh, 480px\)/s.test(css),
+        'PDF 内嵌高度不正确');
+    assert.ok(/\.md-file-card\.md-file-expanded \.md-file-body/.test(css),
+        '紧凑/展开切换样式缺失');
+    const routes = fs.readFileSync(path.join(ROOT, 'lib/routes/index.js'), 'utf8');
+    assert.ok(/frame-src 'self' https:/.test(routes), 'CSP 未允许外部 HTTPS PDF 框架');
+});
+check('文件卡片：编辑器增量更新保留展开状态', () => {
+    const src = fs.readFileSync(path.join(ROOT, 'static/js/editor/preview.js'), 'utf8');
+    assert.ok(/keepFileOpen/.test(src), '预览未记录文件卡片展开状态');
+    assert.ok(/FileCards\.ensureBody/.test(src), '预览未恢复文件卡片预览体');
+});
 console.log('\n======== [回归] GFM / 洛谷 Markdown ========');
 for (const [s, n] of results) console.log(s.padEnd(5), n);
 const failed = results.filter(r => r[0] === 'FAIL').length;

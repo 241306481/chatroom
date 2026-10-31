@@ -59,6 +59,17 @@ html[data-theme="dark"] .layout-discuss { background: var(--bg-primary); }
 html[data-theme="dark"] .sidebar-discussions {
   background: #1f1f1f; border-right-color: #3a3a3a;
 }
+html[data-theme="dark"] .mobile-discuss-tabs {
+  background: #1f1f1f; border-bottom-color: #3a3a3a;
+}
+html[data-theme="dark"] .mobile-discuss-tabs label {
+  color: #aaa; border-right-color: #3a3a3a;
+}
+html[data-theme="dark"] #mobilePaneDiscuss:checked ~ .mobile-discuss-tabs label[for="mobilePaneDiscuss"],
+html[data-theme="dark"] #mobilePaneChat:checked ~ .mobile-discuss-tabs label[for="mobilePaneChat"],
+html[data-theme="dark"] #mobilePaneSide:checked ~ .mobile-discuss-tabs label[for="mobilePaneSide"] {
+  background: #262626; color: #4da3ff;
+}
 html[data-theme="dark"] .disc-item { color: #e0e0e0; }
 html[data-theme="dark"] .disc-item:hover { background: #1e3a5f; }
 html[data-theme="dark"] .message-area { background: #1f1f1f; }

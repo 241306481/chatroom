@@ -71,6 +71,9 @@
                     R.applyReaction(data.message_id, data.emoji,
                                     data.user_id, data.added, data.count);
                     break;
+                case 'batch_result':
+                    if (window.MessageBatch) window.MessageBatch.done(data.count || 0);
+                    break;
                 case 'user_online':
                     window.updateUserStatus(data.user_id, true);
                     break;

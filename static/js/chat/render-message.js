@@ -28,6 +28,10 @@
         const nick = window.Avatar.avatarText(msg.nickname);
         const color = window.Avatar.safeColor(msg.avatar_color);
         const mid = escSingle(msg.id);
+        const canBatch = window.__CAN_BATCH__ === true;
+        const batchCheck = canBatch
+            ? `<input type="checkbox" class="msg-check" data-msg-check value="${escAttr(msg.id)}" aria-label="选择消息">`
+            : '';
         const canReply = !!document.getElementById('msgInput') && !revoked;
         const replyBtn = canReply
             ? `<button type="button" class="msg-reply-btn" onclick="setReplyTo('${mid}', this)" title="回复">↩️</button>`
@@ -60,6 +64,7 @@
             ? `<div class="msg-content msg-revoked"><a class="revoked-nick" href="/user/${escAttr(msg.revoked_by)}">${esc(msg.revoked_by_nickname)}</a> 撤回了一条消息</div>`
             : `<div class="msg-content md-body" data-raw="${escAttr(msg.content)}">${window.renderContent(msg.content)}</div>`;
         div.innerHTML = `
+            ${batchCheck}
             <div class="msg-avatar" style="background:${color}">${esc(nick)}</div>
             <div class="msg-body">
                 <div class="msg-header">

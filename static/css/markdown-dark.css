@@ -62,3 +62,18 @@ html[data-theme="dark"] .md-body table td { border-color: #3a3a3a; }
 html[data-theme="dark"] .md-body hr { border-bottom-color: #333; }
 html[data-theme="dark"] .md-body h5,
 html[data-theme="dark"] .md-body h6 { color: #bbb; }
+html[data-theme="dark"] .md-file-card {
+  border-color: #3a3a3a; background: #222;
+}
+html[data-theme="dark"] .md-file-body { border-top-color: #3a3a3a; }
+html[data-theme="dark"] .md-file-name { color: #4da3ff; }
+html[data-theme="dark"] .md-file-kind { background: #333; color: #bbb; }
+html[data-theme="dark"] .md-file-action { color: #bbb !important; }
+html[data-theme="dark"] .md-file-action:hover { color: #4da3ff !important; }
+html[data-theme="dark"] .md-file-toggle {
+  border-color: #444; background: #2a2a2a; color: #bbb;
+}
+html[data-theme="dark"] .md-file-toggle:hover { border-color: #4da3ff; color: #4da3ff; }
+html[data-theme="dark"] .md-file-preview-note,
+html[data-theme="dark"] .md-file-preview-hint { color: #888; }
+html[data-theme="dark"] .md-file-embed { background: #1b1b1b; }

@@ -1,12 +1,27 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="page-container">
+<div class="page-container" data-batch-scope>
   <h1>全局加入申请</h1>
   <p class="hint">所有你管理的域收到的加入申请</p>
+  {% if applications and applications.length %}
+    <div class="batch-toolbar">
+      <form method="POST" action="/manage/join_applications"
+            class="batch-form" data-batch-form>
+        <input type="hidden" name="application_ids" data-batch-ids>
+        <input type="hidden" name="action" data-batch-action-field>
+        <span class="batch-count" data-batch-count>已选 0 个</span>
+        <button type="submit" data-batch-action="approve">批量通过</button>
+        <button type="submit" data-batch-action="reject"
+                data-confirm="确定拒绝选中的申请？">批量拒绝</button>
+      </form>
+    </div>
+  {% endif %}
   {% if applications and applications.length %}
     <table class="user-table">
       <thead>
         <tr>
+          <th style="width:44px;"><input type="checkbox" class="batch-check"
+                data-batch-all title="全选" aria-label="全选"></th>
           <th>用户</th>
           <th>UID</th>
           <th>目标域</th>
@@ -18,6 +33,9 @@
       <tbody>
         {% for a in applications %}
           <tr>
+            <td><input type="checkbox" class="batch-check" data-batch-check
+                       value="{{ a.domain_name }}:{{ a.uid }}"
+                       aria-label="选择 {{ a.nickname }}"></td>
             <td>{{ a.nickname }}</td>
             <td>{{ a.uid }}</td>
             <td>
