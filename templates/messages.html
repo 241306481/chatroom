@@ -2,7 +2,7 @@
 {% from "context_edit.html" import context_edit %}
 {% block content %}
 <div id="dmRoot">
-<div class="dm-layout">
+<div class="dm-layout{% if target and target_user and target_user.id %} dm-with-files{% endif %}">
   <aside class="dm-sidebar">
     {% set cur = current_user.dm_policy or 'everyone' %}
     <details class="dm-settings">
@@ -114,6 +114,31 @@
       <div class="dm-empty">选择左侧会话开始聊天，或点上方「新增会话」</div>
     {% endif %}
   </section>
+  {% if target and target_user and target_user.id %}
+  <aside class="file-sidebar dm-file-sidebar">
+    <h3>📎 私信文件 <span class="file-sidebar-count">{{ dm_files | length }}</span></h3>
+    {% if dm_files and dm_files.length %}
+      <div class="file-sidebar-list">
+        {% for f in dm_files %}
+          <div class="file-sidebar-item">
+            <a class="file-sidebar-main" href="{{ f.url }}" target="_blank"
+               rel="noopener" title="{{ f.filename }}">
+              <span class="file-sidebar-icon">{{ f.icon }}</span>
+              <span class="file-sidebar-text">
+                <span class="file-sidebar-name">{{ f.filename }}</span>
+                <span class="file-sidebar-meta">{{ f.size_str }} · {{ f.uploader_name }}</span>
+              </span>
+            </a>
+            <a class="file-sidebar-download" href="{{ f.download_url }}"
+               title="下载" aria-label="下载 {{ f.filename }}">⬇</a>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="empty">暂无文件</p>
+    {% endif %}
+  </aside>
+  {% endif %}
 <script>(function () {
     window.__MESSAGES__ = {{ messages | jsdump }};
     window.__MESSAGES_TOTAL__ = {{ messages_total | default(0) }};

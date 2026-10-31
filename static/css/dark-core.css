@@ -83,6 +83,18 @@ html[data-theme="dark"] .sidebar-right {
 html[data-theme="dark"] .pinned-panel { background: #2a2410;
   border-bottom-color: #3a3a3a; }
 html[data-theme="dark"] .pinned-item { background: #242424; }
+html[data-theme="dark"] .file-sidebar {
+  background: #242424; border-color: #3a3a3a;
+}
+html[data-theme="dark"] .file-sidebar-count {
+  background: #3a3a3a; color: #aaa;
+}
+html[data-theme="dark"] .file-sidebar-main { color: #e0e0e0; }
+html[data-theme="dark"] .file-sidebar-item:hover { background: #1e3a5f; }
+html[data-theme="dark"] .file-sidebar-download { color: #aaa; }
+html[data-theme="dark"] .dm-file-sidebar {
+  background: var(--bg-card); border-left-color: #3a3a3a;
+}
 html[data-theme="dark"] .members-panel { background: var(--bg-card); }
 html[data-theme="dark"] .member-name { color: #e0e0e0; }
 html[data-theme="dark"] .message-input-area {

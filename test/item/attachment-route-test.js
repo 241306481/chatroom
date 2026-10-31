@@ -111,6 +111,18 @@ const PNG = Buffer.from(
         assert.strictEqual(down.status, 200);
         assert.ok(/^attachment/.test(down.headers['content-disposition'] || ''));
     });
+    if (file) {
+        const page = await req('GET', `/messages?target=${uidB}`, { cookie: A });
+        const html = page.body.toString('utf8');
+        check('私信页右侧显示当前会话文件栏', () => {
+            assert.strictEqual(page.status, 200);
+            assert.ok(html.includes('dm-layout dm-with-files'), '缺少三栏布局');
+            assert.ok(html.includes('dm-file-sidebar'), '缺少私信文件栏');
+            assert.ok(html.includes('dm.png'), '文件栏缺少上传文件名');
+            assert.ok(html.includes(url), '文件栏链接错误');
+            assert.ok(html.includes(url + '/download'), '文件栏缺少下载链接');
+        });
+    }
     const upSys = await req('POST', `/messages/${storage.SYSTEM_UID}/files/upload`, {
         cookie: A, body: up.body, headers: { 'Content-Type': up.ct },
     });
@@ -134,6 +146,20 @@ const PNG = Buffer.from(
         assert.strictEqual(discSeen.status, 200);
         assert.strictEqual(discSeen.body.toString('utf8'), 'ok');
     });
+    if (discFile) {
+        const page = await req('GET', '/domain/system/discuss/general', { cookie: B });
+        const html = page.body.toString('utf8');
+        check('讨论文件栏位于置顶消息与成员之间', () => {
+            assert.strictEqual(page.status, 200);
+            const pin = html.indexOf('pinned-panel');
+            const files = html.indexOf('discuss-file-sidebar');
+            const members = html.indexOf('members-panel');
+            assert.ok(pin >= 0 && files > pin && members > files, '文件栏顺序或位置错误');
+            assert.ok(html.includes('note.txt'), '文件栏缺少上传文件名');
+            assert.ok(html.includes(discUrl), '文件栏链接错误');
+            assert.ok(html.includes(discUrl + '/download'), '文件栏缺少下载链接');
+        });
+    }
     try { proc.kill('SIGINT'); } catch (e) {}
     await sleep(800);
     try { proc.kill('SIGKILL'); } catch (e) {}
