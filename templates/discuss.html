@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% from "context_edit.html" import context_edit %}
+{% from "_file_sidebar.html" import file_sidebar %}
 {% block content %}
 <input type="radio" name="mobileDiscussPane" id="mobilePaneDiscuss" class="mobile-discuss-radio" aria-label="讨论">
 <input type="radio" name="mobileDiscussPane" id="mobilePaneChat" class="mobile-discuss-radio" aria-label="聊天" checked>
@@ -222,29 +223,9 @@
         <p class="empty">暂无置顶消息</p>
       {% endif %}
     </section>
-    <section class="file-sidebar discuss-file-sidebar">
-      <h3>📎 讨论文件 <span class="file-sidebar-count">{{ discuss_files | length }}</span></h3>
-      {% if discuss_files and discuss_files.length %}
-        <div class="file-sidebar-list">
-          {% for f in discuss_files %}
-            <div class="file-sidebar-item">
-              <a class="file-sidebar-main" href="{{ f.url }}" target="_blank"
-                 rel="noopener" title="{{ f.filename }}">
-                <span class="file-sidebar-icon">{{ f.icon }}</span>
-                <span class="file-sidebar-text">
-                  <span class="file-sidebar-name">{{ f.filename }}</span>
-                  <span class="file-sidebar-meta">{{ f.size_str }} · {{ f.uploader_name }}</span>
-                </span>
-              </a>
-              <a class="file-sidebar-download" href="{{ f.download_url }}"
-                 title="下载" aria-label="下载 {{ f.filename }}">⬇</a>
-            </div>
-          {% endfor %}
-        </div>
-      {% else %}
-        <p class="empty">暂无文件</p>
-      {% endif %}
-    </section>
+    {{ file_sidebar(discuss_files, '📎 讨论文件',
+        '/domain/' + (domain_name | urlencode) + '/discuss/' + (discuss_name | urlencode) + '/files',
+        'discuss-file-sidebar') }}
     <section class="members-panel">
       <h3>
         成员

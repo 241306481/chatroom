@@ -1,0 +1,29 @@
+{% macro file_sidebar(files, title, more_url, modifier) %}
+<section class="file-sidebar {{ modifier }}" data-file-panel>
+  <h3>
+    <span>{{ title }}</span>
+    <span class="file-sidebar-count" data-file-count>{{ files | length }}</span>
+    <a class="file-sidebar-more" href="{{ more_url }}">查看全部</a>
+  </h3>
+  {% if files and files.length %}
+    <div class="file-sidebar-list" data-file-list>
+      {% for f in files %}
+        <div class="file-sidebar-item" data-file-id="{{ f.id }}">
+          <a class="file-sidebar-main" href="{{ f.url }}" target="_blank"
+             rel="noopener" title="{{ f.filename }}">
+            <span class="file-sidebar-icon">{{ f.icon }}</span>
+            <span class="file-sidebar-text">
+              <span class="file-sidebar-name">{{ f.filename }}</span>
+              <span class="file-sidebar-meta">{{ f.size_str }} · {{ f.uploader_name }}</span>
+            </span>
+          </a>
+          <a class="file-sidebar-download" href="{{ f.download_url }}"
+             title="下载" aria-label="下载 {{ f.filename }}">⬇</a>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="empty">暂无文件</p>
+  {% endif %}
+</section>
+{% endmacro %}

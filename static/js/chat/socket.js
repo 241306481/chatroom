@@ -35,6 +35,66 @@
             window.updateAllOnlineCounts();
         }
     }
+    function appendDiscussFile(file) {
+        const panel = document.querySelector('.discuss-file-sidebar');
+        if (!panel || !file || !file.id) return;
+        const items = panel.querySelectorAll('.file-sidebar-item');
+        for (const item of items) {
+            if (item.dataset.fileId === String(file.id)) return;
+        }
+        let list = panel.querySelector('[data-file-list]');
+        if (!list) {
+            list = document.createElement('div');
+            list.className = 'file-sidebar-list';
+            list.dataset.fileList = '';
+            const empty = panel.querySelector('.empty');
+            if (empty) empty.remove();
+            panel.appendChild(list);
+        }
+        const item = document.createElement('div');
+        item.className = 'file-sidebar-item';
+        item.dataset.fileId = String(file.id);
+        const main = document.createElement('a');
+        main.className = 'file-sidebar-main';
+        main.href = file.url || '#';
+        main.target = '_blank';
+        main.rel = 'noopener';
+        main.title = file.filename || '';
+        const icon = document.createElement('span');
+        icon.className = 'file-sidebar-icon';
+        icon.textContent = file.icon || '📄';
+        const wrap = document.createElement('span');
+        wrap.className = 'file-sidebar-text';
+        const name = document.createElement('span');
+        name.className = 'file-sidebar-name';
+        name.textContent = file.filename || '';
+        const meta = document.createElement('span');
+        meta.className = 'file-sidebar-meta';
+        meta.textContent = (file.size_str || '') + ' · ' + (file.uploader_name || '?');
+        wrap.appendChild(name);
+        wrap.appendChild(meta);
+        main.appendChild(icon);
+        main.appendChild(wrap);
+        const download = document.createElement('a');
+        download.className = 'file-sidebar-download';
+        download.href = file.download_url || '#';
+        download.title = '下载';
+        download.setAttribute('aria-label', '下载 ' + (file.filename || ''));
+        download.textContent = '⬇';
+        item.appendChild(main);
+        item.appendChild(download);
+        const atTop = panel.scrollTop <= 2;
+        const scrollBefore = panel.scrollTop;
+        const heightBefore = panel.scrollHeight;
+        list.insertBefore(item, list.firstElementChild);
+        if (!atTop) {
+            panel.scrollTop = scrollBefore + (panel.scrollHeight - heightBefore);
+        }
+        const count = panel.querySelector('[data-file-count]');
+        if (count) {
+            count.textContent = String(panel.querySelectorAll('.file-sidebar-item').length);
+        }
+    }
     function connect() {
         socket = new WebSocket(wsUrl);
         socket.onopen = () => {
@@ -91,6 +151,9 @@
                     break;
                 case 'discussion_deleted':
                     R.removeDiscussionFromSidebar(data.id);
+                    break;
+                case 'discuss_file_added':
+                    appendDiscussFile(data.file);
                     break;
                 case 'kicked':
                     R.showToast('你已被移出「' + data.domain + '」');

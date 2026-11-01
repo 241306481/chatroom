@@ -4,6 +4,7 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const { spawn } = require('child_process');
+const { WebSocket } = require('ws');
 const ROOT = path.join(__dirname, '..', '..');
 const DATA = path.join(ROOT, 'data');
 const PORT = 5199;
@@ -159,6 +160,73 @@ const PNG = Buffer.from(
             assert.ok(html.includes(discUrl), '文件栏链接错误');
             assert.ok(html.includes(discUrl + '/download'), '文件栏缺少下载链接');
         });
+        check('讨论与私信文件侧栏复用同一模板', () => {
+            const read = p => fs.readFileSync(path.join(ROOT, 'templates', p), 'utf8');
+            const discussTpl = read('discuss.html');
+            const messagesTpl = read('messages.html');
+            const macro = read('_file_sidebar.html');
+            assert.ok(discussTpl.includes('import file_sidebar'));
+            assert.ok(messagesTpl.includes('import file_sidebar'));
+            assert.ok(!discussTpl.includes('class="file-sidebar-item"'));
+            assert.ok(!messagesTpl.includes('class="file-sidebar-item"'));
+            assert.ok(macro.includes('data-file-panel'));
+            assert.ok(macro.includes('data-file-list'));
+            assert.ok(macro.includes('data-file-count'));
+        });
+        const allPage = await req('GET', '/domain/system/discuss/general/files', { cookie: B });
+        check('讨论文件专页列出全部文件', () => {
+            assert.strictEqual(allPage.status, 200);
+            const html = allPage.body.toString('utf8');
+            assert.ok(html.includes('讨论文件'), '缺少页面标题');
+            assert.ok(html.includes('note.txt'), '专页缺少文件名');
+            assert.ok(html.includes(discUrl), '专页缺少查看链接');
+            assert.ok(html.includes(discUrl + '/download'), '专页缺少下载链接');
+        });
+        const dmPage = await req('GET', `/messages/${uidB}/files`, { cookie: A });
+        check('私信文件专页列出当前会话文件', () => {
+            assert.strictEqual(dmPage.status, 200);
+            const html = dmPage.body.toString('utf8');
+            assert.ok(html.includes('私信文件'), '缺少页面标题');
+            assert.ok(html.includes('dm.png'), '专页缺少文件名');
+            assert.ok(html.includes(url), '专页缺少查看链接');
+        });
+        const ws = new WebSocket(
+            `ws://127.0.0.1:${PORT}/ws/discuss/system/general`,
+            { headers: { Cookie: A } });
+        const wsOpen = await new Promise(resolve => {
+            const t = setTimeout(() => resolve(false), 4000);
+            ws.once('open', () => { clearTimeout(t); resolve(true); });
+            ws.once('error', () => { clearTimeout(t); resolve(false); });
+        });
+        let wsEvent = null;
+        if (wsOpen) {
+            const got = new Promise(resolve => {
+                const t = setTimeout(() => resolve(null), 4000);
+                ws.on('message', raw => {
+                    let data;
+                    try { data = JSON.parse(raw.toString()); } catch (e) { return; }
+                    if (data.type !== 'discuss_file_added') return;
+                    clearTimeout(t);
+                    resolve(data);
+                });
+            });
+            const wsUp = multipart({
+                name: 'ws-note.txt', mime: 'text/plain', data: Buffer.from('ws'),
+            });
+            const upRes = await req('POST', '/domain/system/discuss/general/files/upload', {
+                cookie: A, body: wsUp.body, headers: { 'Content-Type': wsUp.ct },
+            });
+            assert.strictEqual(upRes.status, 200);
+            wsEvent = await got;
+        }
+        check('讨论附件上传广播 WS 文件事件', () => {
+            assert.ok(wsOpen, 'WS 未建立');
+            assert.ok(wsEvent && wsEvent.file, '未收到文件事件');
+            assert.strictEqual(wsEvent.file.filename, 'ws-note.txt');
+            assert.match(wsEvent.file.url, /\/discuss\/general\/file\//);
+            assert.ok(wsEvent.file.download_url.endsWith('/download'));
+        });
+        ws.close();
     }
     try { proc.kill('SIGINT'); } catch (e) {}
     await sleep(800);

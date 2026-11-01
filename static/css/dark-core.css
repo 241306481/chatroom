@@ -92,6 +92,8 @@ html[data-theme="dark"] .file-sidebar-count {
 html[data-theme="dark"] .file-sidebar-main { color: #e0e0e0; }
 html[data-theme="dark"] .file-sidebar-item:hover { background: #1e3a5f; }
 html[data-theme="dark"] .file-sidebar-download { color: #aaa; }
+html[data-theme="dark"] .file-sidebar-more,
+html[data-theme="dark"] .attachment-file-link { color: #4da3ff; }
 html[data-theme="dark"] .dm-file-sidebar {
   background: var(--bg-card); border-left-color: #3a3a3a;
 }

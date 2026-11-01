@@ -126,9 +126,11 @@ html[data-theme="dark"] .notification-card {
 html[data-theme="dark"] .notification-title { color: #e0e0e0; }
 html[data-theme="dark"] .notification-content { color: #b0b0b0; }
 html[data-theme="dark"] .katex { color: #e0e0e0; }
-.theme-toggle { background: transparent; border: none; cursor: pointer;
-  font-size: 18px; padding: 4px 10px; border-radius: 6px;
-  color: #666; margin-left: 4px; transition: background 0.15s; }
+.theme-toggle { display: inline-flex; align-items: center; justify-content: center;
+  flex: none; box-sizing: border-box; width: 34px; height: 34px; padding: 0;
+  background: transparent; border: none; cursor: pointer; line-height: 1;
+  font-size: 18px; border-radius: 6px; color: #666;
+  margin-left: 4px; transition: background 0.15s; }
 .theme-toggle:hover { background: #f0f0f0; }
 html[data-theme="dark"] .theme-toggle { color: #e0e0e0; }
 html[data-theme="dark"] .theme-toggle:hover { background: #333; }

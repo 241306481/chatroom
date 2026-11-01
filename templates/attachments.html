@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-container file-page attachment-page">
+  <div class="file-header">
+    <h1>📎 {{ page_title }}</h1>
+    <a class="file-action-btn" href="{{ back_url }}">{{ back_label }}</a>
+  </div>
+  <div class="file-info-bar">
+    <span>共 {{ files | length }} 个文件</span>
+  </div>
+  {% if files and files.length %}
+    <table class="file-table">
+      <thead>
+        <tr>
+          <th style="width:60px;">类型</th>
+          <th>文件名</th>
+          <th style="width:90px;">大小</th>
+          <th style="width:120px;">上传者</th>
+          <th style="width:170px;">上传时间</th>
+          <th style="width:150px;">操作</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for f in files %}
+          <tr>
+            <td class="file-icon-cell"><span class="file-icon">{{ f.icon }}</span></td>
+            <td class="file-name-cell">
+              <a class="attachment-file-link" href="{{ f.url }}" target="_blank"
+                 rel="noopener">{{ f.filename }}</a>
+            </td>
+            <td>{{ f.size_str }}</td>
+            <td>{{ f.uploader_name }}</td>
+            <td>{{ f.created_at }}</td>
+            <td>
+              <a class="file-action-btn" href="{{ f.url }}" target="_blank"
+                 rel="noopener">查看</a>
+              <a class="file-action-btn" href="{{ f.download_url }}">下载</a>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <div class="file-empty">暂无文件</div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -75,6 +75,12 @@
 .file-sidebar-count { margin-left: auto; min-width: 20px; padding: 0 6px;
   text-align: center; font-size: 11px; font-weight: normal;
   color: #888; background: #eee; border-radius: 10px; }
+.file-sidebar-more { flex: none; font-size: 11px; color: #1890ff;
+  text-decoration: none; white-space: nowrap; }
+.file-sidebar-more:hover { text-decoration: underline; }
+.attachment-file-link { color: #1890ff; text-decoration: none;
+  font-size: 14px; word-break: break-all; }
+.attachment-file-link:hover { text-decoration: underline; }
 .file-sidebar-list { display: flex; flex-direction: column; gap: 4px; }
 .file-sidebar-item { display: flex; align-items: center; gap: 4px;
   padding: 4px 6px; border-radius: 4px; }
