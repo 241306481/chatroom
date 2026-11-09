@@ -21,7 +21,7 @@ const PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR
 const JPG = Buffer.from([0xFF, 0xD8, 0xFF, 0xE0, 0x00, 0x10, 0xFF, 0xD9]);
 function req(method, p, { body, cookie, ct } = {}) {
     return new Promise((resolve, reject) => {
-        const h = {};
+        const h = { Origin: 'http://127.0.0.1:' + PORT };
         if (cookie) h.Cookie = cookie;
         let payload = body;
         if (body) {

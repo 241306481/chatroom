@@ -24,7 +24,7 @@ const check = async (n, f) => {
 };
 function req(method, p, { body, cookie, xff } = {}) {
     return new Promise((resolve, reject) => {
-        const h = {};
+        const h = { Origin: 'http://127.0.0.1:' + PORT };
         if (cookie) h.Cookie = cookie;
         if (xff) h['X-Forwarded-For'] = xff;
         let payload = body;

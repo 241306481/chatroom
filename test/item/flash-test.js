@@ -35,7 +35,7 @@ function cookieHeader() {
 }
 function req(method, p, { body, cookie, jar: useJar } = {}) {
     return new Promise((resolve, reject) => {
-        const h = {};
+        const h = { Origin: 'http://127.0.0.1:' + PORT };
         const c = cookie || (useJar ? cookieHeader() : '');
         if (c) h.Cookie = c;
         let payload = body;

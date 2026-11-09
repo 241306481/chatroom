@@ -10,7 +10,7 @@ const DATA = path.join(ROOT, 'data');
 const CERT = path.join(ROOT, 'cert.pem');
 const KEY = path.join(ROOT, 'key.pem');
 const PORT = 5192;
-const SKIP_N = 9;
+const SKIP_N = 10;
 const results = [];
 const check = async (n, f) => {
     try { await f(); results.push(['PASS', n]); }
@@ -24,6 +24,7 @@ function httpsPost(p, body) {
             host: '127.0.0.1', port: PORT, path: p, method: 'POST',
             rejectUnauthorized: false,
             headers: {
+                Origin: 'https://127.0.0.1:' + PORT,
                 'Content-Type': 'application/x-www-form-urlencoded',
                 'Content-Length': payload.length,
             },
@@ -128,6 +129,16 @@ function httpsGet(p, cookie) {
         assert.ok(/HttpOnly/.test(sc), '缺 HttpOnly: ' + sc);
         assert.ok(/SameSite=Lax/.test(sc), '缺 SameSite: ' + sc);
         assert.ok(/Secure/.test(sc), '★ 缺 Secure: ' + sc);
+    });
+    await check('★ HTTPS 响应带 HSTS 与安全头', async () => {
+        const r = await httpsGet('/login', cookie);
+        assert.strictEqual(r.status, 200, '/login status=' + r.status);
+        assert.strictEqual(r.headers['strict-transport-security'],
+            'max-age=31536000', '缺少 HSTS');
+        assert.strictEqual(r.headers['x-permitted-cross-domain-policies'],
+            'none', '缺少跨域策略头');
+        assert.ok(String(r.headers['permissions-policy'] || '')
+            .includes('camera=()'), '缺少权限策略头');
     });
     await check('HTTPS 监听器拒绝明文 HTTP', async () => {
         const refused = await new Promise(res => {

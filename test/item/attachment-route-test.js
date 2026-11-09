@@ -24,7 +24,7 @@ const check = (n, f) => {
 };
 function req(method, p, { body, cookie, headers } = {}) {
     return new Promise((resolve, reject) => {
-        const h = Object.assign({}, headers);
+        const h = Object.assign({ Origin: 'http://127.0.0.1:' + PORT }, headers);
         if (cookie) h.Cookie = cookie;
         let payload = body;
         if (body && !Buffer.isBuffer(body)) {

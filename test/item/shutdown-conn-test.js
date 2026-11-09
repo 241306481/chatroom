@@ -80,6 +80,7 @@ await check('活跃连接下优雅关闭：WS 断开 + HTTP 计数 + exit(0) + �
                     host: '127.0.0.1', port: PORT, path: '/register', method: 'POST',
                     ...httpOpts,
                     headers: {
+                        Origin: (isHttps ? 'https' : 'http') + '://127.0.0.1:' + PORT,
                         'Content-Type': 'application/x-www-form-urlencoded',
                         'Content-Length': Buffer.byteLength(body),
                     },

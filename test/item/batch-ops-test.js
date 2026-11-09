@@ -20,7 +20,7 @@ const check = async (n, f) => {
 };
 function req(method, p, { body, cookie } = {}) {
     return new Promise((resolve, reject) => {
-        const h = {};
+        const h = { Origin: 'http://127.0.0.1:' + PORT };
         if (cookie) h.Cookie = cookie;
         let payload = body;
         if (body) {

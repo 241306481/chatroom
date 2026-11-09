@@ -43,7 +43,7 @@
     </div>
   </form>
   <h2 style="margin-top:32px;">实时计数</h2>
-  <p class="hint">只显示当前窗口内还有效的记录，按次数从多到少。共 {{ sessionCount }} 个在线会话。</p>
+  <p class="hint">只显示当前窗口内还有效的记录，按次数从多到少。共 {{ sessionCount }} 个在线会话{% if can_view_sessions %} · <a href="/manage/sessions">管理在线会话</a>{% endif %}。</p>
   {% for a in actions %}
     {% if a.live and a.live.length %}
       <div style="margin-top:14px;">

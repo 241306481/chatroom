@@ -22,8 +22,10 @@
       <label>昵称<input type="text" name="nickname" required autofocus
           pattern="[^0-9\s].*" maxlength="32"
           title="昵称不能以数字开头，长度 1-32"></label>
-      <label>密码<input type="password" name="password" required></label>
-      <label>确认密码<input type="password" name="confirm_password" required></label>
+      <label>密码<input type="password" name="password" required
+          minlength="8" maxlength="128" title="密码至少 8 位，最多 128 位"></label>
+      <label>确认密码<input type="password" name="confirm_password" required
+          minlength="8" maxlength="128"></label>
       <button type="submit">注册</button>
     </form>
     <p class="login-switch">

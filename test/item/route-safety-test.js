@@ -33,6 +33,7 @@ function post(p, body) {
         const r = require('http').request({
             host: '127.0.0.1', port: PORT, path: p, method: 'POST',
             headers: {
+                Origin: BASE,
                 'Content-Type': 'application/x-www-form-urlencoded',
                 'Content-Length': pl.length,
             },

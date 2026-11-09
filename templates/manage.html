@@ -38,6 +38,18 @@
         <h3>🌐 用户最近 IP</h3>
         <p>溯源用户登录来源</p>
       </a>
+      {% if can_view_audit %}
+      <a href="/manage/audit" class="manage-entry">
+        <h3>📜 审计日志</h3>
+        <p>查看管理操作与安全事件</p>
+      </a>
+      {% endif %}
+      {% if can_view_sessions %}
+      <a href="/manage/sessions" class="manage-entry">
+        <h3>🔐 在线会话</h3>
+        <p>查看并强制下线登录会话</p>
+      </a>
+      {% endif %}
     </div>
   {% endif %}
   <h2 style="margin-top:32px;">我管理的域</h2>

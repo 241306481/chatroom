@@ -44,8 +44,45 @@ check('写入中途失败时回滚已写分片，不留下部分更新', () => {
     const leftovers = fs.readdirSync(dir).filter(f => f.includes('.tmp-'));
     assert.strictEqual(leftovers.length, 0, '临时文件未清理');
 });
+const lockedDir = fs.mkdtempSync(path.join(os.tmpdir(), 'chatroom-chunks-locked-'));
+chunks.saveAll(lockedDir, [{ id: 'keep', value: 0 }]);
+check('旧目录无法备份时阻止重写并保留原数据', () => {
+    const real = fs.renameSync;
+    fs.renameSync = function (from) {
+        if (String(from) === lockedDir) throw new Error('simulated locked dir');
+        return real.apply(fs, arguments);
+    };
+    try {
+        assert.throws(
+            () => chunks.saveAll(lockedDir, [{ id: 'new', value: 1 }]),
+            /已阻止重写/);
+    } finally {
+        fs.renameSync = real;
+    }
+    assert.deepStrictEqual(chunks.loadAll(lockedDir).map(m => m.id), ['keep']);
+});
+const corruptDir = fs.mkdtempSync(path.join(os.tmpdir(), 'chatroom-chunks-corrupt-'));
+chunks.saveAll(corruptDir, [{ id: 'keep', value: 0 }]);
+const corruptFile = chunks.sortedChunkFiles(corruptDir)[0];
+const corruptPath = chunks.chunkPath(corruptDir, corruptFile);
+fs.appendFileSync(corruptPath, '{broken\n', 'utf8');
+const corruptBefore = fs.readFileSync(corruptPath, 'utf8');
+check('分片损坏时批量更新被阻止且不覆盖原文件', () => {
+    assert.throws(
+        () => chunks.updateWhere(corruptDir, () => true, { value: 1 }),
+        /已损坏/);
+    assert.strictEqual(fs.readFileSync(corruptPath, 'utf8'), corruptBefore);
+});
+check('分片损坏时单条更新被阻止且不覆盖原文件', () => {
+    assert.throws(
+        () => chunks.update(corruptDir, 'keep', { value: 2 }),
+        /已损坏/);
+    assert.strictEqual(fs.readFileSync(corruptPath, 'utf8'), corruptBefore);
+});
 for (const [s, n] of results) console.log(s.padEnd(5), n);
 const failed = results.filter(r => r[0] === 'FAIL').length;
 try { fs.rmSync(dir, { recursive: true, force: true }); } catch (e) {}
+try { fs.rmSync(lockedDir, { recursive: true, force: true }); } catch (e) {}
+try { fs.rmSync(corruptDir, { recursive: true, force: true }); } catch (e) {}
 console.log('\n' + (results.length - failed) + ' passed, ' + failed + ' failed');
 process.exit(failed ? 1 : 0);

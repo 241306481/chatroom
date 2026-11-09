@@ -280,18 +280,45 @@ window.FileCards = {
     ensureBody: buildFileBody,
     toggle: toggleFileCard,
 };
-window.copyToClipboard = function (text, btn) {
-    navigator.clipboard.writeText(text).then(function () {
+window.copyToClipboard = function (text, btn, okText) {
+    const value = String(text == null ? '' : text);
+    function feedback(ok) {
         if (!btn) return;
         if (btn.classList && btn.classList.contains('copy-button')) {
-            btn.classList.add('copied');
-            setTimeout(function () { btn.classList.remove('copied'); }, 1500);
+            const cls = ok ? 'copied' : 'copy-failed';
+            btn.classList.add(cls);
+            setTimeout(function () { btn.classList.remove(cls); }, 1500);
             return;
         }
         const old = btn.textContent;
-        btn.textContent = '已复制';
+        btn.textContent = ok ? (okText || '已复制') : '复制失败';
         setTimeout(function () { btn.textContent = old; }, 1500);
-    });
+    }
+    function fallback() {
+        const area = document.createElement('textarea');
+        area.value = value;
+        area.setAttribute('readonly', '');
+        area.style.position = 'fixed';
+        area.style.top = '-9999px';
+        area.style.opacity = '0';
+        document.body.appendChild(area);
+        area.focus();
+        area.select();
+        if (area.setSelectionRange) area.setSelectionRange(0, area.value.length);
+        let ok = false;
+        try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+        area.remove();
+        feedback(ok);
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        try {
+            navigator.clipboard.writeText(value).then(function () {
+                feedback(true);
+            }, fallback);
+            return;
+        } catch (e) {}
+    }
+    fallback();
 };
 document.addEventListener('click', function (e) {
     const t = e.target;

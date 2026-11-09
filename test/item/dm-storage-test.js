@@ -30,6 +30,11 @@ check('私信写入双方独立分片', () => {
     assert.strictEqual(a[0].id, first.id);
     assert.strictEqual(b[0].id, first.id);
 });
+check('会话索引未读与未读计数一致', () => {
+    const conv = storage.getConvIndex(B);
+    assert.strictEqual(conv[A].unread, 1);
+    assert.strictEqual(storage.loadUnreadCount(B)[A], 1);
+});
 check('会话索引与未读只属于接收方', () => {
     assert.strictEqual(storage.listConversations(A).length, 1);
     assert.strictEqual(storage.listConversations(B).length, 1);
@@ -58,6 +63,7 @@ check('单侧清空只移除自己的日志与索引', () => {
 check('单侧删除后对端未读与消息仍一致', () => {
     const msg = storage.appendDM(A, B, 'unread-stays');
     assert.strictEqual(storage.getTotalUnread(B), 1);
+    assert.strictEqual(storage.getConvIndex(B)[A].unread, 1);
     assert.strictEqual(storage.listConversations(B)[0].unread, 1);
     storage.deleteDMMessage(A, B, msg.id);
     assert.strictEqual(storage.getTotalUnread(B), 1);

@@ -347,6 +347,38 @@ check('搜索限流已接入', () => {
         path.join(__dirname, '../../lib/routes/search.js'), 'utf8');
     assert.ok(src.includes("check('search'"), '搜索应有独立限流');
 });
+check('限流计数会持久化并在重启后恢复', () => {
+    limiter.resetCounters('login');
+    const cfg = limiter.listConfig().find(a => a.action === 'login');
+    const keys = { ip: '10.11.0.1', account: 'persist-me' };
+    for (let i = 0; i < cfg.perAccount; i++) limiter.note('login', keys);
+    assert.ok(limiter.flush(), '写入状态失败');
+    assert.ok(fs.existsSync(limiter.STATE_FILE), '状态文件不存在');
+    const raw = fs.readFileSync(limiter.STATE_FILE, 'utf8');
+    assert.ok(raw.includes('persist-me'), '状态文件缺少账号计数');
+    const modPath = require.resolve('../../lib/rate-limit');
+    delete require.cache[modPath];
+    const fresh = require('../../lib/rate-limit');
+    const hit = fresh.check('login', keys);
+    assert.ok(hit, '重启后限流计数丢失');
+    assert.strictEqual(hit.dim, 'account', '恢复后拦截维度错误');
+    fresh.resetCounters('login');
+    assert.ok(fresh.flush(), '清理状态失败');
+    const left = JSON.parse(fs.readFileSync(fresh.STATE_FILE, 'utf8'));
+    assert.ok(!left.actions.login, '重置后仍残留 login 计数');
+});
+check('损坏的限流状态不会阻止启动', () => {
+    fs.writeFileSync(limiter.STATE_FILE, '{broken', 'utf8');
+    const modPath = require.resolve('../../lib/rate-limit');
+    delete require.cache[modPath];
+    let fresh;
+    assert.doesNotThrow(() => { fresh = require('../../lib/rate-limit'); },
+        '损坏状态导致启动异常');
+    assert.strictEqual(fresh.check('login', { ip: '10.12.0.1', account: 'x' }),
+        null, '损坏状态不应产生假计数');
+    fresh.resetCounters();
+    assert.ok(fresh.flush(), '清理状态失败');
+});
 console.log('\n======== [回归] 限流与会话绑定 ========');
 for (const [s, n] of results) console.log(s.padEnd(5), n);
 const f = results.filter(x => x[0] === 'FAIL').length;

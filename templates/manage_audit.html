@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-container">
+  <h1>审计日志</h1>
+  <p class="hint">
+    第 {{ page }} 页，本页 {{ items.length }} 条 ·
+    <a href="/manage/audit">全部</a> |
+    <a href="/manage/audit?type=audit">管理操作</a> |
+    <a href="/manage/audit?type=security">安全事件</a> ·
+    <a href="/manage/audit/export?type={{ type }}">导出最近记录</a>
+  </p>
+  {% if items and items.length %}
+    <div class="audit-log">
+      {% for line in items %}
+        <div class="audit-line">{{ line }}</div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="empty">暂无审计记录</p>
+  {% endif %}
+  <div style="margin-top:14px;display:flex;gap:12px;">
+    {% if has_prev %}
+      <a href="/manage/audit?type={{ type }}&page={{ page - 1 }}">← 上一页</a>
+    {% endif %}
+    {% if has_next %}
+      <a href="/manage/audit?type={{ type }}&page={{ page + 1 }}">下一页 →</a>
+    {% endif %}
+  </div>
+  <p style="margin-top:24px;"><a href="/manage">← 返回系统管理</a></p>
+</div>
+<style>
+  .audit-log { max-height:70vh; overflow:auto; background:#111; color:#ddd;
+    padding:12px; border-radius:6px; font-family:monospace; font-size:12px; }
+  .audit-line { padding:2px 0; border-bottom:1px solid #222; word-break:break-all; }
+</style>
+{% endblock %}
