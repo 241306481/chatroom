@@ -60,6 +60,15 @@ storage.createDomain('opend', 'OpenD', rootId);
     };
     storage.saveDomain('opend', d);
 }
+const mentionIds = [];
+for (let i = 0; i < 30; i++) mentionIds.push(storage.createUser('mention' + i, 'pw123456'));
+{
+    const d = storage.loadDomain('opend');
+    for (const id of mentionIds) {
+        d.members[id] = { role: 'default', level: 0, exp: 0, joined_at: storage.nowIso() };
+    }
+    storage.saveDomain('opend', d);
+}
 const privateFile = storage.addUserFile(rootId, {
     filename: 'secret.txt', mime: 'text/plain',
     buffer: Buffer.from('private-content'), visibility: 'private',
@@ -129,6 +138,23 @@ let proc = null;
         const du = auth.getDomainUser('opend', ops);
         assert.strictEqual(du.role, 'guest');
         assert.throws(() => checkDual(ops, du, 'send_message'));
+    });
+    await check('提及解析可正常读取域成员并限制通知数量', () => {
+        const guard = require('../../lib/websocket/discuss-guard');
+        const sender = storage.loadUser(rootId);
+        const du = auth.getDomainUser('opend', sender);
+        const content = mentionIds.map(id => '@[' + id + ']').join(' ');
+        const r = guard.parseMentions(content, 'opend', sender, du);
+        assert.ok(guard.MAX_MENTIONS > 0 && guard.MAX_MENTIONS <= guard.MAX_MENTION_TOKENS);
+        assert.strictEqual(r.mentions.length, guard.MAX_MENTIONS);
+        assert.ok(r.silent.length <= guard.MAX_MENTIONS);
+    });
+    await check('非法 reply_to 不会被写入或用于回复奖励', () => {
+        const { normalizeMessageId } = require('../../lib/websocket/discuss');
+        assert.strictEqual(normalizeMessageId('a'.repeat(65)), '');
+        assert.strictEqual(normalizeMessageId({}), '');
+        assert.strictEqual(normalizeMessageId(null), '');
+        assert.strictEqual(normalizeMessageId('abc_DEF-123'), 'abc_DEF-123');
     });
     await check('requireSystemAdmin 按页面权限位判定，MANAGE_PANEL 不能兜底', () => {
         const { requireSystemAdmin } = require('../../lib/routes/manage/_helpers');
@@ -320,6 +346,23 @@ let proc = null;
     const opsC = cookieOf(await post('/login', { nickname: 'opsx', password: 'pw123456' }));
     const viewerC = cookieOf(await post('/login', { nickname: 'viewx', password: 'pw123456' }));
     const dmodC = cookieOf(await post('/login', { nickname: 'dmodx', password: 'pw123456' }));
+    await check('登录“记住我”生成持久 Cookie，普通登录仍为会话 Cookie', async () => {
+        const remembered = await post('/login',
+            { nickname: 'mention0', password: 'pw123456', remember: '1' });
+        const rememberedCookie = (remembered.headers['set-cookie'] || [])
+            .find(c => /^token=/.test(c)) || '';
+        assert.ok(/Max-Age=[1-9]\d*/.test(rememberedCookie),
+            '记住我 Cookie 缺少正数 Max-Age: ' + rememberedCookie);
+        assert.ok(/HttpOnly/.test(rememberedCookie), '缺少 HttpOnly');
+        assert.ok(/SameSite=Lax/.test(rememberedCookie), '缺少 SameSite');
+        const normal = await post('/login', { nickname: 'mention1', password: 'pw123456' });
+        const normalCookie = (normal.headers['set-cookie'] || [])
+            .find(c => /^token=/.test(c)) || '';
+        assert.ok(!/Max-Age=/.test(normalCookie),
+            '普通登录 Cookie 不应设置 Max-Age: ' + normalCookie);
+        const tpl = fs.readFileSync(path.join(ROOT, 'templates/login.html'), 'utf8');
+        assert.ok(tpl.includes('name="remember"'), '登录页缺少记住我选项');
+    });
     await check('审计日志页按权限开放', async () => {
         const page = await get('/manage/audit', opsC);
         assert.strictEqual(page.status, 200, '审计页 status=' + page.status);

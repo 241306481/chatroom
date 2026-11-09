@@ -2,6 +2,24 @@
 {% block content %}
 <div class="page-container">
   <h1>审计日志</h1>
+  <div class="chain-status {{ 'ok' if chain.ok else 'bad' }}">
+    <strong>{{ '哈希链校验通过' if chain.ok else '哈希链校验异常' }}</strong>
+    <span>已校验 {{ chain.checked }} 条</span>
+    {% if chain.checked %}
+      <span>范围 #{{ chain.firstSeq }} – #{{ chain.lastSeq }}</span>
+    {% endif %}
+    <span>最新哈希 {{ chain.head_short }}</span>
+    {% if chain.checkpointSeq %}
+      <span>检查点 #{{ chain.checkpointSeq }}</span>
+    {% endif %}
+    {% if not chain.ok and chain.errors.length %}
+      <ul>
+        {% for error in chain.errors %}
+          <li>{{ error.label }}（#{{ error.seq }}）</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+  </div>
   <p class="hint">
     第 {{ page }} 页，本页 {{ items.length }} 条 ·
     <a href="/manage/audit">全部</a> |
@@ -29,6 +47,11 @@
   <p style="margin-top:24px;"><a href="/manage">← 返回系统管理</a></p>
 </div>
 <style>
+  .chain-status { display:flex; flex-wrap:wrap; gap:8px 16px; align-items:center;
+    padding:10px 12px; margin-bottom:12px; border-radius:6px; font-size:13px;
+    border:1px solid #b7eb8f; background:#f6ffed; color:#237804; }
+  .chain-status.bad { border-color:#ffa39e; background:#fff1f0; color:#a8071a; }
+  .chain-status ul { flex-basis:100%; margin:4px 0 0 18px; }
   .audit-log { max-height:70vh; overflow:auto; background:#111; color:#ddd;
     padding:12px; border-radius:6px; font-family:monospace; font-size:12px; }
   .audit-line { padding:2px 0; border-bottom:1px solid #222; word-break:break-all; }

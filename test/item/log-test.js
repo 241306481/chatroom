@@ -12,6 +12,9 @@ const logger = require('../../lib/logger');
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const asyncChecks = [];
 const checkAsync = (n, f) => { asyncChecks.push([n, f]); };
+check('★ 时间戳包含日期', () => {
+    assert.match(logger.ts(), /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/);
+});
 checkAsync('★ logs/ 下会产生日志文件', async () => {
     logger.info('hello from regression test');
     await sleep(400);
@@ -19,7 +22,7 @@ checkAsync('★ logs/ 下会产生日志文件', async () => {
     assert.ok(files.length > 0, 'logs/ 为空');
     assert.ok(files.some(f => /\.log$/.test(f)), '没有 .log 文件: ' + files.join(','));
 });
-check('日志内容确实写入磁盘（不只是 stdout）', async () => {
+checkAsync('日志内容确实写入磁盘（不只是 stdout）', async () => {
     await sleep(300);
     const f = fs.readdirSync(LOGS).find(x => /\.log$/.test(x));
     const body = fs.readFileSync(path.join(LOGS, f), 'utf8');
@@ -30,7 +33,7 @@ check('普通 http 访问也会留下日志', () => {
     logger.http({ _clientIp: '203.0.113.9', method: 'GET' }, '/home', 200, 12);
     assert.ok(fs.readdirSync(LOGS).length >= before);
 });
-check('★ 超过阈值后产生轮转文件，且任一文件都不超过阈值上限', async () => {
+checkAsync('★ 超过阈值后产生轮转文件，且任一文件都不超过阈值上限', async () => {
     const line = 'y'.repeat(300);
     for (let i = 0; i < 120; i++) logger.msg('198.51.100.5', 'dn', 'disc', 'nick', line);
     await sleep(600);
@@ -54,21 +57,9 @@ check('日志注入防护仍然生效（不会因轮转改动而失效）', asyn
     const files = fs.readdirSync(LOGS);
     let body = '';
     for (const f of files) body += fs.readFileSync(path.join(LOGS, f), 'utf8');
-    assert.ok(!/^.*\n\d{2}:\d{2}:\d{2} 1\.2\.3\.4 200 POST/m.test(body),
+    assert.ok(!/^.*\n(?:\d{4}-\d{2}-\d{2} )?\d{2}:\d{2}:\d{2} 1\.2\.3\.4 200 POST/m.test(body),
         '换行注入仍然有效');
 });
-asyncChecks.push(['★ 超过阈值后产生轮转文件，且任一文件都不超过阈值上限', async () => {
-    const line = 'y'.repeat(300);
-    for (let i = 0; i < 120; i++) logger.msg('198.51.100.5', 'dn', 'disc', 'nick', line);
-    await sleep(600);
-    const files = fs.readdirSync(LOGS);
-    const rotated = files.filter(f => /\.\d+\.log$/.test(f));
-    assert.ok(rotated.length >= 1, '未发生轮转: ' + files.join(','));
-    for (const f of files) {
-        const size = fs.statSync(path.join(LOGS, f)).size;
-        assert.ok(size <= 8192 + 512, `${f} 达到 ${size} 字节，超出阈值`);
-    }
-}]);
 (async () => {
     for (const [n, f] of asyncChecks) {
         try { await f(); results.push(['PASS', n]); }

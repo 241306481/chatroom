@@ -21,6 +21,10 @@
       <input type="hidden" name="return_to" value="{{ return_to | default('') }}">
       <label>昵称或 UID<input type="text" name="nickname" required autofocus></label>
       <label>密码<input type="password" name="password" required></label>
+      <label class="checkbox-row login-remember">
+        <input type="checkbox" name="remember" value="1">
+        <span>记住我</span>
+      </label>
       <button type="submit">登录</button>
     </form>
     <p class="login-switch">

@@ -45,6 +45,7 @@ const SUITES = [
     'member-bar-test.js',
     'domain-notify-test.js',
     'flash-test.js',
+    'audit-chain-test.js',
     'log-test.js',
     'backup-test.js',
 ];

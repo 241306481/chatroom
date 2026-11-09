@@ -170,9 +170,11 @@ function httpsGet(p, cookie) {
     });
     await check('HTTP 部署下不设 Secure（否则浏览器丢弃 Cookie）', () => {
         const src = fs.readFileSync(path.join(ROOT, 'lib/routes/auth.js'), 'utf8');
+        const utils = fs.readFileSync(path.join(ROOT, 'lib/http-utils.js'), 'utf8');
         assert.ok(/isSecureRequest/.test(src), '缺少按协议判定的逻辑');
-        assert.ok(/\$\{secure \? '; Secure' : ''\}/.test(src), 'Secure 未按条件附加');
-        assert.ok(/req\.socket && req\.socket\.encrypted/.test(src),
+        assert.ok(!/function isSecureRequest/.test(src), 'Secure 判定逻辑重复定义');
+        assert.ok(/if \(secure\) attrs\.push\('Secure'\)/.test(src), 'Secure 未按条件附加');
+        assert.ok(/req\.socket && req\.socket\.encrypted/.test(utils),
             '未依据 socket.encrypted 判定');
     });
     proc.kill();

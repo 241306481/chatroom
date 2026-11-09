@@ -105,7 +105,8 @@ check('session kick 成功', /已注销 alice 的全部会话/.test(text));
 check('session kick 未知用户报错', /用户不存在：99999/.test(text));
 check('config 省略子命令走默认', /config|site_name|配置/i.test(text));
 check('help 覆盖全部新命令', /ipban list/.test(text) && /exp show/.test(text)
-    && /sysrole list/.test(text) && /msg send/.test(text) && /session kick/.test(text));
+    && /sysrole list/.test(text) && /msg send/.test(text) && /session kick/.test(text)
+    && /audit verify/.test(text));
 console.log('======== [回归] 控制台新增命令 ========');
 for (const [st, n] of results) console.log(st.padEnd(5), n);
 const f = results.filter(x => x[0] === 'FAIL').length;
