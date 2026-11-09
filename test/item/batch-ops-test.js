@@ -111,7 +111,8 @@ function waitFor(ws, pred, ms = 10000) {
         assert.ok(manageDiscuss.includes('data-confirm="确定删除选中的讨论及全部消息？"'));
         const discuss = read('templates/discuss.html');
         assert.ok(discuss.includes('id="messageBatchBar"'));
-        assert.ok(discuss.includes('batchDeleteSelected()'));
+        assert.ok(discuss.includes('data-action="batch-delete"'));
+        assert.ok(read('static/js/chat/batch-messages.js').includes('batchDeleteSelected'));
         assert.ok(discuss.includes('mobile-discuss-tabs'));
         assert.ok(discuss.includes('id="mobilePaneChat"'));
         assert.ok(discuss.includes('aria-label="聊天"'));

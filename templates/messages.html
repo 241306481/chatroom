@@ -9,7 +9,7 @@
     <details class="dm-settings">
       <summary>⚙ 私信设置</summary>
       <form method="POST" action="/settings/security/dm_policy" class="dm-settings-form"
-            onsubmit="return submitDMPolicy(this)">
+            data-submit-action="submitDMPolicy">
         <label><input type="radio" name="dm_policy" value="everyone" {% if cur == 'everyone' %}checked{% endif %}> 所有人（拉黑的用户除外）</label>
         <label><input type="radio" name="dm_policy" value="mutual" {% if cur == 'mutual' %}checked{% endif %}> 互相关注的人与管理员</label>
         <label><input type="radio" name="dm_policy" value="following" {% if cur == 'following' %}checked{% endif %}> 关注我的人与管理员</label>
@@ -17,13 +17,13 @@
         <button type="submit">保存</button>
       </form>
     </details>
-    <button class="dm-new-btn" onclick="newDMTarget()">+ 新增会话</button>
+    <button class="dm-new-btn" data-action="new-dm-target">+ 新增会话</button>
     <div class="dm-new-picker" id="dmNewPicker" hidden>
       <input type="text" id="dmSearchInput" class="dm-search-input"
              placeholder="搜索用户昵称…" autocomplete="off">
       <div class="dm-search-list" id="dmSearchList"></div>
     </div>
-    <script>      window.__DM_USERS__ = {{ all_users | jsdump }};
+    <script nonce="{{ csp_nonce }}">      window.__DM_USERS__ = {{ all_users | jsdump }};
 </script>
     {% if conversations and conversations.length %}
       {% for c in conversations %}
@@ -31,7 +31,6 @@
            class="dm-conv {% if c.other == target %}active{% endif %}"
            data-uid="{{ c.other }}">
           <img class="avatar-circle avatar-img" src="{{ c | avatarSrc }}"
-                   onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex'"
                    alt="" loading="lazy"
                    {% if not (c | avatarSrc) %}style="display:none"{% endif %}>
           <span class="avatar-circle" style="background: {{ c.avatar_color | avatarColor }}">{{ c.nickname | avatarText }}</span>
@@ -48,7 +47,6 @@
       <div class="dm-main-header">
         <a href="/user/{{ target_user.id }}" class="dm-user-link">
           <img class="avatar-circle avatar-img" src="{{ target_user | avatarSrc }}"
-                   onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex'"
                    alt="" loading="lazy"
                    {% if not (target_user | avatarSrc) %}style="display:none"{% endif %}>
           <span class="avatar-circle" style="background: {{ target_user.avatar_color | avatarColor }}">{{ target_user.nickname | avatarText }}</span>
@@ -64,7 +62,6 @@
               <div class="dm-avatar-wrap">
                 {% set av = m | avatarSrc(m.from) %}
                  <img class="dm-avatar avatar-img" src="{{ av }}"
-                          onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex'"
                           alt="" loading="lazy"
                           {% if not av %}style="display:none"{% endif %}>
                 <span class="dm-avatar" style="background: {{ m.avatar_color | avatarColor }}">
@@ -76,7 +73,7 @@
                   <span class="dm-nick">{{ m.nickname }}</span>
                   <span class="dm-time">{{ m.created_at }}</span>
                   <button type="button" class="msg-mini-btn"
-                          onclick="toggleSource(this)" title="查看源码">📄</button>
+                          data-action="toggle-source" title="查看源码">📄</button>
                 </div>
                 <div class="dm-bubble md-body" data-raw="{{ m.content | e }}"></div>
               </div>
@@ -97,7 +94,7 @@
               previewId: 'dmInputPreview',
               previewCheckboxId: 'dmInputAutoPreview',
               submitLabel: '发送',
-              submitOnClick: 'sendDM()',
+              submitAction: 'send-dm',
               placeholder: '输入消息，支持 Markdown 与 LaTeX。Ctrl+Enter 发送',
               rows: 6,
               height: 260,
@@ -120,7 +117,7 @@
       '/messages/' + (target | urlencode) + '/files',
       'dm-file-sidebar') }}
   {% endif %}
-<script>(function () {
+<script nonce="{{ csp_nonce }}">(function () {
     window.__MESSAGES__ = {{ messages | jsdump }};
     window.__MESSAGES_TOTAL__ = {{ messages_total | default(0) }};
     window.__MESSAGES_OFFSET__ = {{ messages_offset | default(0) }};
@@ -130,7 +127,7 @@
 </script>
 </div>
 </div>
-<script>(function () {
+<script nonce="{{ csp_nonce }}">(function () {
     function renderHistory() {
         document.querySelectorAll('.dm-bubble[data-raw]').forEach(function (el) {
             if (el.dataset.rendered === '1') return;

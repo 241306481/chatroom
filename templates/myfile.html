@@ -5,7 +5,8 @@
     <h1>📁 我的文件</h1>
     <div>
       <input type="file" id="fileInput" multiple style="display:none">
-      <button type="button" class="file-upload-btn" onclick="document.getElementById('fileInput').click()">
+      <button type="button" class="file-upload-btn"
+              data-action="upload-file" data-file-input="fileInput">
         ⬆ 上传文件
       </button>
     </div>
@@ -76,7 +77,7 @@
                     data-file-id="{{ f.id }}"
                     data-value="{{ f.filename }}"
                     data-rename-url="/myfile/{{ f.id }}/rename"
-                    onclick="inlineEditFilename(this);">{{ f.filename }}</span>
+                    data-action="inline-edit-filename">{{ f.filename }}</span>
             </td>
             <td>{{ f.size_str }}</td>
             <td>{{ f.created_at }}</td>
@@ -84,11 +85,12 @@
               <a href="/myfile/{{ f.id }}/download" class="file-action-btn">下载</a>
               <button type="button" class="file-action-btn"
                       data-copy-url="/myfile/{{ current_user.id }}/{{ f.id }}"
-                      onclick="copyFileLink(this)">复制链接</button>
+                      data-action="copy-file-link">复制链接</button>
               <button type="button" class="file-action-btn"
                       data-file-id="{{ f.id }}"
                       data-visibility="{{ f.visibility or 'private' }}"
-                      onclick="toggleFileVisibility(this, '/myfile/{{ f.id }}/visibility');">
+                      data-action="toggle-file-visibility"
+                      data-action-url="/myfile/{{ f.id }}/visibility">
                 {% if f.visibility == 'public' %}🔓 公开{% else %}🔒 隐藏{% endif %}
               </button>
               <form method="POST" action="/myfile/{{ f.id }}/delete" style="display:inline">
@@ -108,7 +110,7 @@
     </div>
   {% endif %}
 </div>
-<script>  window.addEventListener('DOMContentLoaded', function () {
+<script nonce="{{ csp_nonce }}">  window.addEventListener('DOMContentLoaded', function () {
     initUpload({
       inputId: 'fileInput',
       uploadUrl: '/myfile/upload',

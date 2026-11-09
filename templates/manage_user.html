@@ -23,7 +23,6 @@
           <tr data-uid="{{ u.id }}">
             <td>
               <img class="user-avatar-lg avatar-img" src="{{ u | avatarSrc }}"
-                       onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex'"
                        alt="" loading="lazy"
                        {% if not (u | avatarSrc) %}style="display:none"{% endif %}>
               <span class="user-avatar-lg" style="background: {{ u.avatar_color | avatarColor }}">{{ u.nickname | avatarText }}</span>
@@ -39,7 +38,7 @@
                 <form method="POST" action="/domain/{{ domain_name }}/manage/user" style="display:inline">
                   <input type="hidden" name="action" value="grant">
                   <input type="hidden" name="user_id" value="{{ u.id }}">
-                  <select name="role" onchange="this.form.submit()">
+                  <select name="role" data-auto-submit>
                     {% for r in roles %}
                       <option value="{{ r.name }}" {% if r.name == u.role %}selected{% endif %}>{{ r.display }}</option>
                     {% endfor %}
@@ -106,7 +105,7 @@
   {% endif %}
   <p style="margin-top:24px;"><a href="/domain/{{ domain_name }}/manage">← 返回域管理</a></p>
 </div>
-<script>  (function () {
+<script nonce="{{ csp_nonce }}">  (function () {
     function init() {
       var err = new URL(location.href).searchParams.get('error');
       if (err && window.showAlert) window.showAlert(err);

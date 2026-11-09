@@ -64,7 +64,6 @@
                style="text-decoration:none;color:inherit;">
               <span class="status-dot {% if u.online %}green{% else %}red{% endif %}"></span>
               <img class="user-avatar avatar-img" src="{{ u | avatarSrc }}"
-                       onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex'"
                        alt="" loading="lazy"
                        {% if not (u | avatarSrc) %}style="display:none"{% endif %}>
               <span class="user-avatar" style="background: {{ u.avatar_color | avatarColor }}">{{ u.nickname | avatarText }}</span>

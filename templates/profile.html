@@ -4,7 +4,6 @@
 <div class="page-container">
   <div class="profile-header">
     <img class="profile-avatar avatar-img" src="{{ target | avatarSrc }}"
-             onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex'"
              alt="" loading="lazy"
              {% if not (target | avatarSrc) %}style="display:none"{% endif %}>
     <span class="profile-avatar" style="background: {{ target.avatar_color | avatarColor }}">{{ target.nickname | avatarText }}</span>
@@ -105,7 +104,7 @@
     {% endif %}
   </div>
 </div>
-<script>(function () {
+<script nonce="{{ csp_nonce }}">(function () {
     function renderBio() {
         var stat = document.getElementById('bioStatic');
         if (stat && window.renderContent) {

@@ -58,7 +58,7 @@
               <span class="discuss-id"
                     data-old-id="{{ d.id }}"
                     data-value="{{ d.id }}"
-                    {% if can_edit_discuss and d.id != 'general' %}onclick="inlineEditId(this);"{% endif %}>
+                    {% if can_edit_discuss and d.id != 'general' %}data-action="inline-edit-id"{% endif %}>
                 #{{ d.id }}
               </span>
             </td>
@@ -67,7 +67,7 @@
               <span class="discuss-title {% if not d.title %}empty{% endif %}"
                     data-id="{{ d.id }}"
                     data-value="{{ d.title }}"
-                    {% if can_edit_discuss %}onclick="inlineEditTitle(this);"{% endif %}>{{ d.title or '（无标题）' }}</span>
+                    {% if can_edit_discuss %}data-action="inline-edit-title"{% endif %}>{{ d.title or '（无标题）' }}</span>
             </td>
             <td>{{ d.count }}</td>
             <td>

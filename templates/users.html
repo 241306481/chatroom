@@ -32,7 +32,6 @@
             <td>
               <a href="/user/{{ u.id }}" class="user-link">
                 <img class="user-avatar avatar-img" src="{{ u | avatarSrc }}"
-                         onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex'"
                          alt="" loading="lazy"
                          {% if not (u | avatarSrc) %}style="display:none"{% endif %}>
                 <span class="user-avatar" style="background: {{ u.avatar_color | avatarColor }}">{{ u.nickname | avatarText }}</span>
@@ -99,7 +98,7 @@
            placeholder="输入昵称或 UID 筛选…" autocomplete="off">
     <span class="list-filter-count"></span>
   </div>
-<script>  window.__LIST_FILTER_SCOPE__ = 'userTable';
+<script nonce="{{ csp_nonce }}">  window.__LIST_FILTER_SCOPE__ = 'userTable';
 </script>
 </div>
 {% endblock %}

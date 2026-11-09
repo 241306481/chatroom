@@ -34,14 +34,14 @@
             : '';
         const canReply = !!document.getElementById('msgInput') && !revoked;
         const replyBtn = canReply
-            ? `<button type="button" class="msg-reply-btn" onclick="setReplyTo('${mid}', this)" title="回复">↩️</button>`
+            ? `<button type="button" class="msg-reply-btn" data-action="set-reply-to" data-id="${escAttr(msg.id)}" title="回复">↩️</button>`
             : '';
         const replyQuote = msg.reply_info
             ? (msg.reply_info.deleted
                 ? `<div class="msg-reply-quote msg-reply-quote-deleted"><span class="reply-quote-content"><em>该消息已被删除</em></span></div>`
                 : msg.reply_info.revoked
                     ? `<div class="msg-reply-quote msg-reply-quote-revoked"><span class="reply-quote-content"><em>该消息已被撤回</em></span></div>`
-                    : `<div class="msg-reply-quote" onclick="scrollToMessage('${escSingle(msg.reply_info.id)}')">
+                    : `<div class="msg-reply-quote" data-action="scroll-to-message" data-id="${escAttr(msg.reply_info.id)}">
                            <span class="reply-quote-nick">${esc(msg.reply_info.nickname)}</span>
                            <span class="reply-quote-content">${esc(msg.reply_info.content)}</span>
                        </div>`)
@@ -49,13 +49,13 @@
         const revokeBtn = !revoked && (isOwn
             ? window.__CAN_REVOKE_OWN__ === true
             : window.__CAN_REVOKE_ANY__ === true)
-            ? `<button type="button" onclick="revokeMessage('${mid}')" title="撤回">↩️</button>`
+            ? `<button type="button" data-action="revoke-message" data-id="${escAttr(msg.id)}" title="撤回">↩️</button>`
             : '';
         const sourceBtn = !revoked
-            ? `<button type="button" onclick="toggleSource(this)" title="查看源码">📄</button>`
+            ? `<button type="button" data-action="toggle-source" title="查看源码">📄</button>`
             : '';
         const reactionBtn = canAddReaction && !revoked
-            ? `<button type="button" onclick="toggleReactionPicker('${mid}', this)" title="添加表情">😀</button>`
+            ? `<button type="button" data-action="toggle-reaction-picker" data-id="${escAttr(msg.id)}" title="添加表情">😀</button>`
             : '';
         const reactionsDiv = !revoked
             ? `<div class="msg-reactions" id="reactions-${mid}" data-reactions="${escAttr(msg.reactions_json || '{}')}"></div>`
@@ -75,9 +75,9 @@
                     <div class="msg-actions">
                         ${sourceBtn}
                         ${reactionBtn}
-                        ${showPin ? `<button type="button" onclick="pinMessage('${mid}')" title="置顶">📌</button>` : ''}
+                        ${showPin ? `<button type="button" data-action="pin-message" data-id="${escAttr(msg.id)}" title="置顶">📌</button>` : ''}
                         ${revokeBtn}
-                        ${showDelete ? `<button type="button" onclick="deleteMessage('${mid}')" title="删除">🗑</button>` : ''}
+                        ${showDelete ? `<button type="button" data-action="delete-message" data-id="${escAttr(msg.id)}" title="删除">🗑</button>` : ''}
                     </div>
                 </div>
                 ${replyQuote}
@@ -108,7 +108,7 @@
                 + '<span class="dm-nick">' + esc(nick) + '</span>'
                 + '<span class="dm-time">' + esc(msg.created_at) + '</span>'
                 + '<button type="button" class="msg-mini-btn" '
-                + 'onclick="toggleSource(this)" title="查看源码">📄</button>'
+                + 'data-action="toggle-source" title="查看源码">📄</button>'
               + '</div>'
               + '<div class="dm-bubble md-body" data-raw="' + rawAttr + '">'
                 + contentHtml

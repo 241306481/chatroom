@@ -257,7 +257,7 @@ check('模板不产生 XSS：昵称与 ext 均被处理', () => {
     const out2 = renderToString('users.html', { current_user: {}, nav: {}, users: [evil2] });
     assert.ok(/src=""/.test(out2), '非法 ext 应产出空 src');
     const imgTag = (out2.match(/<img class="user-avatar avatar-img"[\s\S]*?>/) || [''])[0];
-    assert.strictEqual((imgTag.match(/onerror=/g) || []).length, 1,
+    assert.strictEqual((imgTag.match(/onerror=/g) || []).length, 0,
         'img 上出现了注入的 onerror');
     assert.ok(!/<script>alert/.test(out2), 'ext 注入未挡住');
 });

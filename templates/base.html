@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>{{ site_name or display_name or "聊天室" }}</title>
-<script>  (function () {
+<script nonce="{{ csp_nonce }}">  (function () {
     try {
       var t = localStorage.getItem('chatroom_theme')
           || (window.matchMedia
@@ -12,6 +12,22 @@
               ? 'dark' : 'light');
       document.documentElement.setAttribute('data-theme', t);
     } catch (e) {}
+    window.addEventListener('error', function (e) {
+      var img = e.target;
+      if (!img || img.tagName !== 'IMG' || !img.classList
+          || !img.classList.contains('avatar-img')) return;
+      img.style.display = 'none';
+      var sib = img.nextElementSibling;
+      if (!sib || !sib.classList) return;
+      var fallback = ['avatar-circle', 'user-avatar', 'user-avatar-lg',
+        'member-avatar', 'msg-avatar', 'dm-avatar', 'profile-avatar'];
+      for (var i = 0; i < fallback.length; i++) {
+        if (sib.classList.contains(fallback[i])) {
+          sib.style.display = 'inline-flex';
+          break;
+        }
+      }
+    }, true);
   })();
 </script>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>💬</text></svg>">
@@ -64,7 +80,6 @@
       <div class="user-menu-wrapper">
         <div class="user-avatar-btn" id="userMenuBtn" data-uid="{{ current_user.id }}">
           <img class="avatar-circle avatar-img" src="{{ current_user | avatarSrc }}"
-                   onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex'"
                    alt="" loading="lazy"
                    {% if not (current_user | avatarSrc) %}style="display:none"{% endif %}>
           <span class="avatar-circle" style="background: {{ current_user.avatar_color | avatarColor }}">
@@ -76,7 +91,6 @@
         <div class="user-dropdown" id="userDropdown">
           <div class="dropdown-header">
             <img class="avatar-circle lg avatar-img" src="{{ current_user | avatarSrc }}"
-                     onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex'"
                      alt="" loading="lazy"
                      {% if not (current_user | avatarSrc) %}style="display:none"{% endif %}>
             <span class="avatar-circle lg" style="background: {{ current_user.avatar_color | avatarColor }}">
@@ -117,7 +131,7 @@
 {% block content %}{% endblock %}
 </main>
 <div id="notificationContainer"></div>
-<script>  window.__WS_PROTOCOL__ = {{ (ws_protocol or 'ws') | jsdump }};
+<script nonce="{{ csp_nonce }}">  window.__WS_PROTOCOL__ = {{ (ws_protocol or 'ws') | jsdump }};
   window.__DOMAIN__ = {{ (domain_name or '') | jsdump }};
   window.__DISCUSS__ = {{ (discuss_name or '') | jsdump }};
   window.__CURRENT_UID__ = {{ (current_user.id if current_user and current_user.id else '') | jsdump }};
@@ -131,7 +145,7 @@
   window.__CAN_REVOKE_OWN__ = {{ 'true' if can_revoke_own else 'false' }};
   window.__CAN_REVOKE_ANY__ = {{ 'true' if can_revoke_any else 'false' }};
 </script>
-<script>  (function () {
+<script nonce="{{ csp_nonce }}">  (function () {
     var target = location.pathname + location.search;
     if (target.startsWith('/login') || target.startsWith('/register')) return;
     if (target === '/' || target === '/home') return;
@@ -143,7 +157,7 @@
     });
   })();
 </script>
-<script>  document.addEventListener('DOMContentLoaded', function () {
+<script nonce="{{ csp_nonce }}">  document.addEventListener('DOMContentLoaded', function () {
     document.querySelectorAll('.announcement-content[data-raw], .pinned-content[data-raw]')
         .forEach(function (el) {
             if (el.dataset.rendered === '1') return;
@@ -248,7 +262,7 @@
 </script>
 <script src="/static/js/batch-select.js">
 </script>
-<script>  (function () {
+<script nonce="{{ csp_nonce }}">  (function () {
     var KEY = 'chatroom_theme';
     var stored = localStorage.getItem(KEY);
     var theme = stored || (window.matchMedia

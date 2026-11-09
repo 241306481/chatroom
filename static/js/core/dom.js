@@ -471,3 +471,107 @@ window.toggleSource = function (btn) {
         }
     }
 };
+document.addEventListener('click', function (e) {
+    const el = e.target && e.target.closest
+        ? e.target.closest('[data-action]') : null;
+    if (!el) return;
+    const action = el.dataset.action;
+    const id = el.dataset.id;
+    switch (action) {
+    case 'inline-edit-id':
+        e.preventDefault();
+        e.stopPropagation();
+        if (window.inlineEditId) window.inlineEditId(el);
+        break;
+    case 'inline-edit-title':
+        e.preventDefault();
+        e.stopPropagation();
+        if (window.inlineEditTitle) window.inlineEditTitle(el);
+        break;
+    case 'inline-edit-filename':
+        if (window.inlineEditFilename) window.inlineEditFilename(el);
+        break;
+    case 'delete-discussion':
+        if (window.deleteListItem) window.deleteListItem(el);
+        break;
+    case 'copy-file-link':
+        if (window.copyFileLink) window.copyFileLink(el);
+        break;
+    case 'toggle-file-visibility':
+        if (window.toggleFileVisibility) {
+            window.toggleFileVisibility(el, el.dataset.actionUrl || '');
+        }
+        break;
+    case 'upload-file': {
+        const input = document.getElementById(el.dataset.fileInput || 'fileInput');
+        if (input) input.click();
+        break;
+    }
+    case 'toggle-source':
+        if (window.toggleSource) window.toggleSource(el);
+        break;
+    case 'set-reply-to':
+        if (window.setReplyTo) window.setReplyTo(id, el);
+        break;
+    case 'clear-reply':
+        if (window.clearReplyTo) window.clearReplyTo();
+        break;
+    case 'toggle-reaction-picker':
+        if (window.toggleReactionPicker) window.toggleReactionPicker(id, el);
+        break;
+    case 'pin-message':
+        if (window.pinMessage) window.pinMessage(id);
+        break;
+    case 'unpin-message':
+        if (window.unpinMessage) window.unpinMessage(id);
+        break;
+    case 'revoke-message':
+        if (window.revokeMessage) window.revokeMessage(id);
+        break;
+    case 'delete-message':
+        if (window.deleteMessage) window.deleteMessage(id);
+        break;
+    case 'scroll-to-message':
+        e.preventDefault();
+        if (window.scrollToMessage) window.scrollToMessage(id);
+        break;
+    case 'batch-pin':
+        if (window.batchPinSelected) {
+            window.batchPinSelected(el.dataset.pinned === 'true');
+        }
+        break;
+    case 'batch-delete':
+        if (window.batchDeleteSelected) window.batchDeleteSelected();
+        break;
+    case 'batch-cancel':
+        if (window.toggleMessageBatch) window.toggleMessageBatch(false);
+        break;
+    case 'mute-member':
+        if (window.muteMember) window.muteMember(el.dataset.uid);
+        break;
+    case 'new-dm-target':
+        if (window.newDMTarget) window.newDMTarget();
+        break;
+    case 'send-message':
+        if (window.sendMessage) window.sendMessage();
+        break;
+    case 'send-dm':
+        if (window.sendDM) window.sendDM();
+        break;
+    default:
+        break;
+    }
+});
+document.addEventListener('change', function (e) {
+    const el = e.target;
+    if (!el || !el.matches || !el.matches('[data-auto-submit]')) return;
+    if (el.form) el.form.submit();
+});
+document.addEventListener('submit', function (e) {
+    const form = e.target;
+    if (!form || !form.getAttribute) return;
+    const name = form.getAttribute('data-submit-action');
+    if (!name) return;
+    const fn = window[name];
+    if (typeof fn === 'function' && fn(form) === false) e.preventDefault();
+});

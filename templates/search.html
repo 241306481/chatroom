@@ -86,10 +86,10 @@
     <span class="page-info">{{ page }} / {{ pageCount }}</span>
   </nav>
 {% endif %}
-<script>  window.__SEARCH_DOMAINS__ = {{ domains | jsdump }};
+<script nonce="{{ csp_nonce }}">  window.__SEARCH_DOMAINS__ = {{ domains | jsdump }};
   window.__SEARCH_DISCUSS__ = {{ discFilter | jsdump }};
 </script>
-<script>  (function () {
+<script nonce="{{ csp_nonce }}">  (function () {
     const domainSel = document.getElementById('searchDomain');
     const discSel = document.getElementById('searchDiscuss');
     if (!domainSel || !discSel) return;

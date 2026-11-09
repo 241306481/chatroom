@@ -6,7 +6,8 @@
     {% if can_upload %}
       <div>
         <input type="file" id="fileInput" multiple style="display:none">
-        <button type="button" class="file-upload-btn" onclick="document.getElementById('fileInput').click()">
+        <button type="button" class="file-upload-btn"
+                data-action="upload-file" data-file-input="fileInput">
           ⬆ 上传文件
         </button>
       </div>
@@ -79,7 +80,7 @@
                       data-file-id="{{ f.id }}"
                       data-value="{{ f.filename }}"
                       data-rename-url="/domain/{{ domain_name }}/files/{{ f.id }}/rename"
-                      onclick="inlineEditFilename(this);">{{ f.filename }}</span>
+                      data-action="inline-edit-filename">{{ f.filename }}</span>
               {% else %}
                 {{ f.filename }}
               {% endif %}
@@ -91,7 +92,7 @@
               <a href="/domain/{{ domain_name }}/files/{{ f.id }}/download" class="file-action-btn">下载</a>
               <button type="button" class="file-action-btn"
                       data-copy-url="/domain/{{ domain_name }}/files/{{ f.id }}"
-                      onclick="copyFileLink(this)">复制链接</button>
+                      data-action="copy-file-link">复制链接</button>
               {% if can_delete_any or f.is_own %}
                 <form method="POST" action="/domain/{{ domain_name }}/files/{{ f.id }}/delete" style="display:inline">
                   <button type="submit" class="file-action-btn danger"
@@ -112,7 +113,7 @@
   {% endif %}
 </div>
 {% if can_upload %}
-<script>  window.addEventListener('DOMContentLoaded', function () {
+<script nonce="{{ csp_nonce }}">  window.addEventListener('DOMContentLoaded', function () {
     initUpload({
       inputId: 'fileInput',
       uploadUrl: {{ ('/domain/' + domain_name + '/files/upload') | jsdump }},

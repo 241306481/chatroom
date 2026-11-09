@@ -94,7 +94,7 @@
             '<div class="pinned-content md-body" data-raw="' + escAttr(raw) + '"></div>' +
             '<div class="pinned-meta">' + esc(msg ? msg.nickname : '') + '</div>' +
             (canPin
-                ? '<div class="pinned-actions"><button type="button" title="取消置顶" onclick="unpinMessage(\'' + id + '\')">📌</button></div>'
+                ? '<div class="pinned-actions"><button type="button" title="取消置顶" data-action="unpin-message" data-id="' + escAttr(id) + '">📌</button></div>'
                 : '');
         const content = item.querySelector('.pinned-content');
         content.innerHTML = window.renderContent(raw);

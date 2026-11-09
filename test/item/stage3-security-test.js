@@ -389,6 +389,15 @@ let proc = null;
             .includes('camera=()'), '缺少权限策略头');
         assert.strictEqual(page.headers['strict-transport-security'], undefined,
             'HTTP 不应发送 HSTS');
+        const csp = String(page.headers['content-security-policy'] || '');
+        const nonce = (csp.match(/script-src[^;]*'nonce-([^']+)'/) || [])[1];
+        assert.ok(nonce, 'script-src 缺少 nonce');
+        assert.ok(!/script-src[^;]*'unsafe-inline'/.test(csp),
+            'script-src 不应允许 unsafe-inline');
+        assert.ok(/style-src[^;]*'unsafe-inline'/.test(csp),
+            'style-src 应暂时保留 unsafe-inline');
+        assert.ok(page.body.includes('nonce="' + nonce + '"'),
+            'HTML 未使用响应 nonce');
         const payload = Buffer.alloc(2 * 1024 * 1024 + 1, 0x61);
         const big = await new Promise((resolve, reject) => {
             const r = http.request({

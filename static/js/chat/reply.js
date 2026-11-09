@@ -23,7 +23,7 @@
         const preview = Array.from(content).slice(0, 60).join('');
         banner.innerHTML =
             '<span>回复 <b>' + esc(nick) + '</b>：' + esc(preview) + '</span>' +
-            '<button type="button" title="取消回复" onclick="clearReplyTo()">×</button>';
+            '<button type="button" title="取消回复" data-action="clear-reply">×</button>';
         const ta = document.getElementById('msgInput');
         if (ta) ta.focus();
     };

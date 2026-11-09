@@ -84,7 +84,7 @@
     <a href="/manage/user_ips">查看用户最近 IP</a>
   </p>
 </div>
-<script>(function () {
+<script nonce="{{ csp_nonce }}">(function () {
   function check() {
     var err = new URL(location.href).searchParams.get('error');
     if (err && window.showAlert) window.showAlert(err);
