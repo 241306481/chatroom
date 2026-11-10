@@ -26,16 +26,4 @@
   {% endif %}
   <p style="margin-top:24px;"><a href="/domain/{{ domain_name }}/manage">← 返回域管理</a></p>
 </div>
-<script nonce="{{ csp_nonce }}">  (function () {
-    function check() {
-      var err = new URL(location.href).searchParams.get('error');
-      if (err && window.showAlert) window.showAlert(err);
-    }
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', check);
-    } else {
-      check();
-    }
-  })();
-</script>
 {% endblock %}

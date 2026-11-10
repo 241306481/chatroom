@@ -494,9 +494,6 @@ document.addEventListener('click', function (e) {
     case 'delete-discussion':
         if (window.deleteListItem) window.deleteListItem(el);
         break;
-    case 'copy-file-link':
-        if (window.copyFileLink) window.copyFileLink(el);
-        break;
     case 'toggle-file-visibility':
         if (window.toggleFileVisibility) {
             window.toggleFileVisibility(el, el.dataset.actionUrl || '');
@@ -507,6 +504,16 @@ document.addEventListener('click', function (e) {
         if (input) input.click();
         break;
     }
+    case 'edit-message':
+        if (el.closest('.dm-msg') && window.editDMMessage) {
+            window.editDMMessage(id, el);
+        } else if (window.editMessage) {
+            window.editMessage(id, el);
+        }
+        break;
+    case 'copy-message-link':
+        if (window.copyMessageLink) window.copyMessageLink(id, el);
+        break;
     case 'toggle-source':
         if (window.toggleSource) window.toggleSource(el);
         break;
@@ -565,8 +572,47 @@ document.addEventListener('click', function (e) {
 document.addEventListener('change', function (e) {
     const el = e.target;
     if (!el || !el.matches || !el.matches('[data-auto-submit]')) return;
-    if (el.form) el.form.submit();
+    if (el.form) el.form.requestSubmit();
 });
+function unlockForm(form) {
+    form.querySelectorAll('button[type="submit"]').forEach(function (b) {
+        b.disabled = false;
+    });
+}
+function showFormError(message) {
+    if (window.showAlert) window.showAlert(message);
+    else window.alert(message);
+}
+function saveDownload(res) {
+    const cd = res.headers.get('Content-Disposition') || '';
+    const match = /filename="([^"]+)"/.exec(cd);
+    return res.blob().then(function (blob) {
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = match ? match[1] : 'download';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
+    });
+}
+function handleJsonResponse(res) {
+    return res.text().then(function (text) {
+        let data;
+        try { data = JSON.parse(text); }
+        catch (e) { throw new Error('服务器返回无效响应'); }
+        if (res.status === 401) {
+            location.href = '/login?return_to='
+                + encodeURIComponent(location.pathname + location.search);
+            return;
+        }
+        if (!data.ok) {
+            showFormError(data.error || '操作失败');
+            return;
+        }
+        location.href = data.redirect || location.href;
+    });
+}
 document.addEventListener('submit', function (e) {
     const form = e.target;
     if (!form || !form.getAttribute) return;
@@ -574,4 +620,46 @@ document.addEventListener('submit', function (e) {
     if (!name) return;
     const fn = window[name];
     if (typeof fn === 'function' && fn(form) === false) e.preventDefault();
+});
+document.addEventListener('submit', function (e) {
+    const form = e.target;
+    if (!form || !form.getAttribute || e.defaultPrevented) return;
+    if ((form.getAttribute('method') || '').toUpperCase() !== 'POST') return;
+    if (form.hasAttribute('data-native')) return;
+    if (form.target) return;
+    if (form.dataset.submitting === '1') {
+        e.preventDefault();
+        return;
+    }
+    const submitter = e.submitter;
+    const overrideAction = submitter && submitter.hasAttribute
+        && submitter.hasAttribute('formaction');
+    const action = (overrideAction ? submitter.formAction : form.action) || location.href;
+    const isDownload = !!submitter && submitter.dataset.batchAction === 'download';
+    let hasFiles = false;
+    form.querySelectorAll('input[type="file"]').forEach(function (input) {
+        if (input.files && input.files.length) hasFiles = true;
+    });
+    const data = new FormData(form, submitter);
+    const body = hasFiles ? data : new URLSearchParams(data);
+    e.preventDefault();
+    form.dataset.submitting = '1';
+    fetch(action, {
+        method: 'POST',
+        body: body,
+        credentials: 'same-origin',
+        headers: { Accept: 'application/json' },
+    }).then(function (res) {
+        const ct = res.headers.get('Content-Type') || '';
+        if (isDownload && ct.indexOf('application/json') < 0) {
+            if (!res.ok) throw new Error('下载失败');
+            return saveDownload(res);
+        }
+        return handleJsonResponse(res);
+    }).catch(function (err) {
+        showFormError(err && err.message ? err.message : '网络错误，请稍后重试');
+    }).then(function () {
+        delete form.dataset.submitting;
+        unlockForm(form);
+    });
 });

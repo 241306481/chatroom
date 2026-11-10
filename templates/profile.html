@@ -137,8 +137,6 @@
                 editBtn.hidden = false;
             });
         }
-        var err = new URL(location.href).searchParams.get('error');
-        if (err && window.showAlert) window.showAlert(err);
     }
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', init);

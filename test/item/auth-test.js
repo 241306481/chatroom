@@ -108,9 +108,8 @@ clearTlsArtifacts(ROOT);
     await check('#4 域内封禁接口接受无秒时间（走 HTTP）', async () => {
 const r = await req('POST', '/domain/system/manage/user',
         { body: { action: 'ban', user_id: uidC, reason: 'tz', until: '2099-06-01T12:00' }, cookie: ROOT_C });
-    const loc = String(r.headers.location || '');
-    assert.ok(!loc.includes('error='), '域内封禁失败: ' + loc);
-    assert.ok(!loc.includes('ok='), '不应再有 ?ok=');
+    assert.strictEqual(r.status, 200, r.body);
+    assert.strictEqual(JSON.parse(r.body).ok, true, r.body);
     const flashCookie = (r.headers['set-cookie'] || []).find((c) => /^flash=.+;/.test(c));
     assert.ok(flashCookie, '应下发 flash cookie');
     const ban = (storage.loadDomain('system').bans || {})[uidC];

@@ -123,7 +123,8 @@ function httpsGet(p, cookie) {
     await check('★ HTTPS 下会话 Cookie 带 Secure', async () => {
         const r = await httpsPost('/register',
             { nickname: 'tlsuser', password: 'pw123456', confirm_password: 'pw123456' });
-        assert.strictEqual(r.status, 302, 'register 未成功');
+        assert.strictEqual(r.status, 200, 'register 未成功');
+        assert.strictEqual(JSON.parse(r.body).ok, true, r.body);
         const sc = (r.headers['set-cookie'] || []).join('; ');
         cookie = sc.split(';')[0];
         assert.ok(/HttpOnly/.test(sc), '缺 HttpOnly: ' + sc);

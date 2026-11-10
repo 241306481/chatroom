@@ -46,6 +46,18 @@ function req(method, p, { body, cookie } = {}) {
     });
 }
 const cookieOf = r => (r.headers['set-cookie'] || []).map(c => c.split(';')[0]).join('; ');
+function assertJsonOk(r) {
+    assert.strictEqual(r.status, 200, r.body);
+    const data = JSON.parse(r.body);
+    assert.strictEqual(data.ok, true, r.body);
+    return data;
+}
+function assertJsonFail(r) {
+    assert.strictEqual(r.status, 200, r.body);
+    const data = JSON.parse(r.body);
+    assert.strictEqual(data.ok, false, r.body);
+    return data;
+}
 function open(ws, ms = 15000) {
     return new Promise((res, rej) => {
         const t = setTimeout(() => { ws.off('open', onOpen); ws.off('error', onErr); rej(new Error('ws timeout')); }, ms);
@@ -126,7 +138,7 @@ function waitFor(ws, pred, ms = 10000) {
     await check('文件：批量置顶并排序到最前', async () => {
         const r = await req('POST', '/myfile/batch',
             { cookie: A, body: { ids: f1.id + ',' + f2.id, action: 'pin' } });
-        assert.strictEqual(r.status, 302);
+        assertJsonOk(r);
         const list = storage.listUserFiles(uidA);
         assert.strictEqual(list[0].pinned, true);
         assert.strictEqual(list[1].pinned, true);
@@ -139,7 +151,7 @@ function waitFor(ws, pred, ms = 10000) {
                 mode: 'replace', find: 'a', replace: 'z',
             },
         });
-        assert.strictEqual(r.status, 302);
+        assertJsonOk(r);
         assert.strictEqual(storage.getUserFile(uidA, f1.id).filename, 'zlphz.txt');
         assert.strictEqual(storage.getUserFile(uidA, f2.id).filename, 'betz.txt');
     });
@@ -148,7 +160,7 @@ function waitFor(ws, pred, ms = 10000) {
             cookie: A,
             body: { ids: f1.id + ',' + f2.id, action: 'visibility', visibility: 'public' },
         });
-        assert.strictEqual(r.status, 302);
+        assertJsonOk(r);
         assert.strictEqual(storage.getUserFile(uidA, f1.id).visibility, 'public');
         assert.strictEqual(storage.getUserFile(uidA, f2.id).visibility, 'public');
     });
@@ -173,12 +185,12 @@ function waitFor(ws, pred, ms = 10000) {
         let r = await req('POST', '/myfile/batch', {
             cookie: A, body: { ids: d1.id + ',missing-file', action: 'delete' },
         });
-        assert.strictEqual(r.status, 302);
+        assertJsonFail(r);
         assert.ok(storage.getUserFile(uidA, d1.id), '无效选择时不应删除');
         r = await req('POST', '/myfile/batch', {
             cookie: A, body: { ids: d1.id + ',' + d2.id, action: 'delete' },
         });
-        assert.strictEqual(r.status, 302);
+        assertJsonOk(r);
         assert.strictEqual(storage.getUserFile(uidA, d1.id), null);
         assert.strictEqual(storage.getUserFile(uidA, d2.id), null);
     });
@@ -191,7 +203,7 @@ function waitFor(ws, pred, ms = 10000) {
                 mode: 'prefix', value: 'x-',
             },
         });
-        assert.strictEqual(r.status, 302);
+        assertJsonFail(r);
         assert.strictEqual(storage.getUserFile(uidA, f1.id).filename, before);
     });
     const df1 = storage.addDomainFile('system', {
@@ -205,7 +217,7 @@ function waitFor(ws, pred, ms = 10000) {
             cookie: A,
             body: { ids: df1.id + ',' + df2.id, action: 'pin' },
         });
-        assert.strictEqual(r.status, 302);
+        assertJsonOk(r);
         assert.strictEqual(storage.getDomainFile('system', df1.id).pinned, true);
         r = await req('POST', '/domain/system/files/batch', {
             cookie: A,
@@ -214,7 +226,7 @@ function waitFor(ws, pred, ms = 10000) {
                 mode: 'prefix', value: 'new-',
             },
         });
-        assert.strictEqual(r.status, 302);
+        assertJsonOk(r);
         assert.strictEqual(storage.getDomainFile('system', df1.id).filename, 'new-report-a.pdf');
     });
     await check('PDF 内联响应可被同源 iframe 预览', async () => {
@@ -244,7 +256,7 @@ function waitFor(ws, pred, ms = 10000) {
         const r = await req('POST', '/domain/system/files/batch', {
             cookie: A, body: { ids: d1.id + ',' + d2.id, action: 'delete' },
         });
-        assert.strictEqual(r.status, 302);
+        assertJsonOk(r);
         assert.strictEqual(storage.getDomainFile('system', d1.id), null);
         assert.strictEqual(storage.getDomainFile('system', d2.id), null);
     });
@@ -254,7 +266,7 @@ function waitFor(ws, pred, ms = 10000) {
     await check('讨论：批量置顶', async () => {
         const r = await req('POST', '/domain/system/manage/discussions',
             { cookie: A, body: { ids: 'batch-disc', action: 'batch-pin' } });
-        assert.strictEqual(r.status, 302);
+        assertJsonOk(r);
         assert.strictEqual(storage.loadDiscussion('system', 'batch-disc').pinned, true);
     });
     await check('讨论：批量改标题且不改 ID', async () => {
@@ -265,7 +277,7 @@ function waitFor(ws, pred, ms = 10000) {
                 mode: 'replace', find: 'Hello', replace: 'Hi',
             },
         });
-        assert.strictEqual(r.status, 302);
+        assertJsonOk(r);
         const cfg = storage.loadDiscussion('system', 'batch-disc');
         assert.strictEqual(cfg.title, 'Hi World');
         assert.strictEqual(cfg.name, 'batch-disc');
@@ -280,7 +292,7 @@ function waitFor(ws, pred, ms = 10000) {
         const r = await req('POST', '/domain/system/manage/discussions', {
             cookie: A, body: { ids: 'batch-del-a,general', action: 'batch-delete' },
         });
-        assert.strictEqual(r.status, 302);
+        assertJsonFail(r);
         assert.ok(storage.loadDiscussion('system', 'batch-del-a').name);
         assert.ok(storage.loadDiscussion('system', 'general').name);
     });
@@ -288,7 +300,7 @@ function waitFor(ws, pred, ms = 10000) {
         const r = await req('POST', '/domain/system/manage/discussions', {
             cookie: A, body: { ids: 'batch-del-a,batch-del-b', action: 'batch-delete' },
         });
-        assert.strictEqual(r.status, 302);
+        assertJsonOk(r);
         assert.ok(!storage.loadDiscussion('system', 'batch-del-a').name);
         assert.ok(!storage.loadDiscussion('system', 'batch-del-b').name);
     });
@@ -334,7 +346,7 @@ function waitFor(ws, pred, ms = 10000) {
         const r = await req('POST', '/create/domain', {
             cookie: A, body: { name: 'batchdom', display_name: 'Batch Domain' },
         });
-        assert.strictEqual(r.status, 302);
+        assertJsonOk(r);
         assert.ok(storage.domainExists('batchdom'));
     });
     let dom = storage.loadDomain('batchdom');
@@ -346,13 +358,13 @@ function waitFor(ws, pred, ms = 10000) {
     await check('域申请：批量通过与拒绝', async () => {
         let r = await req('POST', '/domain/batchdom/manage/applications',
             { cookie: A, body: { ids: uidB, action: 'approve' } });
-        assert.strictEqual(r.status, 302);
+        assertJsonOk(r);
         dom = storage.loadDomain('batchdom');
         assert.ok(dom.members[uidB], '通过后未加入成员');
         assert.ok(dom.join_applications.some(a => a.uid === uidC), '未选中的申请被误删');
         r = await req('POST', '/domain/batchdom/manage/applications',
             { cookie: A, body: { ids: uidC, action: 'reject' } });
-        assert.strictEqual(r.status, 302);
+        assertJsonOk(r);
         dom = storage.loadDomain('batchdom');
         assert.ok(!dom.members[uidC]);
         assert.ok(!dom.join_applications.some(a => a.uid === uidC));
@@ -367,7 +379,7 @@ function waitFor(ws, pred, ms = 10000) {
             cookie: A,
             body: { application_ids: 'batchdom:' + uidB, action: 'approve' },
         });
-        assert.strictEqual(r.status, 302);
+        assertJsonOk(r);
         dom = storage.loadDomain('batchdom');
         assert.ok(dom.members[uidB]);
         assert.strictEqual(dom.join_applications.length, 0);
@@ -375,15 +387,16 @@ function waitFor(ws, pred, ms = 10000) {
     await check('管理用户：批量封禁/解封，且拒绝自己', async () => {
         let r = await req('POST', '/manage/users/batch',
             { cookie: A, body: { ids: uidB, action: 'ban', reason: 'test' } });
-        assert.strictEqual(r.status, 302);
+        assertJsonOk(r);
         assert.strictEqual(storage.loadUser(uidB).banned, true);
         r = await req('POST', '/manage/users/batch',
             { cookie: A, body: { ids: uidB, action: 'unban' } });
-        assert.strictEqual(r.status, 302);
+        assertJsonOk(r);
         assert.ok(!storage.loadUser(uidB).banned);
         r = await req('POST', '/manage/users/batch',
             { cookie: A, body: { ids: uidA, action: 'ban', reason: 'self' } });
-        assert.strictEqual(r.status, 302);
+        const data = assertJsonFail(r);
+        assert.ok(data.error.includes('自己'), data.error);
         assert.ok(!storage.loadUser(uidA).banned);
     });
     dom = storage.loadDomain('batchdom');

@@ -107,8 +107,6 @@
 </div>
 <script nonce="{{ csp_nonce }}">  (function () {
     function init() {
-      var err = new URL(location.href).searchParams.get('error');
-      if (err && window.showAlert) window.showAlert(err);
       document.querySelectorAll('.ban-form').forEach(function (form) {
         var input = form.querySelector('input[name="until_local"]');
         if (!input) return;

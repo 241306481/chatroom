@@ -74,7 +74,9 @@
     <div class="message-list" id="messageList"
          data-total="{{ messages_total | default(0) }}"
          data-offset="{{ messages_offset | default(0) }}"
-         data-limit="{{ messages_limit | default(100) }}">
+         data-limit="{{ messages_limit | default(100) }}"
+         data-before="{{ messages_before | default('') }}"
+         data-has-more="{{ 'true' if messages_has_more else 'false' }}">
       <div class="message-list-inner">
       {% if messages and messages.length %}
         {% for msg in messages | reverse %}
@@ -94,6 +96,9 @@
                 <span class="msg-nick">{{ msg.nickname }}</span>
                 {% if msg.is_mod %}<span class="badge mod">MOD</span>{% endif %}
                 <span class="msg-time">{{ msg.created_at }}</span>
+                {% if msg.edited_at %}
+                  <span class="msg-edited" title="{{ msg.edited_at }}">已编辑</span>
+                {% endif %}
                 {% if can_send and not msg.revoked %}
                   <button type="button" class="msg-reply-btn"
                           data-action="set-reply-to" data-id="{{ msg.id }}"
@@ -102,7 +107,14 @@
                 {% if can_add_reaction or can_delete_any or msg.user_id == current_user.id or can_pin
                       or nav.can_revoke_own or nav.can_revoke_any %}
                   <div class="msg-actions">
+                    {% if can_send and msg.user_id == current_user.id and not msg.revoked %}
+                      <button type="button" data-action="edit-message" data-id="{{ msg.id }}"
+                              title="编辑" aria-label="编辑">✏️</button>
+                    {% endif %}
                     {% if not msg.revoked %}
+                      <button type="button" data-action="copy-message-link"
+                              data-id="{{ msg.id }}" title="复制链接"
+                              aria-label="复制消息链接">🔗</button>
                       <button type="button" data-action="toggle-source"
                               title="查看源码" aria-label="查看源码">📄</button>
                     {% endif %}

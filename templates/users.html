@@ -20,7 +20,7 @@
             <th style="width:80px;">等级</th>
           {% endif %}
           <th>简介</th>
-          <th style="width:100px;">操作</th>
+          <th style="width:150px;">操作</th>
         </tr>
       </thead>
       <tbody>
@@ -67,8 +67,8 @@
                   <form method="POST" action="/domain/{{ domain_name }}/manage/user" style="display:inline" class="user-inline-form">
                     <input type="hidden" name="action" value="mute">
                     <input type="hidden" name="user_id" value="{{ u.id }}">
-                    <input type="number" name="minutes" value="60" min="1" style="width:56px;" title="禁言分钟">
-                    <button type="submit" class="mini-btn">禁言</button>
+                    <div class="row"><input type="number" name="minutes" value="60" min="1" style="width:50px;" title="禁言时间（分钟）">分钟
+                    <button type="submit" class="mini-btn">禁言</button></div>
                   </form>
                 {% endif %}
                 {% if can_kick and not is_system_domain %}
@@ -79,7 +79,6 @@
                             {% if not u.banned %}data-confirm="确定踢出该成员？"{% endif %}>{% if u.banned %}解封{% else %}踢出{% endif %}</button>
                   </form>
                 {% endif %}
-                <a href="/domain/{{ domain_name }}/manage/user#user-{{ u.id }}" class="mini-btn">管理</a>
               {% endif %}
             </td>
           </tr>

@@ -82,10 +82,9 @@
             <td>{{ f.size_str }}</td>
             <td>{{ f.created_at }}</td>
             <td>
+              <a href="/myfile/{{ current_user.id }}/{{ f.id }}"
+                 target="_blank" rel="noopener" class="file-action-btn">查看</a>
               <a href="/myfile/{{ f.id }}/download" class="file-action-btn">下载</a>
-              <button type="button" class="file-action-btn"
-                      data-copy-url="/myfile/{{ current_user.id }}/{{ f.id }}"
-                      data-action="copy-file-link">复制链接</button>
               <button type="button" class="file-action-btn"
                       data-file-id="{{ f.id }}"
                       data-visibility="{{ f.visibility or 'private' }}"

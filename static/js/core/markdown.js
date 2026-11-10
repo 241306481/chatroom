@@ -99,7 +99,8 @@
             }
             opts.renderer = renderer;
         }
-        return root.marked.parse(md, opts);
+        const html = root.marked.parse(md, opts);
+        return html.replace(/<img\s/gi, '<img loading="lazy" decoding="async" ');
     }
     function fragment(src, blocks, token) {
         const md = preprocess(src, blocks, token);

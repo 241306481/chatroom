@@ -123,8 +123,6 @@
 </div>
 <script nonce="{{ csp_nonce }}">  (function () {
     function init() {
-      var err = new URL(location.href).searchParams.get('error');
-      if (err && window.showAlert) window.showAlert(err);
       document.querySelectorAll('input[name="until_local"]').forEach(function (input) {
         var hidden = input.form.querySelector('input[name="until"]');
         if (!hidden) {

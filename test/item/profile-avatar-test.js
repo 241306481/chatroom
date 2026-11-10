@@ -79,7 +79,8 @@ const check = (n, f) => {
         { field: 'avatar_file', name: 'a.png', mime: 'image/png', data: PNG });
     const r1 = await req('POST', `/user/${uid}`, { body: mp1.body, cookie: C, ct: mp1.ct });
     check('上传图片后 avatar_ext 落库', () => {
-        assert.ok(r1.status === 302 || r1.status === 303, '未重定向，status=' + r1.status);
+        assert.strictEqual(r1.status, 200, r1.body);
+        assert.strictEqual(JSON.parse(r1.body).ok, true, r1.body);
         const u = storage.loadUser(uid);
         assert.strictEqual(u.avatar_ext, 'png', 'avatar_ext 未写入，实际: ' + JSON.stringify(u.avatar_ext));
     });

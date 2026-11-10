@@ -131,14 +131,14 @@ const check = (n, f) => {
         { body: { nickname: 'tempuser', password: 'pw123456', confirm_password: 'pw123456' } });
     const C2 = (reg2.headers['set-cookie'] || []).map((c) => c.split(';')[0]).join('; ');
     check('第二个用户注册成功', () => {
-        assert.ok(reg2.status === 302 || reg2.status === 303, 'status=' + reg2.status);
+        assert.strictEqual(reg2.status, 200, reg2.body);
+        assert.strictEqual(JSON.parse(reg2.body).ok, true, reg2.body);
         assert.ok(C2.includes('token='), '未拿到会话 cookie');
     });
     const joined = await req('POST', '/domain/tempdomain/join', { cookie: C2 });
     check('第二个用户加入域', () => {
-        assert.ok(joined.status === 302 || joined.status === 303,
-            '加入失败，status=' + joined.status + ' body='
-            + joined.body.replace(/\s+/g, ' ').slice(0, 300));
+        assert.strictEqual(joined.status, 200, joined.body);
+        assert.strictEqual(JSON.parse(joined.body).ok, true, joined.body);
     });
     let gotDelete = null;
     const ws = new WebSocket(`ws://127.0.0.1:${PORT}/ws/status/tempdomain`,
@@ -153,7 +153,8 @@ const check = (n, f) => {
     const del = await req('POST', '/domain/tempdomain/manage/delete',
         { body: { confirm: 'DELETE' }, cookie: ROOT_C });
     check('超管可删除自己的域', () => {
-        assert.ok(del.status === 302 || del.status === 303, 'status=' + del.status);
+        assert.strictEqual(del.status, 200, del.body);
+        assert.strictEqual(JSON.parse(del.body).ok, true, del.body);
         assert.ok(!storage.domainExists('tempdomain'), '域目录仍在');
     });
     check('删除会广播 domain_deleted', () => {

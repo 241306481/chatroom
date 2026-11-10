@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#1890ff">
+<link rel="manifest" href="/static/manifest.webmanifest">
+<link rel="icon" href="/static/icon.svg" type="image/svg+xml">
 <title>{{ site_name or display_name or "聊天室" }}</title>
 <script nonce="{{ csp_nonce }}">  (function () {
     try {
@@ -105,6 +108,7 @@
           <a href="/messages">📧 私信{% if nav.unread_count and nav.unread_count > 0 %}<span class="badge-unread">{{ nav.unread_count }}</span>{% endif %}</a>
           <a href="/user/{{ current_user.id }}">👤 个人资料</a>
           <a href="/settings/security">🔒 安全设置</a>
+          <button type="button" class="dropdown-button" id="desktopNotifyBtn">🔔 桌面通知</button>
           <a href="/myfile">📁 我的文件</a>
           <div class="dropdown-divider"></div>
           <form method="POST" action="/logout" class="logout-form">
@@ -136,6 +140,7 @@
   window.__DISCUSS__ = {{ (discuss_name or '') | jsdump }};
   window.__CURRENT_UID__ = {{ (current_user.id if current_user and current_user.id else '') | jsdump }};
   window.__UNREAD_COUNT__ = {{ (nav.unread_count if nav and nav.unread_count else 0) | jsdump }};
+  window.__CAN_SEND__ = {{ 'true' if can_send else 'false' }};
   window.__CAN_PIN__ = {{ 'true' if can_pin else 'false' }};
   window.__CAN_MUTE__ = {{ 'true' if can_mute else 'false' }};
   window.__CAN_DELETE_ANY__ = {{ 'true' if can_delete_any else 'false' }};
@@ -180,7 +185,9 @@
     }
     document.querySelectorAll('form[method="POST"]').forEach(function (form) {
         form.addEventListener('submit', function () {
-            setTimeout(function () { lockSubmit(form); }, 50);
+            setTimeout(function () {
+                if (form.dataset.submitting !== '1') lockSubmit(form);
+            }, 50);
         });
     });
     document.querySelectorAll('form[method="POST"] select[onchange]').forEach(function (sel) {
@@ -203,6 +210,12 @@
 <script src="/static/js/avatar.js">
 </script>
 <script src="/static/js/core/notify.js">
+</script>
+<script src="/static/js/desktop-notify.js">
+</script>
+<script src="/static/js/shortcuts.js">
+</script>
+<script src="/static/js/pwa.js">
 </script>
 <script src="/static/js/unread-notify.js">
 </script>
@@ -255,8 +268,6 @@
 <script src="/static/js/dm.js">
 </script>
 <script src="/static/js/upload.js">
-</script>
-<script src="/static/js/copy-link.js">
 </script>
 <script src="/static/js/file-visibility.js">
 </script>

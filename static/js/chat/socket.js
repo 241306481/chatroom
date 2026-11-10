@@ -124,6 +124,11 @@
                 case 'message_revoked':
                     R.applyRevoke(data);
                     break;
+                case 'message_edited':
+                    if (R.applyEdit) {
+                        R.applyEdit(data.message_id, data.content, data.edited_at);
+                    }
+                    break;
                 case 'message_pinned':
                     R.updatePinned(data.message_id, data.pinned, data.message);
                     break;
@@ -209,12 +214,9 @@
         const list = document.getElementById('messageList');
         if (!list) return;
         let loading = false;
-        let hasMoreOlder = true;
-        const initialOffset = parseInt(list.dataset.offset || '0', 10) || 0;
-        const initialLimit = parseInt(list.dataset.limit || '100', 10) || 100;
-        const total = parseInt(list.dataset.total || '0', 10) || 0;
-        let oldestLoaded = initialOffset + initialLimit;
-        if (total > 0 && oldestLoaded >= total) hasMoreOlder = false;
+        let hasMoreOlder = list.dataset.hasMore !== 'false';
+        let before = list.dataset.before || '';
+        if (!before) hasMoreOlder = false;
         function showLoading() {
             const inner = list.querySelector('.message-list-inner') || list;
             if (inner.querySelector('.loading-older')) return;
@@ -238,7 +240,7 @@
             loading = true;
             const url = '/domain/' + encodeURIComponent(dn)
                 + '/discuss/' + encodeURIComponent(disc)
-                + '/messages?offset=' + oldestLoaded + '&limit=50';
+                + '/messages?before=' + encodeURIComponent(before) + '&limit=50';
             const delay = urgent ? 0 : 500;
             setTimeout(() => {
                 fetch(url).then((r) => r.json()).then((res) => {
@@ -256,10 +258,9 @@
                     if (typeof window.__chatSearchReapply === 'function') {
                         window.__chatSearchReapply();
                     }
-                    oldestLoaded += res.messages.length;
-                    if (res.messages.length < 50 || oldestLoaded >= total) {
-                        hasMoreOlder = false;
-                    }
+                    before = res.next_before
+                        || (res.messages.length ? res.messages[0].id : before);
+                    hasMoreOlder = !!res.has_more;
                 }).catch(() => {
                     if (!urgent) hideLoading();
                     loading = false;

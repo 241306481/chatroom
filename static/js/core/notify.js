@@ -54,6 +54,16 @@ window.showNotification = function (opts) {
         setTimeout(function () { card.remove(); }, 300);
     }
     container.appendChild(card);
+    if (window.showDesktopNotification) {
+        window.showDesktopNotification({
+            title: title,
+            content: opts.content || '',
+            tag: opts.tag || 'chatroom',
+            avatarUid: opts.avatarUid,
+            avatarExt: opts.avatarExt,
+            onClick: opts.onClick,
+        });
+    }
     var timer = setTimeout(close, opts.duration || 5000);
     card.addEventListener('mouseenter', function () { clearTimeout(timer); });
     card.addEventListener('mouseleave', function () {

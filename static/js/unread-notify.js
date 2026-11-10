@@ -14,6 +14,7 @@
             content: count + ' 条未读私信，点击查看',
             color: '#f5222d',
             avatar: '📧',
+            tag: 'dm-unread',
             duration: 8000,
             onClick: function () {
                 location.href = '/messages';

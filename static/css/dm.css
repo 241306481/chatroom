@@ -141,3 +141,8 @@ html[data-theme="dark"] .loading-older { color: #666; }
     grid-template-columns: 120px minmax(0, 1fr); }
   .dm-file-sidebar { display: none; }
 }
+
+.dm-typing { margin-left: auto; color: var(--text-tertiary, #999);
+  font-size: 12px; white-space: nowrap; }
+.dm-read-label { margin-left: 6px; color: var(--text-tertiary, #999);
+  font-size: 12px; }

@@ -33,22 +33,33 @@ async function runStartupCheck() {
     try { fs.writeSync(1, out.join('\n') + '\n'); } catch (e) {}
     process.exit(1);
 }
+function configureServer(server) {
+    server.requestTimeout = 5 * 60 * 1000;
+    server.headersTimeout = 20 * 1000;
+    server.keepAliveTimeout = 5 * 1000;
+    server.maxHeadersCount = 100;
+    server.on('clientError', (err, socket) => {
+        if (!socket || socket.destroyed || !socket.writable) return;
+        socket.end('HTTP/1.1 400 Bad Request\r\nConnection: close\r\n'
+            + 'Content-Length: 0\r\n\r\n');
+    });
+    return server;
+}
 function createServer() {
     const cert = path.join(__dirname, 'cert.pem');
     const key = path.join(__dirname, 'key.pem');
     if (!fs.existsSync(cert) || !fs.existsSync(key)) {
-        return { server: http.createServer(routes.handleRequest), hasCert: false };
+        return { server: configureServer(http.createServer(routes.handleRequest)), hasCert: false };
     }
-    return {
-        server: https.createServer(
-            { key: fs.readFileSync(key), cert: fs.readFileSync(cert) },
-            routes.handleRequest),
-        hasCert: true,
-    };
+    const server = https.createServer(
+        { key: fs.readFileSync(key), cert: fs.readFileSync(cert) },
+        routes.handleRequest);
+    return { server: configureServer(server), hasCert: true };
 }
 function getLanIp() {
-    for (const name of Object.keys(os.networkInterfaces())) {
-        for (const iface of os.networkInterfaces()[name]) {
+    const interfaces = os.networkInterfaces();
+    for (const name of Object.keys(interfaces)) {
+        for (const iface of interfaces[name] || []) {
             if (iface.family === 'IPv4' && !iface.internal) return iface.address;
         }
     }
@@ -80,7 +91,8 @@ function handleServerError(err) {
     process.exit(1);
 }
 async function main() {
-    storage.ensureDirs();    storage.ensureSystemDomain();
+    storage.ensureDirs();
+    storage.ensureSystemDomain();
     storage.ensureSystemUser();
     await runStartupCheck();
     const { server, hasCert } = createServer();

@@ -87,8 +87,9 @@ const check = (n, f) => {
     const up = await req('POST', `/user/${uid}`, {
         body: { nickname: 'flashuser2', bio: '改个名' }, cookie: C, jar: true,
     });
-    check('POST 重定向时下发 flash cookie', () => {
-        assert.ok(up.status === 302 || up.status === 303, '未重定向，status=' + up.status);
+    check('POST 成功时下发 flash cookie', () => {
+        assert.strictEqual(up.status, 200, up.body);
+        assert.strictEqual(JSON.parse(up.body).ok, true, up.body);
         const sc = up.headers['set-cookie'] || [];
         const f = sc.find((c) => c.startsWith('flash=') && !/flash=;/.test(c));
         assert.ok(f, '未下发 flash cookie，实际: ' + JSON.stringify(sc));

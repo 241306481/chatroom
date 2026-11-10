@@ -30,6 +30,19 @@ check('私信写入双方独立分片', () => {
     assert.strictEqual(a[0].id, first.id);
     assert.strictEqual(b[0].id, first.id);
 });
+check('编辑私信同步双方副本与会话预览', () => {
+    const at = '2026-01-02T03:04:05.000Z';
+    assert.strictEqual(storage.updateDMMessage(A, B, first.id, {
+        content: 'hello edited', edited_at: at,
+    }), true);
+    const a = storage.loadAllDM(A, B);
+    const b = storage.loadAllDM(B, A);
+    assert.strictEqual(a[0].content, 'hello edited');
+    assert.strictEqual(b[0].content, 'hello edited');
+    assert.strictEqual(a[0].edited_at, at);
+    assert.strictEqual(b[0].edited_at, at);
+    assert.strictEqual(storage.getConvIndex(B)[A].last.content, 'hello edited');
+});
 check('会话索引未读与未读计数一致', () => {
     const conv = storage.getConvIndex(B);
     assert.strictEqual(conv[A].unread, 1);

@@ -25,8 +25,8 @@ check('成员栏含踢出/解封操作', () => {
 check('踢出带二次确认（自定义弹窗 data-confirm）', () => {
     assert.ok(/data-confirm/.test(src), '踢出缺少确认');
 });
-check('成员栏含跳转管理页的链接', () => {
-    assert.ok(/\/manage\/user#user-/.test(src), '缺少管理页链接');
+check('成员行保留定位锚点', () => {
+    assert.ok(/id="user-\{\{ u\.id \}\}"/.test(src), '缺少成员行锚点');
 });
 check('所有者不出现管理操作', () => {
     assert.ok(/not u\.is_owner/.test(src), '所有者应被排除');

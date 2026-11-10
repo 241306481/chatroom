@@ -23,8 +23,6 @@
              placeholder="搜索用户昵称…" autocomplete="off">
       <div class="dm-search-list" id="dmSearchList"></div>
     </div>
-    <script nonce="{{ csp_nonce }}">      window.__DM_USERS__ = {{ all_users | jsdump }};
-</script>
     {% if conversations and conversations.length %}
       {% for c in conversations %}
         <a href="/messages?target={{ c.other }}"
@@ -52,8 +50,12 @@
           <span class="avatar-circle" style="background: {{ target_user.avatar_color | avatarColor }}">{{ target_user.nickname | avatarText }}</span>
           <span>{{ target_user.nickname }}</span>
         </a>
+        <span class="dm-typing" id="dmTyping" hidden></span>
       </div>
-      <div class="dm-list" id="dmList">
+      <div class="dm-list" id="dmList"
+           data-before="{{ messages_before | default('') }}"
+           data-has-more="{{ 'true' if messages_has_more else 'false' }}"
+           data-limit="{{ messages_limit | default(100) }}">
         <div class="dm-list-inner">
         {% if messages and messages.length %}
           {% for m in messages | reverse %}
@@ -72,6 +74,14 @@
                 <div class="dm-msg-header">
                   <span class="dm-nick">{{ m.nickname }}</span>
                   <span class="dm-time">{{ m.created_at }}</span>
+                  {% if m.edited_at %}
+                    <span class="dm-edited" title="{{ m.edited_at }}">已编辑</span>
+                  {% endif %}
+                  {% if m.is_me %}
+                    <button type="button" class="msg-mini-btn"
+                            data-action="edit-message" data-id="{{ m.id }}"
+                            title="编辑">✏️</button>
+                  {% endif %}
                   <button type="button" class="msg-mini-btn"
                           data-action="toggle-source" title="查看源码">📄</button>
                 </div>

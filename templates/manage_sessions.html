@@ -37,7 +37,7 @@
               </td>
               <td>
                 {% if g.can_revoke %}
-                <form method="POST" action="/manage/sessions" style="display:inline;">
+                <form method="POST" action="/manage/sessions" data-native style="display:inline;">
                   <input type="hidden" name="action" value="revoke">
                   <input type="hidden" name="sid" value="{{ s.sid }}">
                   <button type="submit" class="file-action-btn danger"
@@ -52,7 +52,7 @@
           </tbody>
         </table>
         {% if g.can_revoke %}
-        <form method="POST" action="/manage/sessions" style="margin-top:8px;">
+        <form method="POST" action="/manage/sessions" data-native style="margin-top:8px;">
           <input type="hidden" name="action" value="revoke_user">
           <input type="hidden" name="uid" value="{{ g.uid }}">
           <button type="submit" class="file-action-btn danger"

@@ -416,7 +416,9 @@ let proc = null;
             r.end(payload);
         });
         assert.strictEqual(big.status, 413, '超大表单未拒绝, status=' + big.status);
-        assert.ok(big.body.includes('Payload Too Large'), '缺少 413 文案');
+        const bigData = JSON.parse(big.body);
+        assert.strictEqual(bigData.ok, false, big.body);
+        assert.ok(bigData.error, '缺少错误文案');
     });
     await check('私有文件仅所有者可读，公开文件可读', async () => {
         const denied = await get(`/myfile/${rootId}/${privateFile.id}`, viewerC);
@@ -455,8 +457,10 @@ let proc = null;
     await check('未知管理操作统一报错，不静默成功', async () => {
         const ban = await post('/manage/users/ban',
             { action: 'bogus', user_id: viewerId }, rootC);
-        assert.strictEqual(ban.status, 302);
-        assert.ok(String(ban.headers.location || '').includes('error='));
+        assert.strictEqual(ban.status, 200, ban.body);
+        const banData = JSON.parse(ban.body);
+        assert.strictEqual(banData.ok, false, ban.body);
+        assert.ok(banData.error, '未知操作未报错');
         const sysRole = await post('/manage/system_roles', { action: 'bogus' }, rootC);
         assert.ok(sysRole.body.includes('未知操作'));
         const ipBan = await post('/manage/ip_bans', { action: 'bogus' }, rootC);
@@ -492,8 +496,8 @@ let proc = null;
     await check('非超管不能修改其他系统管理员的角色', async () => {
         const r = await post('/manage/users/role',
             { user_id: adminId, role: 'guest' }, opsC);
-        assert.ok(r.status >= 300 && r.status < 400, 'status=' + r.status);
-        assert.ok(String(r.headers.location || '').includes('error='));
+        assert.strictEqual(r.status, 200, r.body);
+        assert.strictEqual(JSON.parse(r.body).ok, false, r.body);
         assert.strictEqual(storage.loadUser(adminId).system_role, 'admin');
     });
     await check('域管理员不能授予自己不具备权限的角色', async () => {
@@ -510,8 +514,8 @@ let proc = null;
         assert.ok(before, '申请未创建');
         const r = await post('/domain/opend/manage/applications',
             { uid: viewerId, action: 'bogus' }, rootC);
-        const loc = String(r.headers.location || '');
-        assert.ok(loc.includes('error='), '未知操作未报错: ' + loc);
+        assert.strictEqual(r.status, 200, r.body);
+        assert.strictEqual(JSON.parse(r.body).ok, false, r.body);
         const after = (storage.loadDomain('opend').join_applications || [])
             .find(a => a.uid === viewerId);
         assert.ok(after, '未知操作误删了申请');
@@ -559,7 +563,8 @@ let proc = null;
         assert.strictEqual(await tryOpen(ws), true, 'WebSocket 未建立');
         const closed = waitClose(ws);
         const r = await post('/logout', {}, rootC);
-        assert.ok(r.status >= 300 && r.status < 400, 'logout status=' + r.status);
+        assert.strictEqual(r.status, 200, r.body);
+        assert.strictEqual(JSON.parse(r.body).ok, true, r.body);
         assert.strictEqual(await closed, true, '退出登录后 WebSocket 未关闭');
     });
     proc.kill();

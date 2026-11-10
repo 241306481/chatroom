@@ -80,15 +80,48 @@
                 chain.then(() => this._upload(file, ta, refresh, opts)), Promise.resolve())
                 .then(() => list.length);
         },
+        dropFiles(files, ta, refresh, opts) {
+            const list = Array.from(files || []).filter(Boolean);
+            if (!list.length) return Promise.resolve(0);
+            return list.reduce((chain, file) => chain.then(() => {
+                const isImage = /^image\//i.test(file.type)
+                    || /\.(png|jpe?g|gif|webp|bmp|avif)$/i.test(file.name || '');
+                return this._upload(file, ta, refresh, Object.assign({}, opts, {
+                    kind: isImage ? 'image' : 'file',
+                }));
+            }), Promise.resolve()).then(() => list.length);
+        },
         _upload(file, ta, refresh, opts) {
             const kind = (opts && opts.kind) || 'image';
             const fd = new FormData();
             fd.append('file', file);
             const xhr = new XMLHttpRequest();
             const title = kind === 'image' ? '上传图片' : '上传附件';
+            const box = document.createElement('div');
+            box.className = 'inline-upload-progress';
+            const nameEl = document.createElement('span');
+            nameEl.className = 'inline-upload-progress-name';
+            nameEl.textContent = '上传中：' + (file.name || title) + ' 0%';
+            const bar = document.createElement('div');
+            bar.className = 'inline-upload-progress-bar';
+            const fill = document.createElement('i');
+            bar.appendChild(fill);
+            box.appendChild(nameEl);
+            box.appendChild(bar);
+            document.body.appendChild(box);
+            const cleanup = function () {
+                if (box.parentNode) box.parentNode.removeChild(box);
+            };
             return new Promise(resolve => {
                 xhr.open('POST', getUploadUrl(opts && opts.visibility));
+                xhr.upload.onprogress = function (e) {
+                    if (!e.lengthComputable) return;
+                    const pct = Math.min(100, Math.round(e.loaded / e.total * 100));
+                    nameEl.textContent = '上传中：' + (file.name || title) + ' ' + pct + '%';
+                    fill.style.width = pct + '%';
+                };
                 xhr.onload = function () {
+                    cleanup();
                     let res = null;
                     try { res = JSON.parse(xhr.responseText); } catch (e) {}
                     if (!res || !res.ok || !res.file) {
@@ -101,7 +134,7 @@
                     const url = getViewUrl(res.file.id);
                     const name = String(res.file.filename || (kind === 'image' ? '图片' : '附件'))
                         .replace(/[\[\]]/g, '_');
-                    const md = '![' + name + '](' + url + ')';
+                    const md = (kind === 'image' ? '![' : '[') + name + '](' + url + ')';
                     if (window.EditorUtils && window.EditorUtils.insertAt) {
                         window.EditorUtils.insertAt(ta, md);
                     }
@@ -109,9 +142,11 @@
                     resolve(true);
                 };
                 xhr.onerror = function () {
+                    cleanup();
                     if (window.showAlert) window.showAlert('网络错误', { title });
                     resolve(false);
                 };
+                xhr.onabort = cleanup;
                 xhr.send(fd);
             });
         },

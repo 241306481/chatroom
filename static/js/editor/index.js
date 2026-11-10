@@ -1,4 +1,37 @@
 (function () {
+    function draftEnabled() {
+        return /^\/messages(?:$|\/|\?)/.test(location.pathname + location.search)
+            || /\/discuss\//.test(location.pathname);
+    }
+    function draftKey(ta) {
+        return 'chatroom-draft:' + location.pathname + location.search
+            + ':' + (ta.id || 'editor');
+    }
+    function readDraft(key) {
+        try { return localStorage.getItem(key) || ''; }
+        catch (e) { return ''; }
+    }
+    function writeDraft(key, value) {
+        try {
+            if (value.trim()) localStorage.setItem(key, value);
+            else localStorage.removeItem(key);
+        } catch (e) {}
+    }
+    function bindDraft(root, ta, previewApi) {
+        if (!draftEnabled()) return;
+        const key = draftKey(ta);
+        const saved = readDraft(key);
+        if (saved && !ta.value) {
+            ta.value = saved;
+            if (previewApi && previewApi.refresh) previewApi.refresh();
+        }
+        let timer = null;
+        ta.addEventListener('input', () => {
+            if (timer) clearTimeout(timer);
+            timer = setTimeout(() => writeDraft(key, ta.value), 400);
+        });
+        window.addEventListener('beforeunload', () => writeDraft(key, ta.value));
+    }
     window.initContextEdit = function (root) {
         if (typeof root === 'string') root = document.querySelector(root);
         if (!root || root.dataset.ctxInit === '1') return;
@@ -43,6 +76,33 @@
                 kind: 'image', visibility: root.dataset.imageVisibility,
             });
         });
+        let dragDepth = 0;
+        root.addEventListener('dragenter', e => {
+            if (!e.dataTransfer || !Array.from(e.dataTransfer.types || []).includes('Files')) return;
+            e.preventDefault();
+            dragDepth += 1;
+            root.classList.add('md-drag-over');
+        });
+        root.addEventListener('dragover', e => {
+            if (!e.dataTransfer || !Array.from(e.dataTransfer.types || []).includes('Files')) return;
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'copy';
+        });
+        root.addEventListener('dragleave', () => {
+            dragDepth = Math.max(0, dragDepth - 1);
+            if (!dragDepth) root.classList.remove('md-drag-over');
+        });
+        root.addEventListener('drop', e => {
+            if (!e.dataTransfer || !e.dataTransfer.files || !e.dataTransfer.files.length) return;
+            e.preventDefault();
+            dragDepth = 0;
+            root.classList.remove('md-drag-over');
+            if (!window.EditorUpload || !window.EditorUpload.dropFiles) return;
+            window.EditorUpload.dropFiles(e.dataTransfer.files, ta, previewApi.refresh, {
+                visibility: root.dataset.imageVisibility,
+            });
+        });
+        bindDraft(root, ta, previewApi);
         window.EditorTable.attach({
             root, ta, refresh: previewApi.refresh, closeAll,
         });

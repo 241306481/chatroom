@@ -51,6 +51,12 @@
             : window.__CAN_REVOKE_ANY__ === true)
             ? `<button type="button" data-action="revoke-message" data-id="${escAttr(msg.id)}" title="撤回">↩️</button>`
             : '';
+        const editBtn = !revoked && isOwn && window.__CAN_SEND__ === true
+            ? `<button type="button" data-action="edit-message" data-id="${escAttr(msg.id)}" title="编辑">✏️</button>`
+            : '';
+        const linkBtn = !revoked
+            ? `<button type="button" data-action="copy-message-link" data-id="${escAttr(msg.id)}" title="复制链接">🔗</button>`
+            : '';
         const sourceBtn = !revoked
             ? `<button type="button" data-action="toggle-source" title="查看源码">📄</button>`
             : '';
@@ -71,8 +77,11 @@
                     <span class="msg-nick">${esc(msg.nickname)}</span>
                     ${msg.is_mod ? '<span class="badge mod">MOD</span>' : ''}
                     <span class="msg-time">${esc(msg.created_at)}</span>
+                    ${msg.edited_at ? '<span class="msg-edited" title="' + escAttr(msg.edited_at) + '">已编辑</span>' : ''}
                     ${replyBtn}
                     <div class="msg-actions">
+                        ${editBtn}
+                        ${linkBtn}
                         ${sourceBtn}
                         ${reactionBtn}
                         ${showPin ? `<button type="button" data-action="pin-message" data-id="${escAttr(msg.id)}" title="置顶">📌</button>` : ''}
@@ -107,6 +116,14 @@
               + '<div class="dm-msg-header">'
                 + '<span class="dm-nick">' + esc(nick) + '</span>'
                 + '<span class="dm-time">' + esc(msg.created_at) + '</span>'
+                + (msg.edited_at
+                    ? '<span class="dm-edited" title="' + escAttr(msg.edited_at) + '">已编辑</span>'
+                    : '')
+                + (isMe
+                    ? '<button type="button" class="msg-mini-btn" '
+                      + 'data-action="edit-message" data-id="' + escAttr(msg.id)
+                      + '" title="编辑">✏️</button>'
+                    : '')
                 + '<button type="button" class="msg-mini-btn" '
                 + 'data-action="toggle-source" title="查看源码">📄</button>'
               + '</div>'

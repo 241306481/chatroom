@@ -9,7 +9,7 @@
     <code>1.1.1-3.2</code>（范围）
   </p>
   <h2 style="margin-top:24px;">添加封禁</h2>
-  <form method="POST" action="/manage/ip_bans" class="form-stack">
+  <form method="POST" action="/manage/ip_bans" data-native class="form-stack">
     <input type="hidden" name="action" value="add">
     {% if back %}<input type="hidden" name="back" value="{{ back }}">{% endif %}
     <label>IP 规则
@@ -49,7 +49,7 @@
             </td>
             <td>{{ item.reason or '—' }}</td>
             <td>
-              <form method="POST" action="/manage/ip_bans" style="display:flex;gap:4px;align-items:center;">
+              <form method="POST" action="/manage/ip_bans" data-native style="display:flex;gap:4px;align-items:center;">
                 <input type="hidden" name="action" value="set_until">
                 <input type="hidden" name="rule" value="{{ item.rule }}">
                 {% if back %}<input type="hidden" name="back" value="{{ back }}">{% endif %}
@@ -63,7 +63,7 @@
             </td>
             <td>{{ item.at }}</td>
             <td>
-              <form method="POST" action="/manage/ip_bans" style="display:inline">
+              <form method="POST" action="/manage/ip_bans" data-native style="display:inline">
                 <input type="hidden" name="action" value="remove">
                 <input type="hidden" name="rule" value="{{ item.rule }}">
                 {% if back %}<input type="hidden" name="back" value="{{ back }}">{% endif %}
@@ -85,10 +85,6 @@
   </p>
 </div>
 <script nonce="{{ csp_nonce }}">(function () {
-  function check() {
-    var err = new URL(location.href).searchParams.get('error');
-    if (err && window.showAlert) window.showAlert(err);
-  }
   var MY_IP = '{{ my_ip }}';
   window.checkIpRule = function (v) {
     v = String(v || '').trim();
@@ -165,11 +161,6 @@
       } catch (e) { hidden.value = ''; }
     });
   });
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', check);
-  } else {
-    check();
-  }
 })();
 </script>
 {% endblock %}

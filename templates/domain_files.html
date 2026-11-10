@@ -89,10 +89,9 @@
             <td>{% if f.uploader %}<a href="/user/{{ f.uploader }}">{{ f.uploader_name }}</a>{% else %}{{ f.uploader_name }}{% endif %}</td>
             <td>{{ f.created_at }}</td>
             <td>
+              <a href="/domain/{{ domain_name }}/files/{{ f.id }}"
+                 target="_blank" rel="noopener" class="file-action-btn">查看</a>
               <a href="/domain/{{ domain_name }}/files/{{ f.id }}/download" class="file-action-btn">下载</a>
-              <button type="button" class="file-action-btn"
-                      data-copy-url="/domain/{{ domain_name }}/files/{{ f.id }}"
-                      data-action="copy-file-link">复制链接</button>
               {% if can_delete_any or f.is_own %}
                 <form method="POST" action="/domain/{{ domain_name }}/files/{{ f.id }}/delete" style="display:inline">
                   <button type="submit" class="file-action-btn danger"

@@ -1,5 +1,100 @@
 (function () {
     const R = window.ChatRender = window.ChatRender || {};
+    function startInlineEdit(root, bubble, onSave) {
+        if (!root || !bubble || root.querySelector('.msg-edit-box')) return;
+        const raw = bubble.dataset.raw || bubble.textContent || '';
+        bubble.hidden = true;
+        const box = document.createElement('div');
+        box.className = 'msg-edit-box';
+        const ta = document.createElement('textarea');
+        ta.className = 'msg-edit-input';
+        ta.value = raw;
+        ta.rows = Math.min(10, Math.max(2, raw.split('\n').length + 1));
+        const bar = document.createElement('div');
+        bar.className = 'msg-edit-actions';
+        const hint = document.createElement('span');
+        hint.className = 'msg-edit-hint';
+        hint.textContent = 'Esc 取消 · Ctrl+Enter 保存';
+        const cancel = document.createElement('button');
+        cancel.type = 'button';
+        cancel.textContent = '取消';
+        const save = document.createElement('button');
+        save.type = 'button';
+        save.className = 'primary';
+        save.textContent = '保存';
+        bar.appendChild(hint);
+        bar.appendChild(cancel);
+        bar.appendChild(save);
+        box.appendChild(ta);
+        box.appendChild(bar);
+        bubble.parentNode.insertBefore(box, bubble.nextSibling);
+        ta.focus();
+        ta.setSelectionRange(raw.length, raw.length);
+        function close() {
+            box.remove();
+            bubble.hidden = false;
+        }
+        function submit() {
+            const val = ta.value.trim();
+            if (!val) {
+                if (window.showToast) window.showToast('消息不能为空');
+                return;
+            }
+            if (val === raw.trim()) { close(); return; }
+            save.disabled = true;
+            onSave(val, close);
+        }
+        cancel.addEventListener('click', close);
+        save.addEventListener('click', submit);
+        ta.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') {
+                e.preventDefault();
+                close();
+            } else if (e.ctrlKey && e.key === 'Enter') {
+                e.preventDefault();
+                submit();
+            }
+        });
+    }
+    function editMessage(id, btn) {
+        const root = btn && btn.closest ? btn.closest('.message') : null;
+        if (!root) return;
+        const bubble = root.querySelector('.msg-content');
+        if (!bubble || bubble.classList.contains('msg-revoked')) return;
+        startInlineEdit(root, bubble, function (val, close) {
+            if (!window.ChatWS || !window.ChatWS.isOpen()) {
+                if (window.showToast) window.showToast('未就绪');
+                close();
+                return;
+            }
+            window.ChatWS.send({ type: 'edit', message_id: id, content: val });
+            close();
+        });
+    }
+    function applyEdit(id, content, editedAt) {
+        const el = document.querySelector('.message[data-id="' + CSS.escape(id) + '"]');
+        if (!el) return;
+        const bubble = el.querySelector('.msg-content');
+        if (!bubble) return;
+        bubble.dataset.raw = content;
+        bubble.innerHTML = window.renderContent(content);
+        bubble.dataset.rendered = '1';
+        let mark = el.querySelector('.msg-edited');
+        if (!mark) {
+            mark = document.createElement('span');
+            mark.className = 'msg-edited';
+            mark.textContent = '已编辑';
+            const time = el.querySelector('.msg-time');
+            if (time && time.parentNode) time.parentNode.insertBefore(mark, time.nextSibling);
+            else el.querySelector('.msg-header').appendChild(mark);
+        }
+        mark.title = editedAt || '';
+    }
+    function copyMessageLink(id, btn) {
+        const url = location.href.split('#')[0] + '#msg-' + encodeURIComponent(id);
+        if (window.copyToClipboard) window.copyToClipboard(url, btn, '已复制');
+        if (window.showToast) window.showToast('消息链接已复制');
+    }
     function revokeMessage(id) {
         window.showConfirm('撤回这条消息？').then(function (ok) {
             if (!ok) return;
@@ -141,8 +236,10 @@
     function initReactions() {
         document.querySelectorAll('.msg-reactions[data-reactions]').forEach(initReactionsIn);
     }
+    R.startInlineEdit = startInlineEdit;
     R.revokeMessage = revokeMessage;
     R.applyRevoke = applyRevoke;
+    R.applyEdit = applyEdit;
     R.updatePinned = updatePinned;
     R.updatePinnedPanel = updatePinnedPanel;
     R.renderReaction = renderReaction;
@@ -150,4 +247,6 @@
     R.initReactionsIn = initReactionsIn;
     R.initReactions = initReactions;
     window.revokeMessage = revokeMessage;
+    window.editMessage = editMessage;
+    window.copyMessageLink = copyMessageLink;
 })();

@@ -40,7 +40,7 @@
                 <input name="user_id" value="${uid}">
                 <input name="minutes" value="${parseInt(mins, 10) || 60}">`;
             document.body.appendChild(form);
-            form.submit();
+            form.requestSubmit();
         });
     };
 })();

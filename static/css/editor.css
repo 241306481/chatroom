@@ -1,6 +1,6 @@
 .md-editor { --md-editor-height: 220px; background: #fff;
   border: 1px solid #d9d9d9; border-radius: 6px; overflow: hidden;
-  display: flex; flex-direction: column; font-size: 14px; }
+  display: flex; flex-direction: column; font-size: 14px; position: relative; }
 .md-editor:focus-within { border-color: #40a9ff;
   box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.08); }
 .md-editor-toolbar-wrapper { border-bottom: 1px solid #eee; background: #fafafa; }
@@ -124,3 +124,20 @@
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .mention-picker-item:hover,
 .mention-picker-item.active { background: #e6f7ff; color: #1890ff; }
+
+.inline-upload-progress { position: fixed; right: 16px; bottom: 16px; z-index: 100000;
+  width: min(320px, calc(100vw - 32px)); padding: 10px 12px;
+  background: var(--bg-card, #fff); color: var(--text-primary, #333);
+  border: 1px solid var(--border-color, #e0e0e0); border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.16); font-size: 13px; }
+.inline-upload-progress-name { display: block; margin-bottom: 6px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.inline-upload-progress-bar { height: 4px; border-radius: 2px;
+  background: var(--border-subtle, #eee); overflow: hidden; }
+.inline-upload-progress-bar i { display: block; width: 0; height: 100%;
+  background: #1890ff; transition: width 0.15s ease; }
+.md-editor.md-drag-over { outline: 2px dashed #1890ff; outline-offset: -4px; }
+.md-editor.md-drag-over::after { content: "松开以上传文件"; position: absolute;
+  inset: 0; display: flex; align-items: center; justify-content: center;
+  background: rgba(24,144,255,0.08); color: #1890ff; font-size: 14px;
+  pointer-events: none; z-index: 5; }

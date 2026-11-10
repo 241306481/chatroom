@@ -32,7 +32,7 @@
               {% for r in u.ips %}
                 <div style="margin-bottom:4px;">
                   {% if r.banned %}
-                    <form method="POST" action="/manage/ip_bans" style="display:inline">
+                    <form method="POST" action="/manage/ip_bans" data-native style="display:inline">
                       <input type="hidden" name="action" value="remove">
                       <input type="hidden" name="rule" value="{{ r.ip }}">
                       <input type="hidden" name="back" value="/manage/user_ips">
@@ -40,7 +40,7 @@
                               data-confirm="确定解除对 {{ r.ip }} 的封禁？">解封 {{ r.ip }}</button>
                     </form>
                   {% else %}
-                    <form method="POST" action="/manage/ip_bans" style="display:inline">
+                    <form method="POST" action="/manage/ip_bans" data-native style="display:inline">
                       <input type="hidden" name="action" value="add">
                       <input type="hidden" name="rule" value="{{ r.ip }}">
                       <input type="hidden" name="reason" value="封禁用户 {{ u.nickname }}">
