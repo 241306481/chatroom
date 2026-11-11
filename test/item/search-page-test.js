@@ -66,6 +66,17 @@ check('残留的压缩锁会被识别并清理', () => {
     assert.ok(!fs.existsSync(lock), '残留锁应被清除');
     assert.ok(fs.existsSync(base), '应重新写出基索引');
 });
+check('空锁文件超过宽限期也会被清理', () => {
+    const lock = storage.searchIndex._paths.lock(dn, 'general');
+    const base = storage.searchIndex._paths.index(dn, 'general');
+    fs.rmSync(base, { force: true });
+    fs.writeFileSync(lock, '', 'utf8');
+    const old = new Date(Date.now() - 60 * 1000);
+    fs.utimesSync(lock, old, old);
+    assert.strictEqual(collect(['findme']).length, 45);
+    assert.ok(!fs.existsSync(lock), '空锁应被清除');
+    assert.ok(fs.existsSync(base), '应重新写出基索引');
+});
 check('搜索不存在的讨论不会创建目录', () => {
     const bogus = 'no-such-discussion';
     const dir = path.join(storage.DATA_DIR, 'domains', dn, 'discuss', bogus);
