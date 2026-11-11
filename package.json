@@ -13,11 +13,11 @@
     "start": "node server.js",
     "cert": "node test/tools/gen-cert.js",
     "console": "node lib/console/index.js",
+    "clean:modules": "node scripts/clean-node-modules.js",
     "test": "node test/test.js"
   },
   "dependencies": {
     "nunjucks": "^3.2.4",
-    "sharp": "^0.35.5",
     "ws": "^8.18.0"
   }
 }

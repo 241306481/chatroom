@@ -4,8 +4,10 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const { spawn } = require('child_process');
-const sharp = require('sharp');
 const ROOT = path.join(__dirname, '..', '..');
+const PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64');
+let hasSharp = false;
+try { require.resolve('sharp'); hasSharp = true; } catch (e) {}
 const DATA = path.join(ROOT, 'data');
 if (fs.existsSync(DATA)) fs.rmSync(DATA, { recursive: true, force: true });
 const PORT = 5391;
@@ -115,20 +117,19 @@ async function upload(cookie, name, mime, text) {
         assert.match(exeView.headers['content-disposition'] || '', /^inline/);
         assert.strictEqual(exeView.body.toString('utf8'), '这是文本内容');
     });
-    const png = await sharp({
-        create: {
-            width: 800, height: 600, channels: 3,
-            background: { r: 12, g: 180, b: 90 },
-        },
-    }).png().toBuffer();
-    const img = await upload(C, 'thumb-image.png', 'image/png', png);
+    const img = await upload(C, 'thumb-image.png', 'image/png', PNG);
     const thumb = await req('GET', '/myfile/' + img.data.file.id + '?thumb=1', { cookie: C });
-    check('图片缩略图按需生成并返回 WebP', () => {
+    check('图片缩略图可用（无 sharp 时回退原图）', () => {
         assert.strictEqual(img.r.status, 200, img.r.body.toString('utf8'));
         assert.strictEqual(thumb.status, 200);
-        assert.match(thumb.headers['content-type'] || '', /^image\/webp/);
-        assert.strictEqual(thumb.body.subarray(0, 4).toString('latin1'), 'RIFF');
-        assert.strictEqual(thumb.body.subarray(8, 12).toString('latin1'), 'WEBP');
+        if (hasSharp) {
+            assert.match(thumb.headers['content-type'] || '', /^image\/webp/);
+            assert.strictEqual(thumb.body.subarray(0, 4).toString('latin1'), 'RIFF');
+            assert.strictEqual(thumb.body.subarray(8, 12).toString('latin1'), 'WEBP');
+        } else {
+            assert.match(thumb.headers['content-type'] || '', /^image\/png/);
+            assert.ok(thumb.body.equals(PNG), '应回退为原图');
+        }
     });
     function uploadedPath(id) {
         const users = path.join(DATA, 'users');
@@ -140,9 +141,10 @@ async function upload(cookie, name, mime, text) {
     }
     const imgPath = uploadedPath(img.data.file.id);
     const thumbPath = imgPath + '.thumb.webp';
-    check('缩略图文件与缓存已写入', () => {
+    check('缩略图缓存状态符合依赖情况', () => {
         assert.ok(imgPath, '找不到上传文件');
-        assert.ok(fs.existsSync(thumbPath), '缩略图文件应存在');
+        assert.strictEqual(fs.existsSync(thumbPath), hasSharp,
+            hasSharp ? '缩略图文件应存在' : '未装 sharp 时不应生成缩略图');
     });
     const delImg = await req('POST', '/myfile/' + img.data.file.id + '/delete', {
         cookie: C,
@@ -152,7 +154,7 @@ async function upload(cookie, name, mime, text) {
     check('删除图片时同时清理缩略图', () => {
         assert.strictEqual(delImg.status, 200, delImg.body.toString('utf8'));
         assert.ok(!fs.existsSync(imgPath), '原文件应删除');
-        assert.ok(!fs.existsSync(thumbPath), '缩略图应删除');
+        if (hasSharp) assert.ok(!fs.existsSync(thumbPath), '缩略图应删除');
     });
     const down = await req('GET', '/myfile/' + cpp.data.file.id + '/download', { cookie: C });
     check('显式下载仍强制附件', () => {
