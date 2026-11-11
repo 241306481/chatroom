@@ -44,8 +44,6 @@ npm start
 
 **第一个注册的用户会自动成为超级管理员。** 注册后请到 `/manage` 检查系统设置并修改密码。
 
-运行 `npm run clean:modules` 可将 `node_modules` 压到约 0.3 MB。缩略图加速依赖可选的 `sharp`，未安装时图片接口直接回退原图，不影响离线运行。
-
 ### 局域网 / 手机访问
 
 服务默认监听 `0.0.0.0`，启动日志会打印局域网地址：
@@ -65,7 +63,6 @@ npm start
 | `npm test` | 编码守卫 + 全部回归套件 |
 | `npm run cert` | 生成自签证书（`cert.pem` / `key.pem`），之后启动自动走 HTTPS |
 | `npm run console` | 进入命令行管理控制台 |
-| `npm run clean:modules` | 清理 node_modules 中运行时不需要的文件 |
 
 ## 环境变量
 

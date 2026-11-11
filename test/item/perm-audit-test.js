@@ -7,7 +7,7 @@ const { PAGE_BITS } = require('../../lib/routes/manage/_helpers');
 const PUBLIC_ROUTES = new Set([
     'GET /login', 'GET /register', 'POST /login', 'POST /register',
     'GET /avatar/:uid/:ext', 'GET /search', 'GET /messages',
-    'GET /user/:uid', 'GET /sw.js', 'GET /favicon.ico',
+    'GET /user/:uid', 'GET /favicon.ico',
 ]);
 const results = [];
 const check = (n, f) => {

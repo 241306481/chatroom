@@ -13,7 +13,6 @@
     "start": "node server.js",
     "cert": "node test/tools/gen-cert.js",
     "console": "node lib/console/index.js",
-    "clean:modules": "node scripts/clean-node-modules.js",
     "test": "node test/test.js"
   },
   "dependencies": {
