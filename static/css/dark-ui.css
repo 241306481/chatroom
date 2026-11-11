@@ -201,3 +201,13 @@ html[data-theme="dark"] .dm-me .dm-bubble[data-mode="source"] {
   background: #177ddc !important;
   color: #fff !important;
 }
+html[data-theme="dark"] .forward-target {
+  background: #2a2a2a;
+}
+html[data-theme="dark"] .forward-target:hover,
+html[data-theme="dark"] .forward-target:focus-visible {
+  background: #163a52;
+  border-color: #1f6f9f;
+}
+html[data-theme="dark"] .forward-target-name { color: #e6e6e6; }
+html[data-theme="dark"] .forward-target-meta { color: #999; }

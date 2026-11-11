@@ -57,6 +57,9 @@
         const linkBtn = !revoked
             ? `<button type="button" data-action="copy-message-link" data-id="${escAttr(msg.id)}" title="复制链接">🔗</button>`
             : '';
+        const forwardBtn = !revoked
+            ? `<button type="button" data-action="forward-message" data-id="${escAttr(msg.id)}" title="转发">↪️</button>`
+            : '';
         const sourceBtn = !revoked
             ? `<button type="button" data-action="toggle-source" title="查看源码">📄</button>`
             : '';
@@ -82,6 +85,7 @@
                     <div class="msg-actions">
                         ${editBtn}
                         ${linkBtn}
+                        ${forwardBtn}
                         ${sourceBtn}
                         ${reactionBtn}
                         ${showPin ? `<button type="button" data-action="pin-message" data-id="${escAttr(msg.id)}" title="置顶">📌</button>` : ''}
@@ -123,6 +127,9 @@
                     ? '<button type="button" class="msg-mini-btn" '
                       + 'data-action="edit-message" data-id="' + escAttr(msg.id)
                       + '" title="编辑">✏️</button>'
+                      + '<button type="button" class="msg-mini-btn" '
+                      + 'data-action="forward-message" data-id="' + escAttr(msg.id)
+                      + '" title="转发">↪️</button>'
                     : '')
                 + '<button type="button" class="msg-mini-btn" '
                 + 'data-action="toggle-source" title="查看源码">📄</button>'

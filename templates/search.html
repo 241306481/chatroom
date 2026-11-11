@@ -52,7 +52,7 @@
   {% if searched %}
     <div class="search-results-info">
       {% if total %}
-        共 {{ total }} 条结果，第 {{ page }}/{{ pageCount }} 页{% if truncated %}（结果过多，仅保留最近 {{ total }} 条）{% endif %}
+        共 {{ total }} 条结果{% if has_more %}，本页显示 {{ results.length }} 条{% endif %}
       {% else %}
         无匹配结果
       {% endif %}
@@ -74,16 +74,12 @@
     {% endif %}
   {% endif %}
 </div>
-{% if pageCount > 1 %}
-  {% set base = '/search?q=' ~ (q | urlencode) ~ '&domain=' ~ (domainFilter | urlencode) ~ '&discuss=' ~ (discFilter | urlencode) ~ '&user=' ~ (userFilter | urlencode) %}
+{% if has_more or cursor %}
+  {% set base = '/search?q=' ~ (q | urlencode) ~ '&domain=' ~ (domainFilter | urlencode) ~ '&discuss=' ~ (discFilter | urlencode) ~ '&user=' ~ (userFilter | urlencode) ~ '&limit=' ~ limit %}
   <nav class="pagination">
-    {% if page > 1 %}<a class="page-btn" href="{{ base }}&page={{ page - 1 }}">上一页</a>{% endif %}
-    {% for p in range(1, pageCount + 1) %}
-      <a class="page-btn{% if p == page %} active{% endif %}"
-         href="{{ base }}&page={{ p }}">{{ p }}</a>
-    {% endfor %}
-    {% if page < pageCount %}<a class="page-btn" href="{{ base }}&page={{ page + 1 }}">下一页</a>{% endif %}
-    <span class="page-info">{{ page }} / {{ pageCount }}</span>
+    {% if cursor %}<a class="page-btn" href="{{ base }}">回到第一页</a>{% endif %}
+    {% if has_more %}<a class="page-btn" href="{{ base }}&cursor={{ next_cursor | urlencode }}">下一页</a>{% endif %}
+    <span class="page-info">每页 {{ limit }} 条</span>
   </nav>
 {% endif %}
 <script nonce="{{ csp_nonce }}">  window.__SEARCH_DOMAINS__ = {{ domains | jsdump }};

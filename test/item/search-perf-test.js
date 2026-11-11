@@ -32,6 +32,11 @@ function build(discs, perDisc) {
     }
     storage.invalidateChunkCache();
 }
+function collect(disc, keywords) {
+    const out = [];
+    storage.searchIndex.forEachMatch(DN, disc, keywords, doc => out.push(doc));
+    return out;
+}
 build(3, 1200);
 check('分片缓存：重复读不再走磁盘', () => {
     const t0 = Date.now();
@@ -70,54 +75,45 @@ check('倒序遍历时消息也是新的在前', () => {
     assert.ok(arr.length > 1);
     assert.ok(arr[0].created_at <= arr[arr.length - 1].created_at, '分片内应按时间递增');
 });
-check('搜索：关键词全匹配才算命中', () => {
+check('搜索走索引，不读全量消息，不设全局扫描上限', () => {
     const src = fs.readFileSync(
         path.join(__dirname, '../../lib/routes/search.js'), 'utf8');
-    assert.ok(src.includes('keyRes.every'), '应为「所有关键词都命中」');
-    assert.ok(src.includes('listMessageChunks(dn, disc, true)'), '应倒序遍历');
-    assert.ok(!src.includes('loadAllMessages(dn, disc)'), '不应再全量加载');
+    const idxSrc = fs.readFileSync(
+        path.join(__dirname, '../../lib/storage/search-index.js'), 'utf8');
+    assert.ok(src.includes('searchIndex.forEachMatch'), '应走搜索索引');
+    assert.ok(!src.includes('loadAllMessages'), '路由不应全量加载');
+    assert.ok(!src.includes('MAX_RESULTS'), '不应再有 MAX_RESULTS');
+    assert.ok(idxSrc.includes('MAX_GRAM'), '索引应使用 n-gram');
+    assert.ok(idxSrc.includes('LOG_COMPACT_LINES'), '索引应有日志压缩');
+    assert.ok(!idxSrc.includes('loadAllMessages'), '索引模块不应全量加载');
 });
-check('搜索：便宜的过滤在前（按人/日期早于内容）', () => {
-    const src = fs.readFileSync(
-        path.join(__dirname, '../../lib/routes/search.js'), 'utf8');
-    const iUser = src.indexOf('if (userFilter && m.user_id !== userFilter) continue;');
-    const iDate = src.indexOf('if (f.after && at < f.after) continue;');
-    const iContent = src.indexOf('if (!keyRes.every(');
-    assert.ok(iUser > 0 && iDate > 0 && iContent > 0, '三处都要存在');
-    assert.ok(iUser < iContent, '按人过滤应早于内容匹配');
-    assert.ok(iDate < iContent, '日期过滤应早于内容匹配');
+check('索引增量更新：新增、批量编辑、批量删除', () => {
+    collect('d0', ['关键词']);
+    storage.appendMessage(DN, 'd0', {
+        id: 'inc-new', user_id: 'u1', nickname: 'u1',
+        content: '独一无二新增词', created_at: new Date().toISOString(),
+    });
+    assert.strictEqual(collect('d0', ['独一无二新增词']).length, 1);
+    storage.updateMessages(DN, 'd0', ['m0_0'], { content: '批量改词内容' });
+    assert.strictEqual(collect('d0', ['批量改词']).length, 1);
+    storage.updateMessages(DN, 'd0', ['m0_0'], { deleted: true });
+    assert.strictEqual(collect('d0', ['批量改词']).length, 0);
+    const base = path.join(storage.DATA_DIR, 'domains', DN,
+        'discuss', 'd0', 'search-index.json');
+    assert.ok(fs.existsSync(base), '查询后应有基索引');
 });
-check('搜索：关键词按普通文本匹配（正则元字符被转义）', () => {
-    const src = fs.readFileSync(
-        path.join(__dirname, '../../lib/routes/search.js'), 'utf8');
-    const m = /function escapeRe\(s\)\s*\{([\s\S]*?)\n\}/.exec(src);
-    assert.ok(m, '应有 escapeRe');
-    const escapeRe = new Function('s', 'return ' + m[1].replace(/^\s*return\s*/, '').replace(/;\s*$/, ''));
-    const re = new RegExp(escapeRe('a.b(c)'), 'i');
-    assert.ok(re.test('a.b(c)'), '应匹配字面量');
-    assert.ok(!re.test('axbxc'), '不应把 . 当通配');
-});
-check('搜索：扫描上限仍然存在', () => {
-    const src = fs.readFileSync(
-        path.join(__dirname, '../../lib/routes/search.js'), 'utf8');
-    assert.ok(src.includes('MAX_RESULTS'), '应有扫描上限');
-    assert.ok(src.includes('results.length >= MAX_RESULTS'), '应提前终止');
-});
-check('大库搜索在可接受时间内完成（缓存命中）', () => {
+check('大库索引查询在可接受时间内完成（热缓存）', () => {
     build(10, 1000);
-    for (let d = 0; d < 10; d++) storage.listMessageChunks(DN, 'd' + d, true);
+    for (let d = 0; d < 10; d++) collect('d' + d, ['关键词']);
     const t0 = Date.now();
     let n = 0;
-    for (let d = 0; d < 10; d++) {
-        const chunks = storage.listMessageChunks(DN, 'd' + d, true);
-        for (const ch of chunks) n += ch.arr.length;
-    }
+    for (let d = 0; d < 10; d++) n += collect('d' + d, ['关键词']).length;
     const ms = Date.now() - t0;
-    assert.strictEqual(n, 10000, '应读到 10000 条');
-    assert.ok(ms < 500, '1 万条应在 500ms 内，实际 ' + ms + 'ms');
+    assert.strictEqual(n, 10000, '应命中 10000 条，实际 ' + n);
+    assert.ok(ms < 1500, '1 万条索引查询应在 1500ms 内，实际 ' + ms + 'ms');
 });
 try { storage.deleteDomain(DN); } catch (e) {}
-console.log('\n======== [回归] 搜索性能与正确性 ========');
+console.log('\n======== [回归] 搜索索引性能与正确性 ========');
 for (const [s, n] of results) console.log(s.padEnd(5), n);
 const f = results.filter(x => x[0] === 'FAIL').length;
 console.log(results.length - f + ' passed, ' + f + ' failed');

@@ -342,6 +342,80 @@ function waitFor(ws, pred, ms = 10000) {
         assert.ok(!storage.findMessage('system', 'general', 'batch-keep').deleted);
     });
     wsA.close(); wsB.close();
+    await check('转发：讨论消息到其他讨论', async () => {
+        storage.saveDiscussion('system', 'fwd', {
+            name: 'fwd', title: '转发目标', created_at: storage.nowIso(),
+        });
+        const src = {
+            id: 'fwd-src', user_id: uidA, nickname: 'batchA',
+            content: '**原消息**', created_at: storage.nowIso(),
+        };
+        storage.appendMessage('system', 'general', src);
+        const r = await req('POST', '/forward', {
+            cookie: A,
+            body: {
+                message_id: src.id, source_type: 'discuss',
+                source_domain: 'system', source_disc: 'general',
+                target_domain: 'system', target_disc: 'fwd',
+            },
+        });
+        assertJsonOk(r);
+        const list = storage.loadMessagePage('system', 'fwd', { limit: 100 }).messages;
+        const got = list.find(m => m.content.includes('**原消息**'));
+        assert.ok(got, '目标讨论缺少转发消息');
+        assert.ok(got.content.includes('转发自'));
+        assert.strictEqual(got.forwarded_from.id, src.id);
+    });
+    await check('转发：私信消息到讨论，且非会话成员不可转发', async () => {
+        const dm = storage.appendDM(uidA, uidB, '私信原文');
+        let r = await req('POST', '/forward', {
+            cookie: A,
+            body: {
+                message_id: dm.id, source_type: 'dm', source_peer: uidB,
+                target_domain: 'system', target_disc: 'fwd',
+            },
+        });
+        assertJsonOk(r);
+        assert.ok(storage.loadMessagePage('system', 'fwd', { limit: 100 }).messages
+            .some(m => m.content.includes('私信原文')));
+        r = await req('POST', '/forward', {
+            cookie: C,
+            body: {
+                message_id: dm.id, source_type: 'dm', source_peer: uidB,
+                target_domain: 'system', target_disc: 'fwd',
+            },
+        });
+        assert.strictEqual(JSON.parse(r.body).ok, false);
+    });
+    await check('转发：非法目标/来源返回失败而不是 500', async () => {
+        const base = {
+            message_id: 'fwd-src', source_type: 'discuss',
+            source_domain: 'system', source_disc: 'general',
+            target_domain: 'system', target_disc: 'fwd',
+        };
+        let r = await req('POST', '/forward', {
+            cookie: A, body: Object.assign({}, base, { target_disc: '../bad' }),
+        });
+        assert.strictEqual(r.status, 200, r.body);
+        assert.strictEqual(JSON.parse(r.body).ok, false);
+        r = await req('POST', '/forward', {
+            cookie: A, body: Object.assign({}, base, { source_disc: '../bad' }),
+        });
+        assert.strictEqual(r.status, 200, r.body);
+        assert.strictEqual(JSON.parse(r.body).ok, false);
+        r = await req('POST', '/forward', {
+            cookie: A, body: Object.assign({}, base, {
+                source_type: 'dm', source_peer: '../bad',
+            }),
+        });
+        assert.strictEqual(r.status, 200, r.body);
+        assert.strictEqual(JSON.parse(r.body).ok, false);
+        r = await req('POST', '/forward', {
+            cookie: A, body: Object.assign({}, base, { source_type: 'bad' }),
+        });
+        assert.strictEqual(r.status, 200, r.body);
+        assert.strictEqual(JSON.parse(r.body).ok, false);
+    });
     await check('管理：创建测试域', async () => {
         const r = await req('POST', '/create/domain', {
             cookie: A, body: { name: 'batchdom', display_name: 'Batch Domain' },

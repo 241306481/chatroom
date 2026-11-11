@@ -105,7 +105,7 @@
                           title="回复" aria-label="回复">↩️</button>
                 {% endif %}
                 {% if can_add_reaction or can_delete_any or msg.user_id == current_user.id or can_pin
-                      or nav.can_revoke_own or nav.can_revoke_any %}
+                      or nav.can_revoke_own or nav.can_revoke_any or can_send %}
                   <div class="msg-actions">
                     {% if can_send and msg.user_id == current_user.id and not msg.revoked %}
                       <button type="button" data-action="edit-message" data-id="{{ msg.id }}"
@@ -115,6 +115,9 @@
                       <button type="button" data-action="copy-message-link"
                               data-id="{{ msg.id }}" title="复制链接"
                               aria-label="复制消息链接">🔗</button>
+                      <button type="button" data-action="forward-message"
+                              data-id="{{ msg.id }}" title="转发"
+                              aria-label="转发消息">↪️</button>
                       <button type="button" data-action="toggle-source"
                               title="查看源码" aria-label="查看源码">📄</button>
                     {% endif %}

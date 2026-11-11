@@ -514,6 +514,9 @@ document.addEventListener('click', function (e) {
     case 'copy-message-link':
         if (window.copyMessageLink) window.copyMessageLink(id, el);
         break;
+    case 'forward-message':
+        if (window.forwardMessage) window.forwardMessage(id, el);
+        break;
     case 'toggle-source':
         if (window.toggleSource) window.toggleSource(el);
         break;

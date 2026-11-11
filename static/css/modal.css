@@ -32,3 +32,20 @@
 .modal-btn-ok:hover { background: #40a9ff; border-color: #40a9ff; }
 .modal-btn-ok.danger { background: #ff4d4f; border-color: #ff4d4f; }
 .modal-btn-ok.danger:hover { background: #ff7875; border-color: #ff7875; }
+
+.forward-box { max-width: 460px; width: calc(100% - 32px); }
+.forward-search { width: 100%; box-sizing: border-box; margin-bottom: 10px; }
+.forward-list { max-height: 320px; overflow-y: auto; display: flex;
+  flex-direction: column; gap: 4px; }
+.forward-target { display: flex; flex-direction: column; align-items: flex-start;
+  gap: 2px; width: 100%; padding: 8px 10px; border: 1px solid transparent;
+  border-radius: 6px; background: #fafafa; cursor: pointer; text-align: left;
+  font: inherit; }
+.forward-target:hover, .forward-target:focus-visible { background: #e6f7ff;
+  border-color: #91d5ff; outline: none; }
+.forward-target:disabled { opacity: .6; cursor: default; }
+.forward-target.sending { border-color: #40a9ff; }
+.forward-target-name { font-size: 14px; color: #333; }
+.forward-target-meta { font-size: 12px; color: #999; }
+.forward-empty { margin: 8px 0; font-size: 13px; color: #999; text-align: center; }
+.forward-error { margin: 0 0 8px; font-size: 13px; color: #f5222d; }
