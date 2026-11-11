@@ -52,7 +52,7 @@
   {% if searched %}
     <div class="search-results-info">
       {% if total %}
-        共 {{ total }} 条结果{% if has_more %}，本页显示 {{ results.length }} 条{% endif %}
+        共 {{ total }}{% if total_capped %}+{% endif %} 条结果{% if has_more %}，本页显示 {{ results.length }} 条{% endif %}
       {% else %}
         无匹配结果
       {% endif %}

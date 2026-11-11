@@ -75,6 +75,19 @@ storage.ensureSystemDomain();
         storage.setOnline('perf-online', 'dom-a', false);
         assert.strictEqual(storage.isOnlineAnywhere('perf-online'), false);
         assert.deepStrictEqual(storage.listOnline('dom-a'), []);
+        const instances = path.join(storage.DATA_DIR, 'online', 'instances');
+        fs.mkdirSync(instances, { recursive: true });
+        const remoteFile = path.join(instances, 'remote-test-' + process.pid + '.json');
+        fs.writeFileSync(remoteFile, JSON.stringify({
+            pid: 1, host: os.hostname(), token: 'remote-test',
+            updated_at: Date.now(),
+            domains: { 'dom-remote': { 'remote-user': 1 } },
+        }), 'utf8');
+        storage.setOnline('perf-online', 'dom-a', true);
+        assert.strictEqual(storage.isOnline('remote-user', 'dom-remote'), true);
+        assert.ok(storage.listOnline('dom-remote').includes('remote-user'));
+        fs.rmSync(remoteFile, { force: true });
+        storage.setOnline('perf-online', 'dom-a', false);
         assert.ok(!read('lib/websocket/status.js').includes('listRealUsers'));
         assert.ok(!read('lib/websocket/discuss.js').includes('listRealUsers'));
     });

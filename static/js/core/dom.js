@@ -130,6 +130,16 @@ function safeFileUrl(raw, kind) {
     if (parsed.origin === window.location.origin) return true;
     return parsed.protocol === 'https:' && kind === 'pdf';
 }
+const FILE_VIEW_PATH_RE = /^\/(?:myfile\/[^/]+(?:\/[^/]+)?|messages\/file\/[^/]+\/[^/]+\/[^/]+|domain\/[^/]+\/files\/[^/]+|domain\/[^/]+\/discuss\/[^/]+\/file\/[^/]+)$/;
+function fileThumbUrl(raw) {
+    const parsed = parsedFileUrl(raw);
+    if (!parsed || parsed.origin !== window.location.origin) return '';
+    if (parsed.searchParams.get('thumb') === '1') return '';
+    if (!FILE_VIEW_PATH_RE.test(parsed.pathname)) return '';
+    const url = new URL(parsed.href);
+    url.searchParams.set('thumb', '1');
+    return url.href;
+}
 function fileDownloadUrl(raw) {
     const parsed = parsedFileUrl(raw);
     if (!parsed || parsed.origin !== window.location.origin) return '';
@@ -233,6 +243,19 @@ function enhanceFileCards(root) {
         if (img.closest('code, pre')) return;
         const label = img.getAttribute('alt') || '';
         const src = img.getAttribute('src') || '';
+        const thumb = fileThumbUrl(src);
+        if (thumb) {
+            if (!img.closest('a') && img.parentNode) {
+                const link = document.createElement('a');
+                link.href = src;
+                link.target = '_blank';
+                link.rel = 'noopener noreferrer';
+                img.parentNode.insertBefore(link, img);
+                link.appendChild(img);
+            }
+            img.setAttribute('src', thumb);
+            return;
+        }
         const kind = fileKind(label, src);
         if (!kind || !safeFileUrl(src, kind)) return;
         if (!img.parentNode) return;

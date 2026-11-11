@@ -1,11 +1,12 @@
 'use strict';
 const assert = require('assert');
 const fs = require('fs');
+const os = require('os');
 const path = require('path');
 const storage = require('../../lib/storage');
 const {
     parseAdvanced, encodeCursor, decodeCursor, topInserter,
-    PAGE_SIZE, MAX_LIMIT,
+    PAGE_SIZE, MAX_LIMIT, TOTAL_CAP,
 } = require('../../lib/routes/search');
 const results = [];
 const check = (n, f) => {
@@ -52,6 +53,26 @@ check('索引缺失时懒重建，并写出基索引', () => {
     const idx = JSON.parse(fs.readFileSync(base, 'utf8'));
     assert.strictEqual(Object.keys(idx.docs).length, 45);
 });
+check('残留的压缩锁会被识别并清理', () => {
+    const lock = storage.searchIndex._paths.lock(dn, 'general');
+    const base = storage.searchIndex._paths.index(dn, 'general');
+    fs.rmSync(base, { force: true });
+    fs.writeFileSync(lock, JSON.stringify({
+        pid: 999999, host: os.hostname(), token: 'stale', time: 0,
+    }), 'utf8');
+    const old = new Date(Date.now() - 11 * 60 * 1000);
+    fs.utimesSync(lock, old, old);
+    assert.strictEqual(collect(['findme']).length, 45);
+    assert.ok(!fs.existsSync(lock), '残留锁应被清除');
+    assert.ok(fs.existsSync(base), '应重新写出基索引');
+});
+check('搜索不存在的讨论不会创建目录', () => {
+    const bogus = 'no-such-discussion';
+    const dir = path.join(storage.DATA_DIR, 'domains', dn, 'discuss', bogus);
+    assert.ok(!fs.existsSync(dir), '测试前不应存在');
+    storage.searchIndex.forEachMatch(dn, bogus, ['anything'], () => {});
+    assert.ok(!fs.existsSync(dir), '搜索不应产生副作用目录');
+});
 check('编辑与删除会增量更新索引', () => {
     storage.updateMessage(dn, 'general', 'm001', { content: 'replacedword only' });
     assert.strictEqual(collect(['findme']).length, 44);
@@ -86,6 +107,8 @@ check('搜索路由使用索引与 cursor/limit，不再全量扫描', () => {
     assert.ok(!src.includes('loadAllMessages'), '不应再全量加载');
     assert.strictEqual(PAGE_SIZE, 50);
     assert.strictEqual(MAX_LIMIT, 100);
+    assert.ok(src.includes('TOTAL_CAP'), 'total 应有上限');
+    assert.ok(TOTAL_CAP >= 1000);
 });
 check('搜索路由按 cursor 返回下一页，不回退到第一页', () => {
     require('../../lib/routes');
@@ -110,6 +133,7 @@ check('搜索路由按 cursor 返回下一页，不回退到第一页', () => {
     }
     const p1 = search({ q: 'findme', limit: '10' });
     assert.strictEqual(p1.total, 43);
+    assert.strictEqual(p1.total_capped, false);
     assert.strictEqual(p1.results.length, 10);
     assert.strictEqual(p1.has_more, true);
     const p2 = search({ q: 'findme', limit: '10', cursor: p1.next_cursor });
@@ -123,6 +147,7 @@ check('模板使用 cursor 分页，不再依赖 pageCount', () => {
         path.join(__dirname, '../../templates/search.html'), 'utf8');
     assert.ok(tpl.includes('next_cursor'), '模板应渲染 next_cursor');
     assert.ok(tpl.includes('has_more'), '模板应渲染 has_more');
+    assert.ok(tpl.includes('total_capped'), '模板应渲染 total_capped');
     assert.ok(!tpl.includes('pageCount'), '模板不应再依赖 pageCount');
     const adv = parseAdvanced('"hello world" from:alice before:2026-01-01');
     assert.deepStrictEqual(adv.keywords, ['hello world']);

@@ -36,6 +36,9 @@
         if (dn) return origin + '/domain/' + encodeURIComponent(dn) + '/files/' + fileId;
         return origin + '/myfile/' + encodeURIComponent(uid) + '/' + fileId;
     }
+    function getThumbUrl(url) {
+        return url + (url.indexOf('?') < 0 ? '?' : '&') + 'thumb=1';
+    }
     window.EditorUpload = {
         pickAndUpload(ta, refresh, opts) {
             const kind = (opts && opts.kind) || 'image';
@@ -134,7 +137,9 @@
                     const url = getViewUrl(res.file.id);
                     const name = String(res.file.filename || (kind === 'image' ? '图片' : '附件'))
                         .replace(/[\[\]]/g, '_');
-                    const md = (kind === 'image' ? '![' : '[') + name + '](' + url + ')';
+                    const md = kind === 'image'
+                        ? '[![' + name + '](' + getThumbUrl(url) + ')](' + url + ')'
+                        : '[' + name + '](' + url + ')';
                     if (window.EditorUtils && window.EditorUtils.insertAt) {
                         window.EditorUtils.insertAt(ta, md);
                     }
