@@ -68,7 +68,8 @@
             window.showAlert('转发功能不可用');
             return;
         }
-        window.forwardMessages(Array.from(selected), mode);
+        const ids = checks().filter(el => el.checked).map(el => el.value).reverse();
+        window.forwardMessages(ids, mode);
     };
     window.MessageBatch = {
         clear: clear,

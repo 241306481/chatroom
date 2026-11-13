@@ -34,7 +34,7 @@
             : '';
         const canReply = !!document.getElementById('msgInput') && !revoked;
         const replyBtn = canReply
-            ? `<button type="button" class="msg-reply-btn" data-action="set-reply-to" data-id="${escAttr(msg.id)}" title="回复">↩️</button>`
+            ? `<button type="button" class="msg-reply-btn" data-action="set-reply-to" data-id="${escAttr(msg.id)}" title="回复">💬</button>`
             : '';
         const replyQuote = msg.reply_info
             ? (msg.reply_info.deleted
@@ -51,14 +51,14 @@
             : window.__CAN_REVOKE_ANY__ === true)
             ? `<button type="button" data-action="revoke-message" data-id="${escAttr(msg.id)}" title="撤回">↩️</button>`
             : '';
-        const editBtn = !revoked && isOwn && window.__CAN_SEND__ === true
+        const editBtn = !revoked && !msg.forwarded_from && isOwn && window.__CAN_SEND__ === true
             ? `<button type="button" data-action="edit-message" data-id="${escAttr(msg.id)}" title="编辑">✏️</button>`
             : '';
         const linkBtn = !revoked
             ? `<button type="button" data-action="copy-message-link" data-id="${escAttr(msg.id)}" title="复制链接">🔗</button>`
             : '';
         const forwardBtn = !revoked
-            ? `<button type="button" data-action="forward-message" data-id="${escAttr(msg.id)}" title="转发">↪️</button>`
+            ? `<button type="button" data-action="forward-message" data-id="${escAttr(msg.id)}" title="转发">📤</button>`
             : '';
         const sourceBtn = !revoked
             ? `<button type="button" data-action="toggle-source" title="查看源码">📄</button>`
@@ -80,7 +80,7 @@
                     <span class="msg-nick">${esc(msg.nickname)}</span>
                     ${msg.is_mod ? '<span class="badge mod">MOD</span>' : ''}
                     <span class="msg-time">${esc(msg.created_at)}</span>
-                    ${msg.edited_at ? '<span class="msg-edited" title="' + escAttr(msg.edited_at) + '">已编辑</span>' : ''}
+                    ${msg.edited_at ? '<button type="button" class="msg-edited" data-action="show-message-history" data-id="' + escAttr(msg.id) + '" title="' + escAttr(msg.edited_at) + '">已编辑</button>' : ''}
                     ${replyBtn}
                     <div class="msg-actions">
                         ${editBtn}
@@ -90,7 +90,7 @@
                         ${reactionBtn}
                         ${showPin ? `<button type="button" data-action="pin-message" data-id="${escAttr(msg.id)}" title="置顶">📌</button>` : ''}
                         ${revokeBtn}
-                        ${showDelete ? `<button type="button" data-action="delete-message" data-id="${escAttr(msg.id)}" title="删除">🗑</button>` : ''}
+                        ${showDelete ? `<button type="button" data-action="delete-message" data-id="${escAttr(msg.id)}" title="删除">🗑️</button>` : ''}
                     </div>
                 </div>
                 ${replyQuote}
@@ -121,15 +121,17 @@
                 + '<span class="dm-nick">' + esc(nick) + '</span>'
                 + '<span class="dm-time">' + esc(msg.created_at) + '</span>'
                 + (msg.edited_at
-                    ? '<span class="dm-edited" title="' + escAttr(msg.edited_at) + '">已编辑</span>'
+                    ? '<button type="button" class="dm-edited" data-action="show-message-history" data-id="' + escAttr(msg.id) + '" title="' + escAttr(msg.edited_at) + '">已编辑</button>'
                     : '')
                 + (isMe
-                    ? '<button type="button" class="msg-mini-btn" '
-                      + 'data-action="edit-message" data-id="' + escAttr(msg.id)
-                      + '" title="编辑">✏️</button>'
+                    ? (!msg.forwarded_from
+                        ? '<button type="button" class="msg-mini-btn" '
+                          + 'data-action="edit-message" data-id="' + escAttr(msg.id)
+                          + '" title="编辑">✏️</button>'
+                        : '')
                       + '<button type="button" class="msg-mini-btn" '
                       + 'data-action="forward-message" data-id="' + escAttr(msg.id)
-                      + '" title="转发">↪️</button>'
+                      + '" title="转发">📤</button>'
                     : '')
                 + '<button type="button" class="msg-mini-btn" '
                 + 'data-action="toggle-source" title="查看源码">📄</button>'

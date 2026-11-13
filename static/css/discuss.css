@@ -308,6 +308,11 @@ html[data-theme="dark"] .loading-older { color: #666; }
 }
 
 .msg-edited, .dm-edited { font-size: 11px; color: #999; margin-left: 4px; }
+button.msg-edited, button.dm-edited {
+  border: 0; padding: 0; background: transparent; font: inherit;
+  cursor: pointer; text-decoration: underline dotted;
+}
+button.msg-edited:hover, button.dm-edited:hover { color: #1890ff; }
 .msg-edit-box { margin: 6px 0; }
 .msg-edit-input { width: 100%; box-sizing: border-box; min-height: 64px; padding: 8px;
   border: 1px solid #40a9ff; border-radius: 6px; font: inherit; font-size: 14px;

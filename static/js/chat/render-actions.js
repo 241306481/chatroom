@@ -81,14 +81,122 @@
         bubble.dataset.rendered = '1';
         let mark = el.querySelector('.msg-edited');
         if (!mark) {
-            mark = document.createElement('span');
+            mark = document.createElement('button');
+            mark.type = 'button';
             mark.className = 'msg-edited';
             mark.textContent = '已编辑';
             const time = el.querySelector('.msg-time');
             if (time && time.parentNode) time.parentNode.insertBefore(mark, time.nextSibling);
             else el.querySelector('.msg-header').appendChild(mark);
         }
+        mark.dataset.action = 'show-message-history';
+        mark.dataset.id = id;
         mark.title = editedAt || '';
+    }
+    function historyUrl(id, btn) {
+        const dm = btn && btn.closest ? btn.closest('.dm-msg') : null;
+        if (dm) {
+            const peer = document.body.dataset.dmTarget || '';
+            if (!peer) return '';
+            return '/messages/' + encodeURIComponent(peer) + '/'
+                + encodeURIComponent(id) + '/history';
+        }
+        const m = location.pathname.match(/^\/domain\/([^/]+)\/discuss\/([^/]+)/);
+        if (!m) return '';
+        return '/domain/' + encodeURIComponent(decodeURIComponent(m[1]))
+            + '/discuss/' + encodeURIComponent(decodeURIComponent(m[2]))
+            + '/messages/' + encodeURIComponent(id) + '/history';
+    }
+    function openHistory(versions) {
+        const old = document.querySelector('.history-overlay');
+        if (old) old.remove();
+        const overlay = document.createElement('div');
+        overlay.className = 'modal-overlay history-overlay';
+        const box = document.createElement('div');
+        box.className = 'modal-box history-box';
+        box.setAttribute('role', 'dialog');
+        box.setAttribute('aria-modal', 'true');
+        const header = document.createElement('div');
+        header.className = 'modal-header';
+        const icon = document.createElement('span');
+        icon.className = 'modal-icon';
+        icon.textContent = '🧾';
+        const title = document.createElement('span');
+        title.className = 'modal-title';
+        title.textContent = '编辑历史';
+        header.appendChild(icon);
+        header.appendChild(title);
+        const body = document.createElement('div');
+        body.className = 'modal-body history-body';
+        const list = Array.isArray(versions) ? versions.slice().reverse() : [];
+        if (!list.length) {
+            const empty = document.createElement('p');
+            empty.className = 'history-empty';
+            empty.textContent = '暂无版本记录';
+            body.appendChild(empty);
+        }
+        list.forEach(function (v, i) {
+            const item = document.createElement('div');
+            item.className = 'history-item';
+            const meta = document.createElement('div');
+            meta.className = 'history-meta';
+            meta.textContent = (i === 0 ? '当前版本' : '历史版本 ' + (list.length - i))
+                + (v.edited_at ? ' · ' + v.edited_at : '');
+            const content = document.createElement('div');
+            content.className = 'history-content md-body';
+            content.innerHTML = window.renderContent(v.content || '');
+            item.appendChild(meta);
+            item.appendChild(content);
+            body.appendChild(item);
+        });
+        const footer = document.createElement('div');
+        footer.className = 'modal-footer';
+        const closeBtn = document.createElement('button');
+        closeBtn.type = 'button';
+        closeBtn.className = 'modal-btn modal-btn-ok';
+        closeBtn.textContent = '关闭';
+        footer.appendChild(closeBtn);
+        box.appendChild(header);
+        box.appendChild(body);
+        box.appendChild(footer);
+        overlay.appendChild(box);
+        document.body.appendChild(overlay);
+        requestAnimationFrame(function () { overlay.classList.add('show'); });
+        function close() {
+            document.removeEventListener('keydown', onKey, true);
+            overlay.classList.remove('show');
+            setTimeout(function () {
+                if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
+            }, 180);
+        }
+        function onKey(e) {
+            if (e.key === 'Escape') {
+                e.preventDefault();
+                close();
+            }
+        }
+        closeBtn.addEventListener('click', close);
+        overlay.addEventListener('mousedown', function (e) {
+            if (e.target === overlay) close();
+        });
+        document.addEventListener('keydown', onKey, true);
+        closeBtn.focus();
+    }
+    function showMessageHistory(id, btn) {
+        const url = historyUrl(id, btn);
+        if (!url) {
+            if (window.showToast) window.showToast('无法加载编辑历史');
+            return;
+        }
+        fetch(url, { headers: { 'Accept': 'application/json' } })
+            .then(r => r.json().catch(function () {
+                return { ok: false, error: '请求失败（' + r.status + '）' };
+            })).then(function (res) {
+                if (!res.ok) throw new Error(res.error || '加载失败');
+                openHistory(res.versions);
+            }).catch(function (err) {
+                if (window.showToast) window.showToast(err.message || '加载失败');
+            });
     }
     function copyMessageLink(id, btn) {
         const url = location.href.split('#')[0] + '#msg-' + encodeURIComponent(id);
@@ -249,4 +357,5 @@
     window.revokeMessage = revokeMessage;
     window.editMessage = editMessage;
     window.copyMessageLink = copyMessageLink;
+    window.showMessageHistory = showMessageHistory;
 })();

@@ -211,3 +211,9 @@ html[data-theme="dark"] .forward-target:focus-visible {
 }
 html[data-theme="dark"] .forward-target-name { color: #e6e6e6; }
 html[data-theme="dark"] .forward-target-meta { color: #999; }
+html[data-theme="dark"] .history-item {
+  background: #252525;
+  border-color: #3a3a3a;
+}
+html[data-theme="dark"] .history-content { color: #e0e0e0; }
+html[data-theme="dark"] .history-meta { color: #999; }

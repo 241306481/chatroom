@@ -75,15 +75,19 @@
                   <span class="dm-nick">{{ m.nickname }}</span>
                   <span class="dm-time">{{ m.created_at }}</span>
                   {% if m.edited_at %}
-                    <span class="dm-edited" title="{{ m.edited_at }}">已编辑</span>
+                    <button type="button" class="dm-edited"
+                            data-action="show-message-history" data-id="{{ m.id }}"
+                            title="{{ m.edited_at }}">已编辑</button>
                   {% endif %}
                   {% if m.is_me %}
-                    <button type="button" class="msg-mini-btn"
-                            data-action="edit-message" data-id="{{ m.id }}"
-                            title="编辑">✏️</button>
+                    {% if not m.forwarded %}
+                      <button type="button" class="msg-mini-btn"
+                              data-action="edit-message" data-id="{{ m.id }}"
+                              title="编辑">✏️</button>
+                    {% endif %}
                     <button type="button" class="msg-mini-btn"
                             data-action="forward-message" data-id="{{ m.id }}"
-                            title="转发">↪️</button>
+                            title="转发">📤</button>
                   {% endif %}
                   <button type="button" class="msg-mini-btn"
                           data-action="toggle-source" title="查看源码">📄</button>

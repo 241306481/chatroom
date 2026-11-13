@@ -70,8 +70,10 @@
       {% if can_delete_any or can_delete_own %}
         <button type="button" class="danger" data-action="batch-delete">删除</button>
       {% endif %}
-      <button type="button" data-action="batch-forward-merge">合并转发</button>
-      <button type="button" data-action="batch-forward-split">分条转发</button>
+      {% if can_send %}
+        <button type="button" data-action="batch-forward-merge">合并转发</button>
+        <button type="button" data-action="batch-forward-split">分条转发</button>
+      {% endif %}
       <button type="button" data-action="batch-cancel">取消选择</button>
     </div>
     <div class="message-list" id="messageList"
@@ -100,17 +102,19 @@
                 {% if msg.is_mod %}<span class="badge mod">MOD</span>{% endif %}
                 <span class="msg-time">{{ msg.created_at }}</span>
                 {% if msg.edited_at %}
-                  <span class="msg-edited" title="{{ msg.edited_at }}">已编辑</span>
+                  <button type="button" class="msg-edited"
+                          data-action="show-message-history" data-id="{{ msg.id }}"
+                          title="{{ msg.edited_at }}">已编辑</button>
                 {% endif %}
                 {% if can_send and not msg.revoked %}
                   <button type="button" class="msg-reply-btn"
                           data-action="set-reply-to" data-id="{{ msg.id }}"
-                          title="回复" aria-label="回复">↩️</button>
+                          title="回复" aria-label="回复">💬</button>
                 {% endif %}
                 {% if can_add_reaction or can_delete_any or msg.user_id == current_user.id or can_pin
                       or nav.can_revoke_own or nav.can_revoke_any or can_send %}
                   <div class="msg-actions">
-                    {% if can_send and msg.user_id == current_user.id and not msg.revoked %}
+                    {% if can_send and msg.user_id == current_user.id and not msg.revoked and not msg.forwarded_from %}
                       <button type="button" data-action="edit-message" data-id="{{ msg.id }}"
                               title="编辑" aria-label="编辑">✏️</button>
                     {% endif %}
@@ -120,7 +124,7 @@
                               aria-label="复制消息链接">🔗</button>
                       <button type="button" data-action="forward-message"
                               data-id="{{ msg.id }}" title="转发"
-                              aria-label="转发消息">↪️</button>
+                              aria-label="转发消息">📤</button>
                       <button type="button" data-action="toggle-source"
                               title="查看源码" aria-label="查看源码">📄</button>
                     {% endif %}
@@ -141,7 +145,7 @@
                       {% endif %}
                     {% endif %}
                     {% if can_delete_any or msg.user_id == current_user.id %}
-                      <button type="button" data-action="delete-message" data-id="{{ msg.id }}" title="删除" aria-label="删除">🗑</button>
+                      <button type="button" data-action="delete-message" data-id="{{ msg.id }}" title="删除" aria-label="删除">🗑️</button>
                     {% endif %}
                   </div>
                 {% endif %}

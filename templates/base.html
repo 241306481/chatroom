@@ -144,7 +144,7 @@
   window.__CAN_MUTE__ = {{ 'true' if can_mute else 'false' }};
   window.__CAN_DELETE_ANY__ = {{ 'true' if can_delete_any else 'false' }};
   window.__CAN_DELETE_OWN__ = {{ 'true' if can_delete_own else 'false' }};
-  window.__CAN_BATCH__ = {{ 'true' if can_pin or can_delete_any or can_delete_own else 'false' }};
+  window.__CAN_BATCH__ = {{ 'true' if can_pin or can_delete_any or can_delete_own or can_send else 'false' }};
   window.__CAN_ADD_REACTION__ = {{ 'true' if can_add_reaction else 'false' }};
   window.__CAN_REVOKE_OWN__ = {{ 'true' if can_revoke_own else 'false' }};
   window.__CAN_REVOKE_ANY__ = {{ 'true' if can_revoke_any else 'false' }};

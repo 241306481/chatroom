@@ -25,7 +25,7 @@
     function closeOverlay(overlay) {
         if (overlay && overlay.parentNode) overlay.remove();
     }
-    function openPicker(source, targets) {
+    function openPicker(source, targets, users) {
         const old = document.querySelector('.forward-overlay');
         if (old) {
             if (old._close) old._close();
@@ -53,12 +53,12 @@
         const search = document.createElement('input');
         search.type = 'text';
         search.className = 'modal-input forward-search';
-        search.placeholder = '搜索域或讨论';
+        search.placeholder = '搜索用户、域或讨论';
         const list = document.createElement('div');
         list.className = 'forward-list';
         const empty = document.createElement('p');
         empty.className = 'forward-empty';
-        empty.textContent = '没有可转发的讨论';
+        empty.textContent = '没有可转发的用户或讨论';
         body.appendChild(search);
         body.appendChild(list);
         body.appendChild(empty);
@@ -74,10 +74,23 @@
         box.appendChild(footer);
         overlay.appendChild(box);
         document.body.appendChild(overlay);
+        requestAnimationFrame(function () { overlay.classList.add('show'); });
         let options = [];
+        (users || []).forEach(function (u) {
+            options.push({
+                kind: 'user',
+                userId: u.id,
+                display: '私信',
+                id: u.id,
+                title: u.nickname || u.id,
+                online: !!u.online,
+                count: 0,
+            });
+        });
         targets.forEach(function (group) {
             (group.discussions || []).forEach(function (d) {
                 options.push({
+                    kind: 'discuss',
                     domain: group.domain,
                     display: group.display || group.domain,
                     id: d.id,
@@ -91,17 +104,22 @@
             list.innerHTML = '';
             let shown = 0;
             options.forEach(function (o) {
-                const hay = (o.display + ' ' + o.domain + ' ' + o.title + ' ' + o.id).toLowerCase();
+                const hay = (o.kind + ' ' + o.display + ' ' + (o.domain || '')
+                    + ' ' + o.title + ' ' + o.id).toLowerCase();
                 if (q && hay.indexOf(q) < 0) return;
                 const item = document.createElement('button');
                 item.type = 'button';
                 item.className = 'forward-target';
                 const main = document.createElement('span');
                 main.className = 'forward-target-name';
-                main.textContent = o.display + ' / ' + o.title;
+                main.textContent = o.kind === 'user'
+                    ? o.title + ' · 私信'
+                    : o.display + ' / ' + o.title;
                 const meta = document.createElement('span');
                 meta.className = 'forward-target-meta';
-                meta.textContent = o.id + ' · ' + o.count + ' 条消息';
+                meta.textContent = o.kind === 'user'
+                    ? (o.online ? '在线用户' : '用户')
+                    : o.id + ' · ' + o.count + ' 条消息';
                 item.appendChild(main);
                 item.appendChild(meta);
                 item.addEventListener('click', function () {
@@ -120,8 +138,12 @@
                 ? source.ids : [source.id];
             body.set('message_ids', ids.join(','));
             body.set('source_type', source.type);
-            body.set('target_domain', target.domain);
-            body.set('target_disc', target.id);
+            if (target.kind === 'user') {
+                body.set('target_user', target.userId);
+            } else {
+                body.set('target_domain', target.domain);
+                body.set('target_disc', target.id);
+            }
             if (source.mode) body.set('forward_mode', source.mode);
             if (source.type === 'dm') {
                 body.set('source_peer', source.peer);
@@ -141,6 +163,10 @@
             })).then(function (res) {
                 if (!res.ok) throw new Error(res.error || '转发失败');
                 close();
+                if (source.batch && window.MessageBatch) {
+                    window.MessageBatch.clear();
+                    if (window.toggleMessageBatch) window.toggleMessageBatch(false);
+                }
                 if (window.showToast) {
                     window.showToast(res.message || '已转发到 ' + target.title);
                 }
@@ -180,7 +206,8 @@
                 return { ok: false, error: '请求失败（' + r.status + '）' };
             })).then(function (res) {
                 if (!res.ok) throw new Error(res.error || '加载失败');
-                openPicker(source, Array.isArray(res.targets) ? res.targets : []);
+                openPicker(source, Array.isArray(res.targets) ? res.targets : [],
+                    Array.isArray(res.users) ? res.users : []);
             }).catch(function (err) {
                 if (window.showToast) window.showToast(err.message || '加载失败');
             });
@@ -210,6 +237,7 @@
             type: 'discuss',
             id: list[0],
             ids: list,
+            batch: true,
             mode: mode === 'merge' ? 'merge' : 'split',
             domain: decodePart(m[1]),
             discuss: decodePart(m[2]),

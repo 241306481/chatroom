@@ -88,6 +88,10 @@ function waitFor(ws, pred, ms = 10000) {
 (async () => {
     await waitForServer(PORT);
     const storage = require('../../lib/storage');
+    const messageView = require('../../lib/message-view');
+    const viewContent = m => m && m.forwarded_from
+        ? messageView.forwardContent(m.forwarded_from)
+        : String((m && m.content) || '');
     const A = cookieOf(await req('POST', '/register',
         { body: { nickname: 'batchA', password: 'pw123456', confirm_password: 'pw123456' } }));
     const B = cookieOf(await req('POST', '/register',
@@ -126,10 +130,23 @@ function waitFor(ws, pred, ms = 10000) {
         assert.ok(discuss.includes('data-action="batch-delete"'));
         assert.ok(discuss.includes('data-action="batch-forward-merge"'));
         assert.ok(discuss.includes('data-action="batch-forward-split"'));
+        const batchFlag = base.split('\n').find(line => line.includes('window.__CAN_BATCH__'));
+        assert.ok(batchFlag && batchFlag.includes('can_send'), '批量选择标志缺少发送权限');
+        const batchBarStart = discuss.indexOf('id="messageBatchBar"');
+        const batchBarEnd = discuss.indexOf('data-action="batch-cancel"', batchBarStart);
+        const batchBar = discuss.slice(batchBarStart, batchBarEnd);
+        assert.match(batchBar, /\{%\s*if can_send\s*%\}[\s\S]*data-action="batch-forward-merge"[\s\S]*\{%\s*endif\s*%\}/,
+            '批量转发按钮缺少发送权限');
+        assert.ok(read('static/js/chat/forward.js').includes('MessageBatch.clear()'));
         assert.ok(discuss.includes('id="jumpUnreadBtn"'));
         assert.ok(read('static/js/chat/forward.js').includes('message_ids'));
         assert.ok(read('static/js/chat/forward.js').includes('forward_mode'));
         assert.ok(read('static/js/chat/batch-messages.js').includes('batchForwardSelected'));
+        assert.ok(/outCount[\s\S]{0,120}limiter\.note\(limitAction/.test(read('lib/routes/forward.js')),
+            '批量转发未按条数计入限流');
+        assert.ok(read('lib/routes/forward.js').includes('target_user'), '转发目标缺少用户支持');
+        assert.ok(read('static/js/chat/forward.js').includes("classList.add('show')"),
+            '转发目标弹窗缺少显示状态');
         const discussList = read('templates/discuss_list.html');
         assert.ok(discussList.includes('showConfirm'));
         assert.ok(!/\bconfirm\(/.test(discussList), '讨论删除仍使用原生 confirm');
@@ -331,6 +348,23 @@ function waitFor(ws, pred, ms = 10000) {
             assert.strictEqual(storage.findMessage('system', 'general', id).pinned, true);
         }
     });
+    await check('消息：编辑后保留历史版本', async () => {
+        for (const content of ['edited one', 'edited two']) {
+            const p = waitFor(wsB, d => d.type === 'message_edited'
+                && d.message_id === ids[0] && d.content === content);
+            wsA.send(JSON.stringify({
+                type: 'edit', message_id: ids[0], content,
+            }));
+            await p;
+        }
+        const r = await req('GET',
+            '/domain/system/discuss/general/messages/' + ids[0] + '/history',
+            { cookie: A });
+        assertJsonOk(r);
+        const versions = JSON.parse(r.body).versions.map(v => v.content);
+        assert.deepStrictEqual(versions,
+            ['batch one', 'edited one', 'edited two']);
+    });
     await check('消息：批量删除会清掉置顶标记', async () => {
         const p = waitFor(wsA, d => d.type === 'batch_result' && d.op === 'delete');
         wsA.send(JSON.stringify({ type: 'batch_delete', message_ids: ids }));
@@ -369,10 +403,55 @@ function waitFor(ws, pred, ms = 10000) {
         });
         assertJsonOk(r);
         const list = storage.loadMessagePage('system', 'fwd', { limit: 100 }).messages;
-        const got = list.find(m => m.content.includes('**原消息**'));
+        const got = list.find(m => m.forwarded_from && m.forwarded_from.id === src.id);
         assert.ok(got, '目标讨论缺少转发消息');
-        assert.ok(got.content.includes('转发自'));
+        assert.strictEqual(got.content, '', '转发消息不应复制正文');
+        assert.ok(viewContent(got).includes('**原消息**'));
+        assert.ok(viewContent(got).includes('转发自'));
         assert.strictEqual(got.forwarded_from.id, src.id);
+    });
+    await check('转发：锁定转发时的消息版本', async () => {
+        const src = {
+            id: 'fwd-lock-src', user_id: uidA, nickname: 'batchA',
+            content: '锁定原文', created_at: '2020-01-01T00:00:00.000Z',
+        };
+        storage.appendMessage('system', 'general', src);
+        const r = await req('POST', '/forward', {
+            cookie: A,
+            body: {
+                message_id: src.id, source_type: 'discuss',
+                source_domain: 'system', source_disc: 'general',
+                target_domain: 'system', target_disc: 'fwd',
+            },
+        });
+        assertJsonOk(r);
+        const list = storage.loadMessagePage('system', 'fwd', { limit: 100 }).messages;
+        const got = list.find(m => m.forwarded_from
+            && m.forwarded_from.id === src.id);
+        assert.ok(got, '缺少锁定版本的转发消息');
+        assert.ok(got.forwarded_from.locked_at, '转发未记录锁定时间');
+        assert.strictEqual(got.forwarded_from.items[0].content, '锁定原文');
+        storage.updateMessage('system', 'general', src.id, {
+            content: '后来修改', edited_at: storage.nowIso(),
+        });
+        const locked = storage.findMessage('system', 'fwd', got.id);
+        assert.ok(viewContent(locked).includes('锁定原文'), '转发内容未锁定');
+        assert.ok(!viewContent(locked).includes('后来修改'), '转发内容跟随了原消息');
+    });
+    await check('转发：转发消息不可编辑', async () => {
+        const fwd = storage.loadMessagePage('system', 'fwd', { limit: 100 }).messages
+            .find(m => m.forwarded_from);
+        assert.ok(fwd, '缺少转发消息');
+        const ws = await openRetry(() => new WebSocket(
+            `ws://127.0.0.1:${PORT}/ws/discuss/system/fwd`,
+            { headers: { Cookie: A } }));
+        const p = waitFor(ws, d => d.type === 'error'
+            && String(d.msg || '').includes('不能编辑'));
+        ws.send(JSON.stringify({
+            type: 'edit', message_id: fwd.id, content: 'should fail',
+        }));
+        await p;
+        ws.close();
     });
     await check('转发：合并与分条转发多选消息', async () => {
         const src2 = {
@@ -393,14 +472,44 @@ function waitFor(ws, pred, ms = 10000) {
         assertJsonOk(r);
         assert.strictEqual(JSON.parse(r.body).count, 1);
         const merged = storage.loadMessagePage('system', 'fwd', { limit: 100 }).messages
-            .find(m => m.content.includes('第二条原消息'));
-        assert.ok(merged && merged.content.includes('**原消息**'), '合并转发缺少消息内容');
+            .find(m => viewContent(m).includes('第二条原消息'));
+        assert.ok(merged && viewContent(merged).includes('**原消息**'), '合并转发缺少消息内容');
         r = await req('POST', '/forward', {
             cookie: A, body: Object.assign({}, base, { forward_mode: 'split' }),
         });
         assertJsonOk(r);
         assert.strictEqual(JSON.parse(r.body).count, 2);
         assert.strictEqual(storage.getMessageStats('system', 'fwd').total, before + 3);
+    });
+    await check('转发：分条转发保持原消息顺序', async () => {
+        storage.saveDiscussion('system', 'fwd-order', {
+            name: 'fwd-order', title: '顺序', created_at: storage.nowIso(),
+        });
+        storage.appendMessage('system', 'general', {
+            id: 'fwd-order-a', user_id: uidA, nickname: 'batchA',
+            content: '顺序 A', created_at: '2020-01-01T00:00:00.000Z',
+        });
+        storage.appendMessage('system', 'general', {
+            id: 'fwd-order-b', user_id: uidA, nickname: 'batchA',
+            content: '顺序 B', created_at: '2020-01-01T00:00:01.000Z',
+        });
+        const r = await req('POST', '/forward', {
+            cookie: A,
+            body: {
+                message_ids: 'fwd-order-b,fwd-order-a',
+                source_type: 'discuss', forward_mode: 'split',
+                source_domain: 'system', source_disc: 'general',
+                target_domain: 'system', target_disc: 'fwd-order',
+            },
+        });
+        assertJsonOk(r);
+        const list = storage.loadMessagePage('system', 'fwd-order', { limit: 100 }).messages;
+        const ia = list.findIndex(m => m.forwarded_from
+            && m.forwarded_from.id === 'fwd-order-a');
+        const ib = list.findIndex(m => m.forwarded_from
+            && m.forwarded_from.id === 'fwd-order-b');
+        assert.ok(ia >= 0 && ib >= 0, '分条转发缺少消息');
+        assert.ok(ia < ib, '分条转发顺序错误');
     });
     await check('转发：私信消息到讨论，且非会话成员不可转发', async () => {
         const dm = storage.appendDM(uidA, uidB, '私信原文');
@@ -413,7 +522,7 @@ function waitFor(ws, pred, ms = 10000) {
         });
         assertJsonOk(r);
         assert.ok(storage.loadMessagePage('system', 'fwd', { limit: 100 }).messages
-            .some(m => m.content.includes('私信原文')));
+            .some(m => viewContent(m).includes('私信原文')));
         r = await req('POST', '/forward', {
             cookie: C,
             body: {
@@ -422,6 +531,31 @@ function waitFor(ws, pred, ms = 10000) {
             },
         });
         assert.strictEqual(JSON.parse(r.body).ok, false);
+    });
+    await check('转发：目标列表包含用户与讨论', async () => {
+        const r = await req('GET', '/forward/targets', { cookie: A });
+        const data = assertJsonOk(r);
+        assert.ok(data.users.some(u => u.id === uidB), '目标列表缺少用户');
+        assert.ok(data.targets.some(g => g.domain === 'system'), '目标列表缺少讨论');
+    });
+    await check('转发：讨论消息到用户私信', async () => {
+        const src = storage.findMessage('system', 'general', 'fwd-src');
+        const before = storage.loadAllDM(uidA, uidB).length;
+        const r = await req('POST', '/forward', {
+            cookie: A,
+            body: {
+                message_id: src.id, source_type: 'discuss',
+                source_domain: 'system', source_disc: 'general',
+                target_user: uidB,
+            },
+        });
+        assertJsonOk(r);
+        const all = storage.loadAllDM(uidA, uidB);
+        assert.strictEqual(all.length, before + 1);
+        const got = all[all.length - 1];
+        assert.ok(got.forwarded_from, '私信转发缺少引用');
+        assert.strictEqual(got.content, '');
+        assert.ok(viewContent(got).includes('**原消息**'));
     });
     await check('转发：非法目标/来源返回失败而不是 500', async () => {
         const base = {
