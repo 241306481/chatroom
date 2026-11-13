@@ -54,16 +54,23 @@
 </div>
 <script nonce="{{ csp_nonce }}">  window.deleteListItem = function (btn) {
     const disc = btn.dataset.disc;
-    if (!confirm('确定删除讨论「' + disc + '」？所有消息将丢失')) return;
-    const dn = window.__DOMAIN__;
-    fetch('/domain/' + encodeURIComponent(dn) + '/discuss/'
-        + encodeURIComponent(disc) + '/delete', { method: 'POST' })
-      .then(r => r.json())
-      .then(res => {
-        if (res.ok) btn.closest('.discuss-row-wrap').remove();
-        else alert(res.error || '删除失败');
-      })
-      .catch(() => alert('删除失败'));
+    const ask = window.showConfirm
+      ? window.showConfirm('确定删除讨论「' + disc + '」？所有消息将丢失', { danger: true })
+      : Promise.resolve(false);
+    ask.then(function (ok) {
+      if (!ok) return;
+      const dn = window.__DOMAIN__;
+      fetch('/domain/' + encodeURIComponent(dn) + '/discuss/'
+          + encodeURIComponent(disc) + '/delete', { method: 'POST' })
+        .then(r => r.json())
+        .then(res => {
+          if (res.ok) btn.closest('.discuss-row-wrap').remove();
+          else if (window.showAlert) window.showAlert(res.error || '删除失败');
+        })
+        .catch(() => {
+          if (window.showAlert) window.showAlert('删除失败');
+        });
+    });
   };
 </script>
 {% endblock %}

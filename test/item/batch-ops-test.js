@@ -124,7 +124,15 @@ function waitFor(ws, pred, ms = 10000) {
         const discuss = read('templates/discuss.html');
         assert.ok(discuss.includes('id="messageBatchBar"'));
         assert.ok(discuss.includes('data-action="batch-delete"'));
-        assert.ok(read('static/js/chat/batch-messages.js').includes('batchDeleteSelected'));
+        assert.ok(discuss.includes('data-action="batch-forward-merge"'));
+        assert.ok(discuss.includes('data-action="batch-forward-split"'));
+        assert.ok(discuss.includes('id="jumpUnreadBtn"'));
+        assert.ok(read('static/js/chat/forward.js').includes('message_ids'));
+        assert.ok(read('static/js/chat/forward.js').includes('forward_mode'));
+        assert.ok(read('static/js/chat/batch-messages.js').includes('batchForwardSelected'));
+        const discussList = read('templates/discuss_list.html');
+        assert.ok(discussList.includes('showConfirm'));
+        assert.ok(!/\bconfirm\(/.test(discussList), '讨论删除仍使用原生 confirm');
         assert.ok(discuss.includes('mobile-discuss-tabs'));
         assert.ok(discuss.includes('id="mobilePaneChat"'));
         assert.ok(discuss.includes('aria-label="聊天"'));
@@ -365,6 +373,34 @@ function waitFor(ws, pred, ms = 10000) {
         assert.ok(got, '目标讨论缺少转发消息');
         assert.ok(got.content.includes('转发自'));
         assert.strictEqual(got.forwarded_from.id, src.id);
+    });
+    await check('转发：合并与分条转发多选消息', async () => {
+        const src2 = {
+            id: 'fwd-src-2', user_id: uidA, nickname: 'batchA',
+            content: '第二条原消息', created_at: storage.nowIso(),
+        };
+        storage.appendMessage('system', 'general', src2);
+        const base = {
+            message_ids: 'fwd-src,' + src2.id,
+            source_type: 'discuss',
+            source_domain: 'system', source_disc: 'general',
+            target_domain: 'system', target_disc: 'fwd',
+        };
+        const before = storage.getMessageStats('system', 'fwd').total;
+        let r = await req('POST', '/forward', {
+            cookie: A, body: Object.assign({}, base, { forward_mode: 'merge' }),
+        });
+        assertJsonOk(r);
+        assert.strictEqual(JSON.parse(r.body).count, 1);
+        const merged = storage.loadMessagePage('system', 'fwd', { limit: 100 }).messages
+            .find(m => m.content.includes('第二条原消息'));
+        assert.ok(merged && merged.content.includes('**原消息**'), '合并转发缺少消息内容');
+        r = await req('POST', '/forward', {
+            cookie: A, body: Object.assign({}, base, { forward_mode: 'split' }),
+        });
+        assertJsonOk(r);
+        assert.strictEqual(JSON.parse(r.body).count, 2);
+        assert.strictEqual(storage.getMessageStats('system', 'fwd').total, before + 3);
     });
     await check('转发：私信消息到讨论，且非会话成员不可转发', async () => {
         const dm = storage.appendDM(uidA, uidB, '私信原文');

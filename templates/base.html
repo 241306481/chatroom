@@ -132,6 +132,7 @@
 <main class="app-main">
 {% block content %}{% endblock %}
 </main>
+{% include "_footer.html" %}
 <div id="notificationContainer"></div>
 <script nonce="{{ csp_nonce }}">  window.__WS_PROTOCOL__ = {{ (ws_protocol or 'ws') | jsdump }};
   window.__DOMAIN__ = {{ (domain_name or '') | jsdump }};
@@ -217,6 +218,8 @@
 </script>
 <script src="/static/js/core/menu.js">
 </script>
+<script src="/static/js/member-list.js">
+</script>
 <script src="/static/js/online.js">
 </script>
 <script src="/static/js/user-list-filter.js">
@@ -258,6 +261,8 @@
 <script src="/static/js/chat/actions.js">
 </script>
 <script src="/static/js/chat/batch-messages.js">
+</script>
+<script src="/static/js/chat/jump-unread.js">
 </script>
 <script src="/static/js/chat/socket.js">
 </script>

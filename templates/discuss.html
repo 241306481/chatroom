@@ -47,7 +47,8 @@
         <span class="inline-search-count"></span>
       </div>
       <span class="online-badge">● {{ online_count | default(0) }}/{{ total_count | default(0) }}</span>
-      {% if can_pin or can_delete_any or can_delete_own %}
+      <button type="button" class="jump-unread-btn" id="jumpUnreadBtn" hidden>跳到未读</button>
+      {% if can_pin or can_delete_any or can_delete_own or can_send %}
         <button type="button" class="msg-batch-toggle" id="batchToggleBtn">选择</button>
       {% endif %}
       {% if can_manage_discuss %}
@@ -69,6 +70,8 @@
       {% if can_delete_any or can_delete_own %}
         <button type="button" class="danger" data-action="batch-delete">删除</button>
       {% endif %}
+      <button type="button" data-action="batch-forward-merge">合并转发</button>
+      <button type="button" data-action="batch-forward-split">分条转发</button>
       <button type="button" data-action="batch-cancel">取消选择</button>
     </div>
     <div class="message-list" id="messageList"
@@ -82,7 +85,7 @@
         {% for msg in messages | reverse %}
           <div class="message {% if msg.pinned %}pinned{% endif %} {% if msg.is_system %}system-msg{% endif %} {% if msg.revoked %}revoked-msg{% endif %}"
                data-id="{{ msg.id }}" {% if msg.reply_to %}data-reply-to="{{ msg.reply_to }}"{% endif %} id="msg-{{ msg.id }}">
-            {% if can_pin or can_delete_any or can_delete_own %}
+            {% if can_pin or can_delete_any or can_delete_own or can_send %}
               <input type="checkbox" class="msg-check" data-msg-check
                      value="{{ msg.id }}" aria-label="选择消息">
             {% endif %}

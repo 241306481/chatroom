@@ -59,8 +59,20 @@
             send(Array.from(selected), { type: 'batch_delete' });
         });
     };
+    window.batchForwardSelected = function (mode) {
+        if (!selected.size) {
+            window.showAlert('请先选择消息');
+            return;
+        }
+        if (!window.forwardMessages) {
+            window.showAlert('转发功能不可用');
+            return;
+        }
+        window.forwardMessages(Array.from(selected), mode);
+    };
     window.MessageBatch = {
         clear: clear,
+        selectedIds: function () { return Array.from(selected); },
         done: function (count) {
             clear();
             toggleMessageBatch(false);

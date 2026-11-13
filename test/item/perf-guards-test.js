@@ -107,6 +107,15 @@ storage.ensureSystemDomain();
         registry.sendTo(fast, 'y');
         assert.strictEqual(sent, 1);
     });
+    await check('成员更新广播使用结构化数据并增量更新 DOM', () => {
+        const server = read('lib/websocket/index.js');
+        assert.ok(server.includes('members,'));
+        assert.ok(!server.includes("renderToString('_member_list.html'"));
+        const client = read('static/js/member-list.js');
+        assert.ok(client.includes('data-uid'));
+        assert.ok(client.includes('insertBefore'));
+        assert.ok(client.includes('existing[uid]'));
+    });
     await check('分片读取复用缓存，写入后立即失效', () => {
         const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'chatroom-chunk-'));
         try {

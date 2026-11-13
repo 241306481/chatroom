@@ -342,6 +342,13 @@ await check('讨论区：经验立即反映在存储中（无缓冲）', async (
         const out = env.renderString('x={{ v | jsdump }}', { v: '</script><img src=x onerror=1>' });
         assert.ok(!out.includes('</script>'));
     });
+    await check('编辑器：工具栏操作不会拦截发送按钮', () => {
+        const src = fs.readFileSync(path.join(ROOT, 'static/js/editor/toolbar.js'), 'utf8');
+        assert.ok(/querySelectorAll\('\.md-editor-toolbar \[data-action\]'\)/.test(src),
+            '工具栏事件未限定在工具栏内');
+        assert.ok(!/querySelectorAll\('\[data-action\]'\)/.test(src),
+            '工具栏事件仍会绑定到发送按钮');
+    });
     await check('编辑器：插入链接后光标位置正确（走 insertAt）', () => {
         const src = fs.readFileSync(path.join(ROOT, 'static/js/editor/toolbar.js'), 'utf8');
         const seg = src.slice(src.indexOf("action === 'link'"), src.indexOf("action === 'image-link'"));

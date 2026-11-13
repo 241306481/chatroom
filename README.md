@@ -6,13 +6,26 @@
 
 - **域 / 讨论**：按域组织，每个域下有多个讨论区，支持置顶、改名、删除
 - **私信**：用户之间一对一会话，支持附件、未读计数
-- **文件**：用户空间（我的文件）与域空间两套；用户文件支持可见性控制，域文件按域权限访问
+- **文件**：用户空间（我的文件）与域空间两套；用户文件支持可见性控制，域文件按域权限访问，外站 HTTPS 文件链接也可生成文件卡片
 - **Markdown**：支持 GFM、Callouts、cute-table、表格合并、对齐、epigraph 与代码块高亮
+- **实时协作**：WebSocket 推送消息、在线状态与成员变更；成员列表增量更新，标签页隐藏时支持桌面通知
+- **阅读与查找**：讨论内搜索、跳到未读、批量置顶 / 删除 / 合并转发 / 分条转发
 - **角色与权限**：44 项权限，分基础 / 系统 / 讨论 / 消息 / 文件 / 域成员 / 域管理七组；域与系统各有一套内置角色
 - **双重校验**：部分操作要求同时具备系统权限与域内权限（`dual-check`）
 - **管理面板**：用户、域、角色、权限、封禁、系统设置
 - **命令行控制台**：不启服务也能直接管数据
 - **HTTPS**：生成自签证书后自动切换 HTTPS / WSS
+- **统一版权栏**：页面底部显示站点、版本、许可证与源码入口，版本信息从 `package.json` 读取
+
+## 界面与版权栏
+
+页面底部使用与 Hydro 类似的版权栏：左侧是帮助、首页、源代码与许可证入口，右侧显示
+`© 年份 站点名 · v版本 · 许可证 · Powered by Chatroom`。
+
+版本号只在 `package.json` 的 `version` 字段维护，模板通过 `app_version` 全局变量读取；
+年份、许可证和仓库地址也分别由 `app_year`、`app_license`、`app_repo_url` 注入。
+派生发行时请同步修改 `package.json` 的 `name`、`version`、`author`、`repository`，
+并保留 `LICENSE` 与 `NOTICE`，不要直接删除版权栏。
 
 ## Markdown 扩展
 
@@ -44,6 +57,9 @@ npm start
 
 **第一个注册的用户会自动成为超级管理员。** 注册后请到 `/manage` 检查系统设置并修改密码。
 
+> Windows PowerShell 如果提示无法加载 `npm.ps1`，请改用 `npm.cmd install`、`npm.cmd start`
+> 和 `npm.cmd test`，或先调整执行策略。
+
 ### 局域网 / 手机访问
 
 服务默认监听 `0.0.0.0`，启动日志会打印局域网地址：
@@ -54,6 +70,14 @@ npm start
 ```
 
 同一 Wi-Fi 下的其它设备直接用 LAN URL 即可。
+
+## 部署前检查
+
+- **首个注册账号即超级管理员**：部署后立即注册并修改默认密码，再按需关闭注册或收紧加入策略。
+- **不要在有真实数据的环境里跑 `npm test`**：测试会清空 `data/`、`logs/`、`cert.pem`、`key.pem`。
+- **对外部署请走 HTTPS**：可用 `npm run cert` 的自签证书，或在 Nginx / Caddy 后终止 TLS；反代场景务必设置 `TRUST_PROXY=1`。
+- **配置自动备份**：设置 `CHATROOM_BACKUP_DIR`，并定期把备份复制到另一块磁盘。
+- **派生发行同步元数据**：修改 `package.json` 的 `name`、`version`、`author`、`repository`，保留 `LICENSE`、`NOTICE` 和页脚版权信息。
 
 ## 命令
 
@@ -261,7 +285,7 @@ lib/
 ├── logger.js          日志与轮转
 └── startup-check.js   启动自检
 static/                前端资源（js / css）
-templates/             页面模板
+templates/             页面模板（base.html / base_simple.html / _footer.html）
 test/
 ├── test.js            回归入口
 ├── check-encoding.js  编码守卫
@@ -277,9 +301,20 @@ WebSocket 端点：
 | `/ws/dm` | 私信 |
 | `/ws/status/:domain` | 在线状态 |
 
-## 开发约定
+## 开发与贡献
 
-改动前请先读 [CONTRIBUTING.md](CONTRIBUTING.md)，那里有几条踩过坑之后定下的硬约束。
+改动前请先读 [CONTRIBUTING.md](CONTRIBUTING.md)，那里有编码、测试、模板、CSP 与许可证方面的硬约束。
+
+提交前至少执行：
+
+```bash
+node --check <改动的 .js 文件>
+node test/check-encoding.js
+npm test
+```
+
+新增用户可见功能时，请同步更新本 README、`templates/help.html` 与相关回归测试；
+新增页面请继承 `templates/base.html`（或 `base_simple.html`），不要重复实现页脚。
 
 ## License
 
@@ -287,6 +322,6 @@ Licensed under the [Apache License 2.0](LICENSE).
 
 Copyright 2026 241306481. See [NOTICE](NOTICE) for attribution requirements.
 
-## 提示
+## 文档维护
 
-本文由 AI 生成。
+本文档随功能持续更新；如果发现描述与代码不一致，欢迎提交 issue 或 PR 修正。

@@ -2,7 +2,7 @@
 .mobile-discuss-tabs { display: none; }
 .layout-discuss { display: grid; grid-template-columns: 200px 1fr 280px;
   grid-template-rows: minmax(0, 1fr);
-  height: calc(100vh - 48px); overflow: hidden; }
+  height: calc(100vh - 48px - var(--footer-height, 42px)); overflow: hidden; }
 .sidebar-discussions { background: #fafafa; border-right: 1px solid #e0e0e0;
   padding: 16px; overflow-y: auto; min-height: 0; }
 .sidebar-discussions h3 { font-size: 14px; margin-bottom: 12px; color: #888; }
@@ -54,6 +54,10 @@
   border-radius: 4px; background: #fff; color: #555; cursor: pointer;
   font-size: 12px; }
 .msg-batch-toggle:hover { border-color: #1890ff; color: #1890ff; }
+.jump-unread-btn { padding: 3px 9px; border: 1px solid #91caff;
+  border-radius: 4px; background: #e6f7ff; color: #096dd9; cursor: pointer;
+  font-size: 12px; }
+.jump-unread-btn:hover { border-color: #1890ff; color: #1890ff; }
 .message-batch-bar { display: flex; flex-wrap: wrap; align-items: center;
   gap: 8px; padding: 8px 12px; background: #f0f7ff;
   border-bottom: 1px solid #d6e8ff; font-size: 13px; }
@@ -276,8 +280,9 @@ html[data-theme="dark"] .loading-older { color: #666; }
   #mobilePaneSide:focus-visible ~ .mobile-discuss-tabs label[for="mobilePaneSide"] {
     outline: 2px solid #1890ff; outline-offset: -3px;
   }
-  .layout-discuss { display: block; height: calc(100vh - 88px);
-    height: calc(100dvh - 88px); }
+  .layout-discuss { display: block;
+    height: calc(100vh - 88px - var(--footer-height, 42px));
+    height: calc(100dvh - 88px - var(--footer-height, 42px)); }
   .sidebar-discussions, .message-area, .sidebar-right {
     display: none; height: 100%; }
   #mobilePaneDiscuss:checked ~ .layout-discuss .sidebar-discussions { display: block; }

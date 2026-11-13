@@ -216,8 +216,9 @@ check('文件卡片：展开/紧凑语法与安全外部 PDF 契约', () => {
     assert.ok(/function enhanceFileCards/.test(src), '缺少文件卡片增强');
     assert.ok(/function fileKind/.test(src), '缺少文件类型识别');
     assert.ok(/function safeFileUrl/.test(src), '缺少文件 URL 白名单');
-    assert.ok(/parsed\.protocol === 'https:' && kind === 'pdf'/.test(src),
-        '外部文件只应允许 HTTPS PDF');
+    const safeFn = (/function safeFileUrl[\s\S]*?\n}/.exec(src) || [''])[0];
+    assert.ok(/parsed\.protocol === 'https:'/.test(safeFn) && !/kind === 'pdf'/.test(safeFn),
+        '外部文件应允许 HTTPS 链接');
     assert.ok(/prev\.nodeType !== 3/.test(src) && /\/@\$\/\.test/.test(src),
         '紧凑卡片未识别 @ 前缀');
     assert.ok(/createFileCard|makeFileCard/.test(src), '缺少卡片 DOM 构造');

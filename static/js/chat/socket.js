@@ -25,15 +25,7 @@
     }
     window.applyMemberPermissions = applyMemberPermissions;
     function applyMembersUpdate(data) {
-        const list = document.getElementById('memberList');
-        if (!list) return;
-        if (typeof data.html === 'string' && data.html) {
-            list.innerHTML = data.html;
-        }
-        applyMemberPermissions();
-        if (typeof window.updateAllOnlineCounts === 'function') {
-            window.updateAllOnlineCounts();
-        }
+        if (window.MemberList) window.MemberList.apply(data);
     }
     function appendDiscussFile(file) {
         const panel = document.querySelector('.discuss-file-sidebar');
@@ -113,8 +105,32 @@
                     if (window.MY_UID && data.message.user_id !== window.MY_UID && !atBottom) {
                         R.showNewMsgBanner(1);
                     }
+                    if (window.MY_UID && data.message.user_id !== window.MY_UID
+                        && document.hidden && window.showNotification) {
+                        const nick = data.message.nickname || '新消息';
+                        window.showNotification({
+                            title: nick,
+                            content: Array.from(String(data.message.content || ''))
+                                .slice(0, 80).join(''),
+                            color: data.message.avatar_color || '#1890ff',
+                            avatar: Array.from(nick)[0] || '?',
+                            avatarUid: data.message.user_id,
+                            avatarExt: data.message.avatar_ext || '',
+                            tag: 'discuss-' + DOMAIN + '-' + DISCUSS,
+                            onClick: function () {
+                                if (window.scrollToMessage) {
+                                    window.scrollToMessage(data.message.id);
+                                } else {
+                                    location.hash = '#msg-' + data.message.id;
+                                }
+                            },
+                        });
+                    }
                     if (typeof window.__chatSearchReapply === 'function') {
                         window.__chatSearchReapply();
+                    }
+                    if (atBottom && window.markDiscussionRead) {
+                        window.markDiscussionRead();
                     }
                     break;
                 }

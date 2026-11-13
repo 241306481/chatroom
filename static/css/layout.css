@@ -45,7 +45,7 @@
   width: 36px; height: 36px; border-radius: 50%;
   color: #fff; font-weight: 600; font-size: 14px; flex-shrink: 0; }
 .login-page { display: flex; justify-content: center; align-items: center;
-  min-height: calc(100vh - 48px); background: #f0f2f5; }
+  min-height: calc(100vh - 48px - var(--footer-height, 42px)); background: #f0f2f5; }
 .login-box { background: #fff; padding: 32px; border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.1); width: 340px; }
 .login-box h1 { font-size: 20px; margin-bottom: 20px; text-align: center; }

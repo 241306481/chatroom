@@ -33,6 +33,22 @@ check('帮助包含粘贴图片与批量说明', () => {
     assert.ok(html.includes('批量下载为 ZIP'), '缺少批量下载说明');
     assert.ok(html.includes('general 不可删除'), '缺少删除讨论限制');
 });
+check('版权栏由基础模板统一引入并显示版本信息', () => {
+    const base = fs.readFileSync(path.join(ROOT, 'templates/base.html'), 'utf8');
+    const simple = fs.readFileSync(path.join(ROOT, 'templates/base_simple.html'), 'utf8');
+    const footer = fs.readFileSync(path.join(ROOT, 'templates/_footer.html'), 'utf8');
+    assert.ok(base.includes('{% include "_footer.html" %}'), 'base.html 未引入版权栏');
+    assert.ok(simple.includes('{% include "_footer.html" %}'), 'base_simple.html 未引入版权栏');
+    assert.ok(footer.includes('app_version') && footer.includes('app_year'),
+        '版权栏缺少版本或年份');
+    assert.ok(footer.includes('app_repo_url') && footer.includes('app_license'),
+        '版权栏缺少源码或许可证入口');
+    const tpl = fs.readFileSync(path.join(ROOT, 'lib/template.js'), 'utf8');
+    assert.ok(tpl.includes("addGlobal('app_version'"), '模板未暴露 app_version');
+    const css = fs.readFileSync(path.join(ROOT, 'static/css/footer.css'), 'utf8');
+    assert.ok(css.includes('html[data-theme="dark"] .site-footer'),
+        '版权栏缺少深色主题样式');
+});
 for (const [st, n] of results) console.log(st + '  ' + n);
 const failed = results.filter(r => r[0] === 'FAIL').length;
 console.log('\n' + (results.length - failed) + ' passed, ' + failed + ' failed');

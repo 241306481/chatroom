@@ -44,7 +44,8 @@
         icon.textContent = '↪';
         const title = document.createElement('span');
         title.className = 'modal-title';
-        title.textContent = '转发消息';
+        title.textContent = source.mode === 'merge' ? '合并转发'
+            : (source.ids && source.ids.length > 1 ? '分条转发' : '转发消息');
         header.appendChild(icon);
         header.appendChild(title);
         const body = document.createElement('div');
@@ -115,10 +116,13 @@
             list.querySelectorAll('button').forEach(function (b) { b.disabled = true; });
             item.classList.add('sending');
             const body = new URLSearchParams();
-            body.set('message_id', source.id);
+            const ids = source.ids && source.ids.length
+                ? source.ids : [source.id];
+            body.set('message_ids', ids.join(','));
             body.set('source_type', source.type);
             body.set('target_domain', target.domain);
             body.set('target_disc', target.id);
+            if (source.mode) body.set('forward_mode', source.mode);
             if (source.type === 'dm') {
                 body.set('source_peer', source.peer);
             } else {
@@ -137,7 +141,9 @@
             })).then(function (res) {
                 if (!res.ok) throw new Error(res.error || '转发失败');
                 close();
-                if (window.showToast) window.showToast('已转发到 ' + target.title);
+                if (window.showToast) {
+                    window.showToast(res.message || '已转发到 ' + target.title);
+                }
             }).catch(function (err) {
                 item.classList.remove('sending');
                 list.querySelectorAll('button').forEach(function (b) { b.disabled = false; });
@@ -168,13 +174,7 @@
         render();
         search.focus();
     }
-    window.forwardMessage = function (id, btn) {
-        const source = sourceOf(btn);
-        if (!source || !source.id) return;
-        if (!source.peer && source.type === 'dm') {
-            if (window.showToast) window.showToast('当前没有私信会话');
-            return;
-        }
+    function loadTargets(source) {
         fetch('/forward/targets', { headers: { 'Accept': 'application/json' } })
             .then(r => r.json().catch(function () {
                 return { ok: false, error: '请求失败（' + r.status + '）' };
@@ -184,5 +184,35 @@
             }).catch(function (err) {
                 if (window.showToast) window.showToast(err.message || '加载失败');
             });
+    }
+    window.forwardMessage = function (id, btn) {
+        const source = sourceOf(btn);
+        if (!source || !source.id) return;
+        source.ids = [source.id];
+        if (!source.peer && source.type === 'dm') {
+            if (window.showToast) window.showToast('当前没有私信会话');
+            return;
+        }
+        loadTargets(source);
+    };
+    window.forwardMessages = function (ids, mode) {
+        const list = (Array.isArray(ids) ? ids : []).filter(Boolean);
+        if (!list.length) {
+            if (window.showToast) window.showToast('请先选择消息');
+            return;
+        }
+        const m = location.pathname.match(/^\/domain\/([^/]+)\/discuss\/([^/]+)/);
+        if (!m) {
+            if (window.showToast) window.showToast('当前页面不支持转发');
+            return;
+        }
+        loadTargets({
+            type: 'discuss',
+            id: list[0],
+            ids: list,
+            mode: mode === 'merge' ? 'merge' : 'split',
+            domain: decodePart(m[1]),
+            discuss: decodePart(m[2]),
+        });
     };
 })();

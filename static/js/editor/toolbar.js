@@ -1,7 +1,7 @@
 window.EditorToolbar = {
     attach({ root, ta, refresh }) {
         const closeAll = () => window.EditorUtils.closeAll(root);
-        root.querySelectorAll('[data-action="dropdown"]').forEach(btn => {
+        root.querySelectorAll('.md-editor-toolbar [data-action="dropdown"]').forEach(btn => {
             btn.addEventListener('click', e => {
                 e.stopPropagation();
                 const name = btn.dataset.menu;
@@ -20,7 +20,7 @@ window.EditorToolbar = {
             });
         });
         document.addEventListener('click', closeAll);
-        root.querySelectorAll('[data-action]').forEach(el => {
+        root.querySelectorAll('.md-editor-toolbar [data-action]').forEach(el => {
             const action = el.dataset.action;
             if (action === 'dropdown' || action === 'mode') return;
             el.addEventListener('click', e => {

@@ -1,5 +1,6 @@
 .error-page { display: flex; flex-direction: column; align-items: center;
-  justify-content: center; min-height: 60vh; text-align: center; }
+  justify-content: center; min-height: calc(100vh - 48px - var(--footer-height, 42px));
+  text-align: center; }
 .error-page h1 { font-size: 72px; color: #1890ff; margin-bottom: 16px; }
 .error-page p { color: #888; margin-bottom: 24px; }
 .error-page a { padding: 10px 24px; background: #1890ff; color: #fff;

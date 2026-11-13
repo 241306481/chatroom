@@ -77,20 +77,7 @@ window.updateAllOnlineCounts = function () {
             else if (data.type === 'user_offline') window.updateUserStatus(data.user_id, false);
             else if (data.type === 'online_list') window.applyOnlineList(data.users);
             else if (data.type === 'members_update') {
-                const list = document.getElementById('memberList');
-                if (list) {
-                    if (typeof data.html === 'string' && data.html) {
-                        list.innerHTML = data.html;
-                    }
-                    if (typeof window.applyMemberPermissions === 'function') {
-                        window.applyMemberPermissions();
-                    } else if (window.__CAN_MUTE__ !== true && window.__CAN_MUTE__ !== 'true') {
-                        list.querySelectorAll('.member-actions').forEach(el => el.remove());
-                    }
-                    if (typeof window.updateAllOnlineCounts === 'function') {
-                        window.updateAllOnlineCounts();
-                    }
-                }
+                if (window.MemberList) window.MemberList.apply(data);
             }
         };
         socket.onclose = () => {

@@ -1,11 +1,24 @@
 # 贡献指南
 
+先读 [README.md](README.md) 了解项目结构、启动方式与权限模型；本指南只列改动时必须遵守的约束。
+
 ## 提交前必跑
 
 ```bash
 npm test          # 编码守卫 + 全部回归套件
 node --check <改动的 .js 文件>
 ```
+
+Windows PowerShell 如果提示无法加载 `npm.ps1`，改用 `npm.cmd test`。
+
+提交前请确认：
+
+- [ ] 改动过的 `.js` 文件都通过 `node --check`
+- [ ] `node test/check-encoding.js` 通过
+- [ ] `npm test` 全部通过
+- [ ] 新增/修改的页面在浅色、深色和窄屏下都能正常显示
+- [ ] 用户可见行为变化已同步 README、`templates/help.html` 和回归测试
+- [ ] 没有提交 `data/`、`logs/`、`cert.pem`、`key.pem` 或临时脚本
 
 `npm test` 的第一道关是编码守卫（`test/check-encoding.js`），任何源码里出现
 UTF-8 BOM 或 U+FFFD 替换字符都会直接失败并列出文件与行号。
@@ -19,6 +32,29 @@ UTF-8 BOM 或 U+FFFD 替换字符都会直接失败并列出文件与行号。
 >
 > **不要在有真实数据的环境里跑 `npm test`** —— 那些数据会被删掉且无法恢复。
 > 正式部署前请先备份，或在独立的临时目录里测试。
+
+---
+
+## 模板与前端约定
+
+- **页面继承基础模板**：普通页面继承 `templates/base.html`，登录/注册/错误页继承
+  `templates/base_simple.html`。版权栏由 `templates/_footer.html` 统一引入，
+  不要在页面里复制一份页脚。
+- **版权栏信息不要硬编码**：版本、年份、许可证和仓库地址分别来自
+  `app_version`、`app_year`、`app_license`、`app_repo_url`，由 `lib/template.js`
+  从 `package.json` 注入。发布新版本时只改 `package.json` 的 `version`。
+- **CSP**：不要新增内联 `onclick` / `onchange` 等事件属性。需要内联脚本时加
+  `nonce="{{ csp_nonce }}"`；优先把逻辑放进 `static/js/`，用事件委托绑定。
+- **转义**：Nunjucks 默认自动转义，不要随意使用 `| safe`；传给脚本的数据用
+  `| jsdump`，不要把用户内容直接拼进 `<script>`。
+- **前端无构建步骤**：保持原生 JS / CSS，不引入打包器或框架。新增 CSS 文件必须
+  在 `static/css/main.css` 中 `@import`，并同时提供深色主题样式。
+- **响应式与可访问性**：交互控件要有可见的 `:focus-visible` 样式和 `aria-label`；
+  改动布局时检查 720px 以下的窄屏，以及讨论页/私信页的全高布局是否仍能容纳页脚。
+- **接口返回**：POST 成功和失败都返回 JSON（`{ ok: true/false, ... }`），
+  页面端用 `showAlert` / `showConfirm` / `showToast`，不要新增原生 `alert/confirm`。
+- **WebSocket**：发送结构化数据，不要把服务端渲染好的 HTML 塞进消息；成员列表等
+  高频更新走增量 DOM，避免整块 `innerHTML` 替换。
 
 ---
 
@@ -82,6 +118,28 @@ node test/check-encoding.js
 
 ---
 
+## 数据与测试约定
+
+- 测试必须使用独立的临时数据目录或接受 `npm test` 会清空 `data/` 的事实；
+  不要在有真实数据的环境里直接跑测试。
+- 新增回归套件命名为 `test/item/*-test.js`，并在 `test/test.js` 的 `SUITES` 里登记。
+- 测试代码一律放 `test/`，不要在别处散落临时脚本；路径用
+  `path.join(__dirname, ...)` 推导，不要硬编码绝对路径。
+- 新增数据字段时考虑旧数据兼容；读取缺失字段要回退到默认值，不要假设所有
+  历史 JSON 都已迁移。
+- 修改存储格式、权限位或 WebSocket 消息结构时，必须同时更新相关回归断言和
+  文档，避免只改一端。
+
+## 文档与版权
+
+- 用户可见功能变化要同步更新 `README.md` 和 `templates/help.html`。
+- 新增页面或布局时确认页脚版权栏存在，且版本信息仍来自 `package.json`。
+- 派生发行请修改 `package.json` 的 `name`、`version`、`author`、`repository`，
+  保留 `LICENSE`、`NOTICE` 和页脚署名；不要移除或遮挡版权信息。
+- 文档中的命令、环境变量、路径必须与代码一致；不确定的示例不要写进文档。
+
+---
+
 ## 许可证要求（Apache-2.0）
 
 本项目按 **Apache License 2.0** 发布。`LICENSE` 是许可证全文，`NOTICE` 是归属声明，
@@ -130,13 +188,13 @@ A: 建议照做，成本极低（保留两个文件即可），也免得将来�
 
 - 注释用中文，与现有代码保持一致。
 - 不要提交 `data/`、`logs/`、`cert.pem`、`key.pem`。
-- 测试代码一律放 `test/`，不要在别处散落临时脚本。
-- 新增回归用例命名为 `test/item/*-test.js`，并在 `test/test.js` 的 `SUITES` 里登记。
-- 路径一律用 `path.join(__dirname, ...)` 推导，不要硬编码绝对路径，
-  否则仓库换目录后测试会直接失效。
 - 合并重复实现时，务必确认所有调用点都已切换到新位置，并加一条断言
   「旧位置不再保留副本」，否则两份定义迟早分叉。
+- 修改公共函数签名时，先搜索全部调用点；不要只改当前页面能跑到的那一条路径。
+- 发现文档、注释或测试与实现不一致时，优先修正实现或文档中的错误，而不是
+  再加一层兼容代码把问题掩盖掉。
 
-## 提示
+## 文档维护
 
-本文由 AI 生成。
+本指南与代码一起维护。新增约定、踩到新的坑，或发现某条规则已经过时时，
+请在同一个 PR 里更新本文件，不要只把经验留在聊天记录里。

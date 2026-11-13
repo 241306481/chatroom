@@ -1,6 +1,6 @@
 .dm-layout { display: grid; grid-template-columns: 240px minmax(0, 1fr);
   grid-template-rows: minmax(0, 1fr);
-  height: calc(100vh - 48px); overflow: hidden; }
+  height: calc(100vh - 48px - var(--footer-height, 42px)); overflow: hidden; }
 .dm-layout.dm-with-files {
   grid-template-columns: 240px minmax(0, 1fr) 220px; }
 .dm-layout .dm-file-sidebar { max-height: none; overflow-y: auto;

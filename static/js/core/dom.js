@@ -128,7 +128,7 @@ function safeFileUrl(raw, kind) {
     const parsed = parsedFileUrl(raw);
     if (!parsed) return false;
     if (parsed.origin === window.location.origin) return true;
-    return parsed.protocol === 'https:' && kind === 'pdf';
+    return parsed.protocol === 'https:';
 }
 const FILE_VIEW_PATH_RE = /^\/(?:myfile\/[^/]+(?:\/[^/]+)?|messages\/file\/[^/]+\/[^/]+\/[^/]+|domain\/[^/]+\/files\/[^/]+|domain\/[^/]+\/discuss\/[^/]+\/file\/[^/]+)$/;
 function fileThumbUrl(raw) {
@@ -578,6 +578,12 @@ document.addEventListener('click', function (e) {
         break;
     case 'batch-cancel':
         if (window.toggleMessageBatch) window.toggleMessageBatch(false);
+        break;
+    case 'batch-forward-merge':
+        if (window.batchForwardSelected) window.batchForwardSelected('merge');
+        break;
+    case 'batch-forward-split':
+        if (window.batchForwardSelected) window.batchForwardSelected('split');
         break;
     case 'mute-member':
         if (window.muteMember) window.muteMember(el.dataset.uid);
