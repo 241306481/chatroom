@@ -330,9 +330,9 @@ function waitFor(ws, pred, ms = 10000) {
         assert.ok(!storage.loadDiscussion('system', 'batch-del-b').name);
     });
     const wsA = await openRetry(() => new WebSocket(`ws://127.0.0.1:${PORT}/ws/discuss/system/general`,
-        { headers: { Cookie: A } }));
+        { headers: { Cookie: A, Origin: `http://127.0.0.1:${PORT}` } }));
     const wsB = await openRetry(() => new WebSocket(`ws://127.0.0.1:${PORT}/ws/discuss/system/general`,
-        { headers: { Cookie: B } }));
+        { headers: { Cookie: B, Origin: `http://127.0.0.1:${PORT}` } }));
     const ids = [];
     for (const content of ['batch one', 'batch two']) {
         const p = waitFor(wsB, d => d.type === 'new_message' && d.message.content === content);
@@ -444,7 +444,7 @@ function waitFor(ws, pred, ms = 10000) {
         assert.ok(fwd, '缺少转发消息');
         const ws = await openRetry(() => new WebSocket(
             `ws://127.0.0.1:${PORT}/ws/discuss/system/fwd`,
-            { headers: { Cookie: A } }));
+            { headers: { Cookie: A, Origin: `http://127.0.0.1:${PORT}` } }));
         const p = waitFor(ws, d => d.type === 'error'
             && String(d.msg || '').includes('不能编辑'));
         ws.send(JSON.stringify({

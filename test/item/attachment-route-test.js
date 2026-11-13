@@ -192,7 +192,7 @@ const PNG = Buffer.from(
         });
         const ws = new WebSocket(
             `ws://127.0.0.1:${PORT}/ws/discuss/system/general`,
-            { headers: { Cookie: A } });
+            { headers: { Cookie: A, Origin: `http://127.0.0.1:${PORT}` } });
         const wsOpen = await new Promise(resolve => {
             const t = setTimeout(() => resolve(false), 4000);
             ws.once('open', () => { clearTimeout(t); resolve(true); });

@@ -24,6 +24,18 @@
     <label>会话超时（小时）
       <input type="number" name="session_timeout_hours" value="{{ config.session_timeout_hours or 24 }}" min="1">
     </label>
+    <hr style="margin:12px 0;border:none;border-top:1px solid #eee;">
+    <label class="checkbox-row">
+      <input type="checkbox" name="allow_username_change" {% if allow_username_change %}checked{% endif %}>
+      允许用户修改用户名
+    </label>
+    <label>用户名最小修改间隔（小时，0 表示不限制）
+      <input type="number" name="username_change_interval_hours"
+             value="{{ username_change_interval_hours }}" min="0" max="8760">
+    </label>
+    <p class="hint" style="margin-top:-4px;">
+      拥有「绕过用户名修改冷却」权限的用户不受间隔限制；关闭开关后所有人都不能修改用户名。
+    </p>
     <button type="submit">保存设置</button>
   </form>
   <p style="margin-top:24px;"><a href="/manage">← 返回系统管理</a></p>

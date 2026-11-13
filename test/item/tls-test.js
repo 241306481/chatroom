@@ -152,7 +152,7 @@ function httpsGet(p, cookie) {
     });
     await check('★ WSS 握手成功', async () => {
         const ws = new WebSocket(`wss://127.0.0.1:${PORT}/ws/status/system`,
-            { headers: { Cookie: cookie }, rejectUnauthorized: false });
+            { headers: { Cookie: cookie, Origin: `https://127.0.0.1:${PORT}` }, rejectUnauthorized: false });
         const ok = await new Promise(r => {
             ws.on('open', () => r(true));
             ws.on('error', () => r(false));
@@ -171,10 +171,12 @@ function httpsGet(p, cookie) {
     });
     await check('HTTP 部署下不设 Secure（否则浏览器丢弃 Cookie）', () => {
         const src = fs.readFileSync(path.join(ROOT, 'lib/routes/auth.js'), 'utf8');
+        const cookies = fs.readFileSync(path.join(ROOT, 'lib/auth/cookies.js'), 'utf8');
         const utils = fs.readFileSync(path.join(ROOT, 'lib/http-utils.js'), 'utf8');
         assert.ok(/isSecureRequest/.test(src), '缺少按协议判定的逻辑');
         assert.ok(!/function isSecureRequest/.test(src), 'Secure 判定逻辑重复定义');
-        assert.ok(/if \(secure\) attrs\.push\('Secure'\)/.test(src), 'Secure 未按条件附加');
+        assert.ok(/if \(secure\) attrs\.push\('Secure'\)/.test(cookies),
+            'Secure 未按条件附加');
         assert.ok(/req\.socket && req\.socket\.encrypted/.test(utils),
             '未依据 socket.encrypted 判定');
     });

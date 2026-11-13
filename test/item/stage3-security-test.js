@@ -203,16 +203,17 @@ let proc = null;
         assert.ok(profile.includes("limiter.check('upload_file'"), '资料页头像上传未接入限流');
         assert.ok(profile.includes("limiter.check('change_password'"), '修改密码未接入限流');
     });
-    await check('密码策略拒绝空密码或过长的密码', () => {
+    await check('密码策略拒绝空密码、过短或过长的密码', () => {
         const { validatePassword } = require('../../lib/auth/password-policy');
         assert.throws(() => validatePassword(''), /不能为空/);
+        assert.throws(() => validatePassword('1234567'), /不能少于/);
         assert.throws(() => validatePassword('a'.repeat(129)), /不能超过/);
-        assert.strictEqual(validatePassword('1'), true);
-        assert.strictEqual(validatePassword('1234567'), true);
+        assert.strictEqual(validatePassword('12345678'), true);
         const account = require('../../lib/auth/account');
         assert.throws(() => account.registerUser('weakpwd', ''), /不能为空/);
+        assert.throws(() => account.registerUser('weakpwd', '1234567'), /不能少于/);
         const tpl = fs.readFileSync(path.join(ROOT, 'templates/register.html'), 'utf8');
-        assert.ok(!tpl.includes('minlength="8"'), '注册页不应限制密码最短长度');
+        assert.ok(tpl.includes('minlength="8"'), '注册页应限制密码最短长度');
     });
     await check('登录失败达到阈值会触发聚合告警', () => {
         const alerts = require('../../lib/auth/login-alert');
@@ -364,6 +365,20 @@ let proc = null;
         const tpl = fs.readFileSync(path.join(ROOT, 'templates/login.html'), 'utf8');
         assert.ok(tpl.includes('name="remember"'), '登录页缺少记住我选项');
     });
+    await check('登录成功会轮换会话，旧 Cookie 立即失效', async () => {
+        const first = await post('/login',
+            { nickname: 'mention0', password: 'pw123456', remember: '1' });
+        const oldCookie = cookieOf(first);
+        const rotated = await post('/login',
+            { nickname: 'mention0', password: 'pw123456' }, oldCookie);
+        const newCookie = cookieOf(rotated);
+        assert.ok(newCookie && newCookie !== oldCookie, '登录未轮换会话 Cookie');
+        const oldHome = await get('/settings/security', oldCookie);
+        assert.ok(oldHome.status >= 300 && oldHome.status < 400,
+            '旧会话仍可访问, status=' + oldHome.status);
+        const newHome = await get('/settings/security', newCookie);
+        assert.strictEqual(newHome.status, 200, '新会话不可用, status=' + newHome.status);
+    });
     await check('审计日志页按权限开放', async () => {
         const page = await get('/manage/audit', opsC);
         assert.strictEqual(page.status, 200, '审计页 status=' + page.status);
@@ -388,6 +403,12 @@ let proc = null;
             'none', '缺少跨域策略头');
         assert.ok(String(page.headers['permissions-policy'] || '')
             .includes('camera=()'), '缺少权限策略头');
+        assert.strictEqual(page.headers['cross-origin-opener-policy'], 'same-origin',
+            '缺少 COOP 头');
+        assert.strictEqual(page.headers['cross-origin-resource-policy'], 'same-origin',
+            '缺少 CORP 头');
+        assert.ok(/no-store/.test(String(page.headers['cache-control'] || '')),
+            '动态响应缺少 no-store');
         assert.strictEqual(page.headers['strict-transport-security'], undefined,
             'HTTP 不应发送 HSTS');
         const csp = String(page.headers['content-security-policy'] || '');
@@ -454,6 +475,14 @@ let proc = null;
         const foreign = await request('POST', '/login',
             { body: creds, origin: 'http://evil.example' });
         assert.strictEqual(foreign.status, 403, 'foreign status=' + foreign.status);
+        const wrongProto = await request('POST', '/login',
+            { body: creds, origin: 'https://127.0.0.1:' + PORT });
+        assert.strictEqual(wrongProto.status, 403,
+            '跨协议 Origin 应被拒绝, status=' + wrongProto.status);
+        const crossSite = await request('POST', '/login',
+            { body: creds, headers: { 'Sec-Fetch-Site': 'cross-site' } });
+        assert.strictEqual(crossSite.status, 403,
+            'Sec-Fetch-Site: cross-site 应被拒绝, status=' + crossSite.status);
     });
     await check('未知管理操作统一报错，不静默成功', async () => {
         const ban = await post('/manage/users/ban',
@@ -545,8 +574,12 @@ let proc = null;
         assert.ok(String(after.headers.location || '').startsWith('/login'),
             '被下线会话未跳转登录页');
     });
-    await check('WebSocket 拒绝跨站 Origin，但允许同源', async () => {
+    await check('WebSocket 拒绝缺失或跨站 Origin，但允许同源', async () => {
         const wsUrl = 'ws://127.0.0.1:' + PORT + '/ws/discuss/system/general';
+        const missing = new WebSocket(wsUrl, {
+            headers: { Cookie: rootC },
+        });
+        assert.strictEqual(await tryOpen(missing), false, '缺失 Origin 竟然建立成功');
         const bad = new WebSocket(wsUrl, {
             headers: { Cookie: rootC, Origin: 'http://evil.example' },
         });
@@ -566,6 +599,11 @@ let proc = null;
         const r = await post('/logout', {}, rootC);
         assert.strictEqual(r.status, 200, r.body);
         assert.strictEqual(JSON.parse(r.body).ok, true, r.body);
+        const cleared = (r.headers['set-cookie'] || [])
+            .find(c => /^token=;/.test(c)) || '';
+        assert.ok(/HttpOnly/.test(cleared), '清理 Cookie 缺少 HttpOnly');
+        assert.ok(/SameSite=Lax/.test(cleared), '清理 Cookie 缺少 SameSite');
+        assert.ok(!/Secure/.test(cleared), 'HTTP 清理 Cookie 不应带 Secure');
         assert.strictEqual(await closed, true, '退出登录后 WebSocket 未关闭');
     });
     proc.kill();

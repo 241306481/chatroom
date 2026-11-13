@@ -6,6 +6,7 @@ const { PRIV, PERM, PRIV_GROUPS, DUAL_CHECK } = require('../../lib/permissions')
 const { PAGE_BITS } = require('../../lib/routes/manage/_helpers');
 const PUBLIC_ROUTES = new Set([
     'GET /login', 'GET /register', 'POST /login', 'POST /register',
+    'GET /api/auth/public-key',
     'GET /avatar/:uid/:ext', 'GET /search', 'GET /messages',
     'GET /user/:uid', 'GET /favicon.ico',
 ]);
@@ -77,7 +78,8 @@ check('系统管理各页均映射到具体权限位（无 MANAGE_PANEL 兜底�
     if (bad.length) throw new Error(bad.join(', '));
 });
 check('系统组新位已进 PRIV_GROUPS（可在权限页勾选）', () => {
-    for (const k of ['MANAGE_SYS_ROLES', 'MANAGE_SYS_PERMS', 'MANAGE_IP_BANS']) {
+    for (const k of ['MANAGE_SYS_ROLES', 'MANAGE_SYS_PERMS', 'MANAGE_IP_BANS',
+        'BYPASS_NICKNAME_COOLDOWN']) {
         const hit = PRIV_GROUPS.find(g => g.bit === PRIV.SYSTEM[k]);
         if (!hit) throw new Error(k + ' 缺少 PRIV_GROUPS 条目');
         if (!hit.key) throw new Error(k + ' 缺少 key');

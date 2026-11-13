@@ -33,7 +33,10 @@
             id="profileForm" enctype="multipart/form-data">
         <label>昵称<input type="text" name="nickname" value="{{ target.nickname }}" required
           pattern="[^0-9\s].*" maxlength="32"
-          title="昵称不能以数字开头，长度 1-32"></label>
+          title="昵称不能以数字开头，长度 1-32"
+          {% if is_me and not username_change_allowed %}disabled{% endif %}>
+          {% if is_me and username_change_hint %}<span class="field-hint">{{ username_change_hint }}</span>{% endif %}
+        </label>
         {% if can_avatar %}
           <div class="profile-avatar-edit" id="avatarEditBox"
                data-has-avatar="{{ 1 if target.avatar_ext else 0 }}">

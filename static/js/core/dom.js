@@ -124,7 +124,7 @@ function parsedFileUrl(raw) {
         return null;
     }
 }
-function safeFileUrl(raw, kind) {
+function safeFileUrl(raw) {
     const parsed = parsedFileUrl(raw);
     if (!parsed) return false;
     if (parsed.origin === window.location.origin) return true;
@@ -257,7 +257,7 @@ function enhanceFileCards(root) {
             return;
         }
         const kind = fileKind(label, src);
-        if (!kind || !safeFileUrl(src, kind)) return;
+        if (!kind || !safeFileUrl(src)) return;
         if (!img.parentNode) return;
         img.replaceWith(makeFileCard(label || fileNameFromUrl(src), src, true));
     });
@@ -267,8 +267,7 @@ function enhanceFileCards(root) {
         if (!prev || prev.nodeType !== 3 || !/@$/.test(prev.nodeValue || '')) return;
         const label = a.textContent || '';
         const url = a.getAttribute('href') || '';
-        const kind = fileKind(label, url) || 'file';
-        if (!safeFileUrl(url, kind)) return;
+        if (!safeFileUrl(url)) return;
         if (!a.parentNode) return;
         if (prev.nodeValue.length === 1) prev.remove();
         else prev.nodeValue = prev.nodeValue.slice(0, -1);

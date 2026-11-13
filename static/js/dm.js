@@ -2,7 +2,7 @@
     if (!window.MY_UID) return;
     const WS_PROTOCOL = window.__WS_PROTOCOL__ || 'ws';
     const wsUrl = `${WS_PROTOCOL}://${location.host}/ws/dm`;
-    let socket = null, reconnectTimer = null;
+    let socket = null;
     const onMessagesPage = !!document.getElementById('dmRoot');
     let _dmBannerCount = 0;
     let _dmBanner = null;
@@ -115,7 +115,7 @@
                 if (onMessagesPage && data.by === cur) markDmRead();
             }
         };
-        socket.onclose = () => { reconnectTimer = setTimeout(connect, 3000); };
+        socket.onclose = () => { setTimeout(connect, 3000); };
         socket.onerror = () => {};
     }
     connect();

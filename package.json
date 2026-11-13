@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "nunjucks": "^3.2.4",
+    "tweetnacl": "^1.0.3",
     "ws": "^8.18.0"
   }
 }

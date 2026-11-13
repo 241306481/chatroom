@@ -78,7 +78,6 @@ const check = (n, f) => {
     const root = await req('POST', '/register',
         { body: { nickname: 'rootadmin', password: 'pw123456', confirm_password: 'pw123456' } });
     const ROOT_C = (root.headers['set-cookie'] || []).map((c) => c.split(';')[0]).join('; ');
-    const rootId = storage.findUserByNickname('rootadmin').id;
     const { SYSTEM_ROLES_BUILTIN } = require(path.join(ROOT, 'lib/permissions/roles'));
     const { PRIV } = require(path.join(ROOT, 'lib/permissions/priv'));
     check('上传头像权限默认开启（admin 与 member）', () => {
@@ -142,7 +141,7 @@ const check = (n, f) => {
     });
     let gotDelete = null;
     const ws = new WebSocket(`ws://127.0.0.1:${PORT}/ws/status/tempdomain`,
-        { headers: { Cookie: cookieHeader() } });
+        { headers: { Cookie: cookieHeader(), Origin: `http://127.0.0.1:${PORT}` } });
     await new Promise((res) => { ws.on('open', res); ws.on('error', res); });
     ws.on('message', (d) => {
         try { const j = JSON.parse(String(d)); if (j.type === 'domain_deleted') gotDelete = j; }

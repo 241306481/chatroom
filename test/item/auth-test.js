@@ -10,7 +10,6 @@ if (fs.existsSync(DATA)) fs.rmSync(DATA, { recursive: true, force: true });
 const PORT = 5191;
 const FAKE_IP = '203.0.113.5';
 const ADMIN_IP = '198.18.0.1';
-const SIDE_IP = '198.19.0.1';
 const SIDE2_IP = '198.20.0.1';
 const proc = spawn(process.execPath, ['server.js'],
     { cwd: ROOT, env: { ...process.env, PORT, TRUST_PROXY: '1' } });
@@ -117,12 +116,12 @@ const r = await req('POST', '/domain/system/manage/user',
 });
     await check('#3 正常情况下 WS 可建立', async () => {
         const w = new WebSocket(`ws://127.0.0.1:${PORT}/ws/discuss/system/general`,
-            { headers: { Cookie: B } });
+            { headers: { Cookie: B, Origin: `http://127.0.0.1:${PORT}` } });
         assert.ok(await tryOpen(w), 'WS 建不起来');
         w.close();
     });
     const ws = new WebSocket(`ws://127.0.0.1:${PORT}/ws/discuss/system/general`,
-        { headers: { Cookie: B, 'X-Forwarded-For': FAKE_IP } });
+        { headers: { Cookie: B, Origin: `http://127.0.0.1:${PORT}`, 'X-Forwarded-For': FAKE_IP } });
     await tryOpen(ws);
     ws.send(JSON.stringify({ type: 'message', content: 'before ban' }));
     await sleep(600);

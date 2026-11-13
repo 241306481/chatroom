@@ -1,6 +1,7 @@
 'use strict';
 const http = require('http');
 const https = require('https');
+const crypto = require('crypto');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
@@ -8,7 +9,6 @@ const storage = require('./lib/storage');
 const routes = require('./lib/routes');
 const websocket = require('./lib/websocket');
 const startupCheck = require('./lib/startup-check');
-const logger = require('./lib/logger');
 const backup = require('./lib/backup');
 const { registerShutdown } = require('./lib/graceful');
 const PORT = parseInt(process.env.PORT || '5000', 10);
@@ -51,9 +51,14 @@ function createServer() {
     if (!fs.existsSync(cert) || !fs.existsSync(key)) {
         return { server: configureServer(http.createServer(routes.handleRequest)), hasCert: false };
     }
-    const server = https.createServer(
-        { key: fs.readFileSync(key), cert: fs.readFileSync(cert) },
-        routes.handleRequest);
+    const server = https.createServer({
+        key: fs.readFileSync(key),
+        cert: fs.readFileSync(cert),
+        minVersion: 'TLSv1.2',
+        honorCipherOrder: true,
+        secureOptions: crypto.constants.SSL_OP_NO_RENEGOTIATION
+            | crypto.constants.SSL_OP_NO_COMPRESSION,
+    }, routes.handleRequest);
     return { server: configureServer(server), hasCert: true };
 }
 function getLanIp() {

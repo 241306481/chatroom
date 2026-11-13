@@ -30,6 +30,7 @@
 .field-error {
   margin: 4px 0 0; font-size: 12px; line-height: 1.5; color: #cf1322;
 }
+.field-hint { font-size: 12px; line-height: 1.5; color: #999; }
 .field-error[hidden] { display: none; }
 input[aria-invalid=true], textarea[aria-invalid=true] {
   border-color: #ff7875 !important;

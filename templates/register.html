@@ -17,17 +17,19 @@
 <div class="login-page">
   <div class="login-box">
     <h1>💬 注册账号</h1>
-    <form method="POST" action="/register" class="login-form">
+    <form method="POST" action="/register" class="login-form"
+          data-submit-action="submitEncryptedAuth">
       <input type="hidden" name="return_to" value="{{ return_to | default('') }}">
       <label>昵称<input type="text" name="nickname" required autofocus
           pattern="[^0-9\s].*" maxlength="32"
           title="昵称不能以数字开头，长度 1-32"></label>
       <label>密码<input type="password" name="password" required
-          maxlength="128" title="密码最多 128 位"></label>
+          minlength="8" maxlength="128" title="密码长度 8-128 位"></label>
       <label>确认密码<input type="password" name="confirm_password" required
-          maxlength="128"></label>
+          minlength="8" maxlength="128"></label>
       <button type="submit">注册</button>
     </form>
+    <p class="login-crypto-note">凭据会在浏览器内加密后提交；仅降低被动嗅探风险，不能替代 HTTPS。</p>
     <p class="login-switch">
       已有账号？<a href="/login{% if return_to %}?return_to={{ return_to | urlencode }}{% endif %}">返回登录</a>
     </p>
@@ -40,6 +42,10 @@
 <script src="/static/js/core/modal.js">
 </script>
 <script src="/static/js/core/notify.js">
+</script>
+<script src="/static/js/vendor/nacl-fast.min.js">
+</script>
+<script src="/static/js/auth-crypto.js">
 </script>
 <script nonce="{{ csp_nonce }}">(function () {
   var rt = new URL(location.href).searchParams.get('return_to');

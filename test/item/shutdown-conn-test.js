@@ -101,7 +101,10 @@ await check('活跃连接下优雅关闭：WS 断开 + HTTP 计数 + exit(0) + �
         const mkWs = () => new Promise((resolve, reject) => {
             const w = new WebSocket(wsProto + '://127.0.0.1:' + PORT
                 + '/ws/discuss/system/general', {
-                    headers: { Cookie: cookie },
+                    headers: {
+                        Cookie: cookie,
+                        Origin: (isHttps ? 'https' : 'http') + '://127.0.0.1:' + PORT,
+                    },
                     rejectUnauthorized: false,
                 });
             w.on('open', () => resolve(w));

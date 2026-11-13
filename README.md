@@ -113,7 +113,7 @@ npm start
 
 `npm run cert` 会自动探测系统里的 `openssl`（含 Git for Windows 自带的那份），生成证书后打印指纹、SAN、到期时间以及各平台的信任导入步骤。
 
-`cert.pem` 和 `key.pem` 不会进版本库；只要它们存在于项目根目录，服务就以 HTTPS / WSS 启动，否则使用 HTTP。
+`cert.pem` 和 `key.pem` 不会进版本库；只要它们存在于项目根目录，服务就以 HTTPS / WSS 启动，否则使用 HTTP。HTTPS 最低要求 TLS 1.2，并发送 HSTS（`max-age=31536000`）。
 
 ## 反向代理
 

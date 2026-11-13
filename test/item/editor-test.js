@@ -77,9 +77,9 @@ function waitFor(ws, pred, ms = 10000) {
     const uidA = storage.findUserByNickname('alice99').id;
     const uidB = storage.findUserByNickname('bobby99').id;
     const wsA = await openRetry(() => new WebSocket(`ws://127.0.0.1:${PORT}/ws/discuss/system/general`,
-        { headers: { Cookie: A } }));
+        { headers: { Cookie: A, Origin: `http://127.0.0.1:${PORT}` } }));
     const wsB = await openRetry(() => new WebSocket(`ws://127.0.0.1:${PORT}/ws/discuss/system/general`,
-        { headers: { Cookie: B } }));
+        { headers: { Cookie: B, Origin: `http://127.0.0.1:${PORT}` } }));
     await check('讨论区：WS 可建立', () => {
         assert.strictEqual(wsA.readyState, 1);
         assert.strictEqual(wsB.readyState, 1);
@@ -204,8 +204,8 @@ await check('讨论区：经验立即反映在存储中（无缓冲）', async (
         assert.strictEqual(r.status, 200);
     });
     wsA.close(); wsB.close();
-    const dmA = await openRetry(() => new WebSocket(`ws://127.0.0.1:${PORT}/ws/dm`, { headers: { Cookie: A } }));
-    const dmB = await openRetry(() => new WebSocket(`ws://127.0.0.1:${PORT}/ws/dm`, { headers: { Cookie: B } }));
+    const dmA = await openRetry(() => new WebSocket(`ws://127.0.0.1:${PORT}/ws/dm`, { headers: { Cookie: A, Origin: `http://127.0.0.1:${PORT}` } }));
+    const dmB = await openRetry(() => new WebSocket(`ws://127.0.0.1:${PORT}/ws/dm`, { headers: { Cookie: B, Origin: `http://127.0.0.1:${PORT}` } }));
     await check('私信：发送并被对端收到', async () => {
         const p = waitFor(dmB, d => d.type === 'dm_new' && d.message.content === 'psst');
         dmA.send(JSON.stringify({ type: 'dm_send', target: uidB, content: 'psst' }));
