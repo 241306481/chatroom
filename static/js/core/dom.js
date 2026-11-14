@@ -193,8 +193,8 @@ function buildFileBody(card) {
             : '此文件暂不支持在线预览，请打开或下载查看。';
     body.appendChild(note);
 }
-function makeFileCard(label, url, expanded) {
-    const kind = fileKind(label, url) || 'file';
+function makeFileCard(label, url, expanded, forcedKind) {
+    const kind = forcedKind || fileKind(label, url) || 'file';
     const card = document.createElement('span');
     card.className = 'md-file-card md-file-' + kind
         + (expanded ? ' md-file-expanded' : '');
@@ -237,6 +237,11 @@ function makeFileCard(label, url, expanded) {
     return card;
 }
 function enhanceFileCards(root) {
+    root.querySelectorAll('.md-file-leaf').forEach(el => {
+        const url = el.dataset.fileUrl || '';
+        if (!safeFileUrl(url)) { el.remove(); return; }
+        el.replaceWith(makeFileCard(fileNameFromUrl(url), url, el.dataset.fileOpen === '1', 'pdf'));
+    });
     root.querySelectorAll('img').forEach(img => {
         img.setAttribute('loading', 'lazy');
         img.setAttribute('decoding', 'async');

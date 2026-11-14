@@ -6,7 +6,6 @@ const { PRIV, PERM, PRIV_GROUPS, DUAL_CHECK } = require('../../lib/permissions')
 const { PAGE_BITS } = require('../../lib/routes/manage/_helpers');
 const PUBLIC_ROUTES = new Set([
     'GET /login', 'GET /register', 'POST /login', 'POST /register',
-    'GET /api/auth/public-key',
     'GET /avatar/:uid/:ext', 'GET /search', 'GET /messages',
     'GET /user/:uid', 'GET /favicon.ico',
 ]);

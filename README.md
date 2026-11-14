@@ -36,6 +36,7 @@
 - **对齐**：`:::align{left}`、`:::align{center}`、`:::align{right}`，仅作用于段落与标题
 - **Epigraph**：`:::epigraph[——作者]` 正文 `:::`
 - **Cute table**：`::cute-table{three}`、`::cute-table{tuack}`、`::cute-table{tuack=3}`
+- **PDF 叶子**：`::pdf[链接]` 生成紧凑文件卡片，`::pdf[链接]{open}` 默认展开内嵌预览
 - **表格合并**：单元格单独写 `^` 向上合并，写 `<` 向左合并
 - **表格对齐**：GFM 的 `:---`、`:---:`、`---:`
 - **代码行号**：默认不生成行号；围栏加 `line-numbers` 显示行号，加 `lines=5-6` 高亮指定行

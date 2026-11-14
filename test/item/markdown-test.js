@@ -129,6 +129,14 @@ check('Cute table：tuack 参数标记加粗竖线列', () => {
     const marked = html.match(/class="cute-table-bold-col"/g) || [];
     assert.strictEqual(marked.length, 2);
 });
+check('PDF 叶子：默认紧凑，{open} 展开', () => {
+    const compact = md.parse('::pdf[https://example.com/a.pdf]');
+    assert.ok(compact.includes('class="md-file-leaf"'));
+    assert.ok(compact.includes('data-file-url="https://example.com/a.pdf"'));
+    assert.ok(compact.includes('data-file-open="0"'));
+    const open = md.parse('::pdf[https://example.com/a.pdf]{open}');
+    assert.ok(open.includes('data-file-open="1"'));
+});
 check('HTML：class / style / mark 保留供精细排版', () => {
     const html = md.parse('<div class="box" style="color:red"><mark>ok</mark></div>');
     assert.ok(html.includes('class="box"'));
@@ -214,6 +222,7 @@ check('代码块：未知语言保留原标记', () => {
 check('文件卡片：展开/紧凑语法与安全外部 PDF 契约', () => {
     const src = fs.readFileSync(path.join(ROOT, 'static/js/core/dom.js'), 'utf8');
     assert.ok(/function enhanceFileCards/.test(src), '缺少文件卡片增强');
+    assert.ok(/md-file-leaf/.test(src), '缺少 PDF 叶子渲染');
     assert.ok(/function fileKind/.test(src), '缺少文件类型识别');
     assert.ok(/function safeFileUrl/.test(src), '缺少文件 URL 白名单');
     const safeFn = (/function safeFileUrl[\s\S]*?\n}/.exec(src) || [''])[0];

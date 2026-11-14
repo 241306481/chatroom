@@ -137,9 +137,13 @@
                     const url = getViewUrl(res.file.id);
                     const name = String(res.file.filename || (kind === 'image' ? '图片' : '附件'))
                         .replace(/[\[\]]/g, '_');
+                    const isPdf = /^application\/pdf$/i.test(file.type || '')
+                        || /\.pdf$/i.test(file.name || '');
                     const md = kind === 'image'
                         ? '[![' + name + '](' + getThumbUrl(url) + ')](' + url + ')'
-                        : '[' + name + '](' + url + ')';
+                        : isPdf
+                            ? '::pdf[' + url + ']'
+                            : '[' + name + '](' + url + ')';
                     if (window.EditorUtils && window.EditorUtils.insertAt) {
                         window.EditorUtils.insertAt(ta, md);
                     }

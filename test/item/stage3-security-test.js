@@ -203,17 +203,18 @@ let proc = null;
         assert.ok(profile.includes("limiter.check('upload_file'"), '资料页头像上传未接入限流');
         assert.ok(profile.includes("limiter.check('change_password'"), '修改密码未接入限流');
     });
-    await check('密码策略拒绝空密码、过短或过长的密码', () => {
+    await check('密码策略拒绝空密码和过长密码，不再限制最短长度', () => {
         const { validatePassword } = require('../../lib/auth/password-policy');
         assert.throws(() => validatePassword(''), /不能为空/);
-        assert.throws(() => validatePassword('1234567'), /不能少于/);
+        assert.strictEqual(validatePassword('1'), true);
         assert.throws(() => validatePassword('a'.repeat(129)), /不能超过/);
         assert.strictEqual(validatePassword('12345678'), true);
         const account = require('../../lib/auth/account');
         assert.throws(() => account.registerUser('weakpwd', ''), /不能为空/);
-        assert.throws(() => account.registerUser('weakpwd', '1234567'), /不能少于/);
+        assert.ok(account.registerUser('shortpwd', '1'));
         const tpl = fs.readFileSync(path.join(ROOT, 'templates/register.html'), 'utf8');
-        assert.ok(tpl.includes('minlength="8"'), '注册页应限制密码最短长度');
+        assert.ok(!tpl.includes('minlength="8"'), '注册页不应再限制密码最短长度');
+        assert.ok(tpl.includes('maxlength="128"'), '注册页应保留密码最大长度');
     });
     await check('登录失败达到阈值会触发聚合告警', () => {
         const alerts = require('../../lib/auth/login-alert');

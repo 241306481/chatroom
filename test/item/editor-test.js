@@ -265,6 +265,7 @@ await check('讨论区：经验立即反映在存储中（无缓冲）', async (
         const js = fs.readFileSync(path.join(ROOT, 'static/js/editor/upload-inline.js'), 'utf8');
         assert.ok(/kind === 'image'/.test(js), 'image kind 缺失');
         assert.ok(/kind === 'file'/.test(js), '缺少普通文件 kind');
+        assert.ok(/::pdf\[/.test(js), 'PDF 附件未插入叶子语法');
         assert.ok(/input\.accept = 'image\/\*'/.test(js), '图片仍应筛选 image/*');
         assert.ok(/addDMAttachment/.test(fs.readFileSync(
                 path.join(ROOT, 'lib/storage/dm-attachments.js'), 'utf8')),

@@ -17,8 +17,7 @@
 <div class="login-page">
   <div class="login-box">
     <h1>💬 {{ site_name or '聊天室' }}</h1>
-    <form method="POST" action="/login" class="login-form"
-          data-submit-action="submitEncryptedAuth">
+    <form method="POST" action="/login" class="login-form">
       <input type="hidden" name="return_to" value="{{ return_to | default('') }}">
       <label>昵称或 UID<input type="text" name="nickname" required autofocus></label>
       <label>密码<input type="password" name="password" required></label>
@@ -28,7 +27,6 @@
       </label>
       <button type="submit">登录</button>
     </form>
-    <p class="login-crypto-note">凭据会在浏览器内加密后提交；仅降低被动嗅探风险，不能替代 HTTPS。</p>
     <p class="login-switch">
       还没有账号？<a href="/register{% if return_to %}?return_to={{ return_to | urlencode }}{% endif %}">注册新账号</a>
     </p>
@@ -41,10 +39,6 @@
 <script src="/static/js/core/modal.js">
 </script>
 <script src="/static/js/core/notify.js">
-</script>
-<script src="/static/js/vendor/nacl-fast.min.js">
-</script>
-<script src="/static/js/auth-crypto.js">
 </script>
 <script nonce="{{ csp_nonce }}">(function () {
   var rt = new URL(location.href).searchParams.get('return_to');

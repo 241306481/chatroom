@@ -2,7 +2,7 @@
     const esc = s => String(s == null ? '' : s)
         .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     const OPEN_RE = /^ {0,3}(:{3,})([A-Za-z][\w-]*)(?:\[([^\]]*)\])?(?:\{([^}]*)\})?\s*$/;
-    const LEAF_RE = /^ {0,3}::(cute-table)(?:\[([^\]]*)\])?(?:\{([^}]*)\})?\s*$/;
+    const LEAF_RE = /^ {0,3}::(cute-table|pdf)(?:\[([^\]]*)\])?(?:\{([^}]*)\})?\s*$/;
     const FENCE_RE = /^ {0,3}(`{3,}|~{3,})/;
     const TABLE_START_RE = /\|/;
     const TABLE_ALIGN_RE = /^\s*\|?\s*:?-{3,}/;
@@ -164,6 +164,13 @@
         const html = parseMarkdown(tableSrc);
         return '<div class="' + cls + '">' + addBoldColumn(html, boldColumn) + '</div>';
     }
+    function renderPdfLeaf(url, attrs) {
+        const href = String(url == null ? '' : url).trim();
+        if (!href) return null;
+        const open = /(?:^|\s)open(?:\s|$)/i.test(attrs || '');
+        return '<span class="md-file-leaf" data-file-url="' + attr(href)
+            + '" data-file-open="' + (open ? '1' : '0') + '"></span>';
+    }
     function renderContainer(name, label, attrs, inner, blocks, token) {
         const body = fragment(inner, blocks, token);
         const key = name.toLowerCase();
@@ -221,6 +228,15 @@
             }
             const leaf = LEAF_RE.exec(line);
             if (leaf) {
+                if (leaf[1] === 'pdf') {
+                    const html = renderPdfLeaf(leaf[2], leaf[3]);
+                    if (html) {
+                        out.push(addBlock(blocks, token, html));
+                        continue;
+                    }
+                    out.push(line);
+                    continue;
+                }
                 let start = i + 1;
                 while (start < lines.length && lines[start].trim() === '') start++;
                 if (start + 1 < lines.length && TABLE_START_RE.test(lines[start])
