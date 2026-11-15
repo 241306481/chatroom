@@ -19,13 +19,11 @@
 
 ## 界面与版权栏
 
-页面底部使用与 Hydro 类似的版权栏：左侧是帮助、首页、源代码与许可证入口，右侧显示
+页面底部统一显示版权栏：左侧是帮助、首页、源代码与许可证入口，右侧显示
 `© 年份 站点名 · v版本 · 许可证 · Powered by Chatroom`。
 
 版本号只在 `package.json` 的 `version` 字段维护，模板通过 `app_version` 全局变量读取；
 年份、许可证和仓库地址也分别由 `app_year`、`app_license`、`app_repo_url` 注入。
-派生发行时请同步修改 `package.json` 的 `name`、`version`、`author`、`repository`，
-并保留 `LICENSE` 与 `NOTICE`，不要直接删除版权栏。
 
 ## Markdown 扩展
 
@@ -112,19 +110,19 @@ npm run cert
 npm start
 ```
 
-`npm run cert` 会自动探测系统里的 `openssl`（含 Git for Windows 自带的那份），生成证书后打印指纹、SAN、到期时间以及各平台的信任导入步骤。
+`npm run cert` 会自动探测系统中的 `openssl`，生成证书后打印指纹、SAN、到期时间以及各平台的信任导入步骤。
 
 `cert.pem` 和 `key.pem` 不会进版本库；只要它们存在于项目根目录，服务就以 HTTPS / WSS 启动，否则使用 HTTP。HTTPS 最低要求 TLS 1.2，并发送 HSTS（`max-age=31536000`）。
 
 ## 反向代理
 
-`npm run cert` 生成的是**自签证书**，浏览器会红色警告、必须手动点「继续访问」。正式部署通常在服务前面加一层 Nginx / Caddy，由它持有受信任 CA 签发的证书。
+`npm run cert` 生成的是**自签证书**，浏览器默认不会信任。正式部署通常在服务前面加一层 Nginx / Caddy，由它持有受信任 CA 签发的证书。
 
 ```
 浏览器 ──HTTPS──> Nginx ──HTTP──> 本服务 (:5000)
 ```
 
-好处是证书正规、浏览器不报警、可开 HTTP/2，静态文件也能交给反代直接返回。
+反向代理负责 TLS 和证书，后端继续使用 HTTP；HTTP/2 与静态文件缓存由反代按需配置。
 
 ### 必开 TRUST_PROXY
 
@@ -237,7 +235,7 @@ check avatar repair # 头像字段与磁盘不一致时以磁盘为准回填
 
 覆盖 12 个子系统：`user` `domain` `discuss` `dm` `file` `avatar` `perm` `ip` `ban` `json` `space` `session`。
 
-自检以「数据是否自洽」为主，能发现磁盘与索引脱节、字段指向已删文件、非法到期时间、角色引用不存在等问题——这些在页面上看不出来，只会在用户撞到时才暴露。
+自检主要检查数据是否自洽，可发现磁盘与索引脱节、字段指向已删文件、非法到期时间、角色引用不存在等问题。
 
 另有两处带修复的自检：
 
@@ -252,11 +250,10 @@ check avatar repair # 头像记录以磁盘为准
 npm test
 ```
 
-> ⚠️ **`npm test` 会删掉 `data/` 目录**（含 `data/users/`、`data/domains/`），
-> 同时清掉 `logs/`、`cert.pem`、`key.pem`。回归用例需要干净的初始状态。
-> **有真实数据时不要直接跑** —— 先备份，或在独立目录里测。
+> **`npm test` 会清空 `data/`、`logs/`、`cert.pem` 和 `key.pem`。**
+> 回归用例需要干净的初始状态；不要在包含真实数据的环境中运行。
 
-第一道关是编码守卫，扫描源码里的 BOM、非法 UTF-8 字节和 U+FFFD 替换字符——中文被写坏时语法检查和功能测试往往都还是绿的，只有这一关能拦下来。
+第一道关是编码守卫，扫描源码里的 BOM、非法 UTF-8 字节和 U+FFFD 替换字符；这类损坏通常不会导致语法检查或功能测试失败。
 
 之后由 `test/test.js` 依次运行 `SUITES` 中登记的 `test/item/*-test.js`；每个套件使用独立进程，并在开始前清空数据目录。新增套件需同步登记。
 
@@ -325,4 +322,4 @@ Copyright 2026 241306481. See [NOTICE](NOTICE) for attribution requirements.
 
 ## 文档维护
 
-本文档随功能持续更新；如果发现描述与代码不一致，欢迎提交 issue 或 PR 修正。
+文档与代码不一致时，请提交 issue 或 PR 修正。
