@@ -216,6 +216,27 @@ let proc = null;
         assert.ok(!tpl.includes('minlength="8"'), '注册页不应再限制密码最短长度');
         assert.ok(tpl.includes('maxlength="128"'), '注册页应保留密码最大长度');
     });
+    await check('登录拒绝空密码和超长密码，不进入密码哈希', () => {
+        const account = require('../../lib/auth/account');
+        const { MAX_LENGTH } = require('../../lib/auth/password-policy');
+        const uid = storage.findUserByNickname('shortpwd').id;
+        const original = storage.verifyPassword;
+        let called = false;
+        storage.verifyPassword = () => { called = true; return false; };
+        try {
+            assert.strictEqual(account.login('shortpwd', '', '127.0.0.1'), null);
+            assert.strictEqual(
+                account.login('shortpwd', 'a'.repeat(MAX_LENGTH + 1), '127.0.0.1'), null);
+            assert.throws(() => account.changePassword(uid, '', 'newpass'), /原密码错误/);
+            assert.throws(
+                () => account.changePassword(uid, 'a'.repeat(MAX_LENGTH + 1), 'newpass'),
+                /原密码错误/);
+        } finally {
+            storage.verifyPassword = original;
+        }
+        assert.strictEqual(called, false, '空/超长密码不应进入 scrypt');
+        assert.strictEqual(account.login('shortpwd', '1', '127.0.0.1'), uid);
+    });
     await check('登录失败达到阈值会触发聚合告警', () => {
         const alerts = require('../../lib/auth/login-alert');
         const logger = require('../../lib/logger');
@@ -380,6 +401,19 @@ let proc = null;
         const newHome = await get('/settings/security', newCookie);
         assert.strictEqual(newHome.status, 200, '新会话不可用, status=' + newHome.status);
     });
+    await check('登录 return_to 拒绝编码的协议相对跳转', async () => {
+        for (const raw of ['/%2f%2fevil.example', '/%5cevil.example']) {
+            const r = await post('/login', {
+                nickname: 'mention2', password: 'pw123456', return_to: raw,
+            });
+            assert.strictEqual(r.status, 200, '登录 status=' + r.status);
+            assert.strictEqual(JSON.parse(r.body).redirect, '/home', raw);
+        }
+        const ok = await post('/login', {
+            nickname: 'mention2', password: 'pw123456', return_to: '/domain/system',
+        });
+        assert.strictEqual(JSON.parse(ok.body).redirect, '/domain/system');
+    });
     await check('审计日志页按权限开放', async () => {
         const page = await get('/manage/audit', opsC);
         assert.strictEqual(page.status, 200, '审计页 status=' + page.status);
@@ -501,6 +535,22 @@ let proc = null;
         const domRole = await post('/domain/opend/manage/role', { action: 'bogus' }, rootC);
         assert.ok(domRole.body.includes('未知操作'));
     });
+    await check('不存在的域管理页返回 404 且不写入数据', async () => {
+        for (const p of [
+            '/domain/missing/manage/user',
+            '/domain/missing/manage/role',
+            '/domain/missing/manage/permission',
+            '/domain/missing/manage/discussions',
+        ]) {
+            const r = await get(p, rootC);
+            assert.strictEqual(r.status, 404, p + ' status=' + r.status);
+        }
+        const r = await post('/domain/missing/manage/discussions',
+            { action: 'create', name: 'ghost', title: 'x' }, rootC);
+        assert.strictEqual(r.status, 404, 'POST status=' + r.status);
+        assert.strictEqual(storage.domainExists('missing'), false, '不应创建不存在的域');
+        assert.strictEqual(storage.loadDiscussion('missing', 'ghost').name, undefined);
+    });
     await check('仅有 MANAGE_PANEL 不能访问 IP 封禁页', async () => {
         const r = await get('/manage/ip_bans', opsC);
         assert.strictEqual(r.status, 403, 'status=' + r.status);
@@ -537,12 +587,24 @@ let proc = null;
         assert.strictEqual(r.status, 403, 'status=' + r.status);
         assert.strictEqual(storage.loadDomain('opend').members[dmodId].role, 'dmod');
     });
+    await check('域资料文本超长会被截断', async () => {
+        const r = await post('/domain/opend/manage/edit', {
+            display_name: 'D'.repeat(150),
+            announcement: 'A'.repeat(2500),
+        }, rootC);
+        assert.strictEqual(r.status, 200, r.body);
+        const d = storage.loadDomain('opend');
+        assert.strictEqual(d.display_name.length, 100, '显示名未截断');
+        assert.strictEqual(d.announcement.length, 2000, '公告未截断');
+    });
     await check('未知加入申请操作不会误删申请', async () => {
-        const join = await post('/domain/opend/join', { message: 'hi' }, viewerC);
+        const join = await post('/domain/opend/join',
+            { message: 'M'.repeat(600) }, viewerC);
         assert.ok(join.status < 400, 'join status=' + join.status);
         const before = (storage.loadDomain('opend').join_applications || [])
             .find(a => a.uid === viewerId);
         assert.ok(before, '申请未创建');
+        assert.strictEqual(before.message.length, 500, '申请留言未截断');
         const r = await post('/domain/opend/manage/applications',
             { uid: viewerId, action: 'bogus' }, rootC);
         assert.strictEqual(r.status, 200, r.body);
@@ -606,6 +668,18 @@ let proc = null;
         assert.ok(/SameSite=Lax/.test(cleared), '清理 Cookie 缺少 SameSite');
         assert.ok(!/Secure/.test(cleared), 'HTTP 清理 Cookie 不应带 Secure');
         assert.strictEqual(await closed, true, '退出登录后 WebSocket 未关闭');
+    });
+    await check('活动会话数量有硬上限，不会无限增长', () => {
+        const sessions = require('../../lib/auth/sessions');
+        for (let i = 0; i < sessions.MAX_SESSIONS + 3; i++) {
+            sessions.createSession('u-cap', { ua: 'UA/Cap', ip: '10.10.0.1' });
+        }
+        try {
+            assert.ok(sessions.listSessions().length <= sessions.MAX_SESSIONS,
+                '会话数超过硬上限');
+        } finally {
+            sessions.destroyAllUserSessions('u-cap');
+        }
     });
     proc.kill();
     await sleep(300);

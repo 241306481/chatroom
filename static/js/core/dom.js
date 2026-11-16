@@ -312,14 +312,24 @@ window.copyToClipboard = function (text, btn, okText) {
     function feedback(ok) {
         if (!btn) return;
         if (btn.classList && btn.classList.contains('copy-button')) {
-            const cls = ok ? 'copied' : 'copy-failed';
-            btn.classList.add(cls);
-            setTimeout(function () { btn.classList.remove(cls); }, 1500);
+            btn.classList.remove('copied', 'copy-failed');
+            btn.classList.add(ok ? 'copied' : 'copy-failed');
+            if (btn._copyTimer != null) clearTimeout(btn._copyTimer);
+            btn._copyTimer = setTimeout(function () {
+                btn.classList.remove('copied', 'copy-failed');
+                btn._copyTimer = null;
+            }, 1500);
             return;
         }
-        const old = btn.textContent;
+        const old = btn._copyLabel != null ? btn._copyLabel : btn.textContent;
+        btn._copyLabel = old;
         btn.textContent = ok ? (okText || '已复制') : '复制失败';
-        setTimeout(function () { btn.textContent = old; }, 1500);
+        if (btn._copyTimer != null) clearTimeout(btn._copyTimer);
+        btn._copyTimer = setTimeout(function () {
+            btn.textContent = old;
+            btn._copyLabel = null;
+            btn._copyTimer = null;
+        }, 1500);
     }
     function fallback() {
         const area = document.createElement('textarea');
@@ -434,8 +444,12 @@ window.renderContent = function (text) {
             console.error('KaTeX render error:', e);
         }
     }
-    const copyIcon = '<svg viewBox="0 0 448 512" aria-hidden="true">'
+    const copyIcon = '<svg class="copy-icon" viewBox="0 0 448 512" aria-hidden="true">'
         + '<path d="M192 0c-35.3 0-64 28.7-64 64l0 256c0 35.3 28.7 64 64 64l192 0c35.3 0 64-28.7 64-64l0-200.6c0-17.4-7.1-34.1-19.7-46.2L370.6 17.8C358.7 6.4 342.8 0 326.3 0L192 0zM64 128c-35.3 0-64 28.7-64 64L0 448c0 35.3 28.7 64 64 64l192 0c35.3 0 64-28.7 64-64l0-16-64 0 0 16-192 0 0-256 16 0 0-64-16 0z"/>'
+        + '</svg>';
+    const checkIcon = '<svg class="copy-check" viewBox="0 0 24 24" aria-hidden="true">'
+        + '<circle class="copy-check-bg" cx="12" cy="12" r="11"/>'
+        + '<path class="copy-check-mark" d="M6.8 12.4l3.4 3.4 7-7.2"/>'
         + '</svg>';
     container.querySelectorAll('pre').forEach(function (pre) {
         if (pre.closest('.code-container')) return;
@@ -450,7 +464,7 @@ window.renderContent = function (text) {
         btn.className = 'copy-button';
         btn.title = '复制代码';
         btn.setAttribute('aria-label', '复制代码');
-        btn.innerHTML = copyIcon;
+        btn.innerHTML = copyIcon + checkIcon;
         box.appendChild(btn);
     });
     const wrap = document.createElement('div');

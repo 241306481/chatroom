@@ -253,6 +253,23 @@ check('文件卡片：编辑器增量更新保留展开状态', () => {
     assert.ok(/keepFileOpen/.test(src), '预览未记录文件卡片展开状态');
     assert.ok(/FileCards\.ensureBody/.test(src), '预览未恢复文件卡片预览体');
 });
+check('代码块复制成功显示静态圆勾', () => {
+    const css = fs.readFileSync(path.join(ROOT, 'static/css/markdown.css'), 'utf8');
+    assert.ok(/\.copy-button \.copy-check \{ display: none; \}/.test(css),
+        '圆勾未默认隐藏');
+    assert.ok(/\.copy-button\.copied \.copy-check \{/.test(css), '复制成功未显示圆勾');
+    assert.ok(/\.copy-check-bg \{ fill: currentColor; \}/.test(css), '圆底未跟随主题色');
+    assert.ok(/\.copy-check-mark \{[^}]*stroke: #fff/s.test(css), '勾不是白色');
+    assert.ok(!/animation:|@keyframes/.test(css), '复制反馈仍有动画');
+    const dom = fs.readFileSync(path.join(ROOT, 'static/js/core/dom.js'), 'utf8');
+    assert.ok(/class="copy-check"/.test(dom), '缺少圆勾图标');
+    assert.ok(/btn\.innerHTML = copyIcon \+ checkIcon/.test(dom),
+        '复制按钮未同时渲染复制与圆勾图标');
+    assert.ok(/classList\.add\(ok \? 'copied' : 'copy-failed'\)/.test(dom),
+        '复制反馈未切换圆勾');
+    assert.ok(/classList\.remove\('copied', 'copy-failed'\)/.test(dom),
+        '重复复制未重置反馈状态');
+});
 console.log('\n======== [回归] GFM / 洛谷 Markdown ========');
 for (const [s, n] of results) console.log(s.padEnd(5), n);
 const failed = results.filter(r => r[0] === 'FAIL').length;

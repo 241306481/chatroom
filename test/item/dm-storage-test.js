@@ -105,6 +105,35 @@ check('附件写入较小的 UID 一侧且双方各计一次引用', () => {
     assert.strictEqual(storage.getDMAttachment(A, B, meta.id), null);
     assert.ok(!fs.existsSync(path.join(paths.dmFilesDir(A, B), meta.id)));
 });
+check('编辑私信同步附件引用', () => {
+    const meta = storage.addDMAttachment(A, B, {
+        filename: 'edit.png', mime: 'image/png', buffer: PNG, uploader: A,
+    });
+    const url = '/messages/file/' + A + '/' + B + '/' + meta.id;
+    const msg = storage.appendDM(A, B, 'plain');
+    assert.strictEqual(storage.getDMAttachment(A, B, meta.id).refs['u:' + A], undefined);
+    assert.strictEqual(storage.updateDMMessage(A, B, msg.id, {
+        content: '![edit](' + url + ')',
+    }), true);
+    const added = storage.getDMAttachment(A, B, meta.id);
+    assert.strictEqual(added.refs['u:' + A], 1);
+    assert.strictEqual(added.refs['u:' + B], 1);
+    assert.strictEqual(storage.updateDMMessage(A, B, msg.id, { content: 'removed' }), true);
+    assert.strictEqual(storage.getDMAttachment(A, B, meta.id), null);
+    assert.ok(!fs.existsSync(path.join(paths.dmFilesDir(A, B), meta.id)));
+});
+check('私信附加字段不能覆盖身份、内容和已读状态', () => {
+    const msg = storage.appendDM(A, B, 'real', {
+        id: 'evil', from: 'x', to: 'y', content: 'evil',
+        read: true, created_at: 'bad',
+    });
+    assert.notStrictEqual(msg.id, 'evil');
+    assert.strictEqual(msg.from, A);
+    assert.strictEqual(msg.to, B);
+    assert.strictEqual(msg.content, 'real');
+    assert.strictEqual(msg.read, false);
+    assert.notStrictEqual(msg.created_at, 'bad');
+});
 check('讨论附件按讨论目录保存并随讨论删除', () => {
     const dn = 'attach-test';
     storage.createDomain(dn, '附件测试', A);

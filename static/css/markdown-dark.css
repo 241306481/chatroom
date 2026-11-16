@@ -22,7 +22,12 @@ html[data-theme="dark"] .md-body .code-container > .copy-button { color: #abb2bf
 html[data-theme="dark"] .md-body .code-container > .copy-button:hover {
   background: #3a3f4b; color: #abb2bf;
 }
-html[data-theme="dark"] .md-body .code-container > .copy-button.copied { color: #98c379; }
+html[data-theme="dark"] .md-body .code-container > .copy-button.copied {
+  color: #3fb950; background: transparent;
+}
+html[data-theme="dark"] .md-body .code-container > .copy-button.copy-failed {
+  color: #e06c75; background: rgba(224, 108, 117, 0.16);
+}
 html[data-theme="dark"] .md-body .token.comment,
 html[data-theme="dark"] .md-body .token.prolog,
 html[data-theme="dark"] .md-body .token.cdata { color: #5c6370; font-style: italic; }

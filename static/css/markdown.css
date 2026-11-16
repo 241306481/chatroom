@@ -137,9 +137,25 @@
   transition: opacity 0.2s ease-in-out, background-color 0.2s ease-in-out, color 0.2s ease-in-out;
 }
 .md-body .code-container:hover > .copy-button { opacity: 1; }
+.md-body .code-container > .copy-button:focus { opacity: 1; }
 .md-body .code-container > .copy-button:hover { background: #ddd; }
-.md-body .code-container > .copy-button.copied { opacity: 1; color: #1a7f37; }
-.md-body .code-container > .copy-button svg { width: 14px; height: 14px; fill: currentColor; }
+.md-body .code-container > .copy-button svg { width: 16px; height: 16px; fill: currentColor; }
+.md-body .code-container > .copy-button .copy-check { display: none; }
+.md-body .code-container > .copy-button.copied {
+  opacity: 1; color: #16a34a; background: transparent;
+}
+.md-body .code-container > .copy-button.copied .copy-icon { display: none; }
+.md-body .code-container > .copy-button.copied .copy-check {
+  display: block; filter: drop-shadow(0 1px 2px rgba(22, 163, 74, 0.25));
+}
+.md-body .code-container > .copy-button .copy-check-bg { fill: currentColor; }
+.md-body .code-container > .copy-button .copy-check-mark {
+  fill: none; stroke: #fff; stroke-width: 2.4;
+  stroke-linecap: round; stroke-linejoin: round;
+}
+.md-body .code-container > .copy-button.copy-failed {
+  opacity: 1; color: #cf222e; background: #ffebe9;
+}
 .md-body .token.comment,
 .md-body .token.prolog,
 .md-body .token.cdata { color: #a0a1a7; font-style: italic; }

@@ -75,6 +75,12 @@ const check = (n, f) => {
         assert.strictEqual(u.bio, '我的原始简介', '简介丢了');
         assert.strictEqual(u.nickname, 'avatester');
     });
+    await req('POST', `/user/${uid}`, {
+        body: { nickname: 'avatester', bio: 'x'.repeat(600) }, cookie: C,
+    });
+    check('简介超长会被截断', () => {
+        assert.strictEqual(storage.loadUser(uid).bio.length, 500);
+    });
     const mp1 = multipart({ nickname: 'avatester', bio: '换了简介', avatar_remove: '0' },
         { field: 'avatar_file', name: 'a.png', mime: 'image/png', data: PNG });
     const r1 = await req('POST', `/user/${uid}`, { body: mp1.body, cookie: C, ct: mp1.ct });

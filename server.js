@@ -5,6 +5,7 @@ const crypto = require('crypto');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
+const { version } = require('./package.json');
 const storage = require('./lib/storage');
 const routes = require('./lib/routes');
 const websocket = require('./lib/websocket');
@@ -74,7 +75,7 @@ function printBanner(hasCert) {
     const proto = hasCert ? 'https' : 'http';
     const wsProto = hasCert ? 'wss' : 'ws';
     console.log(RULE);
-    console.log('  Chatroom 2.0 starting...');
+    console.log(`  Chatroom ${version} starting...`);
     console.log(RULE);
     console.log(`  Protocol: ${proto} / ${wsProto}`);
     console.log(`  Listen  : ${HOST}:${PORT}`);
@@ -109,4 +110,7 @@ async function main() {
     server.on('error', handleServerError);
     server.listen(PORT, HOST, () => printBanner(hasCert));
 }
-main();
+main().catch(err => {
+    console.error('[Startup Error]', err && err.stack ? err.stack : err);
+    process.exit(1);
+});

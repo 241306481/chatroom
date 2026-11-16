@@ -78,6 +78,14 @@ check('r1: 昵称索引不受 Object.prototype 昵称影响', () => {
         assert.strictEqual(users.findUserByNickname(n), null);
     }
 });
+check('listAllDomains 跳过异常目录名', () => {
+    const bad = path.join(DATA, 'domains', 'x'.repeat(65));
+    fs.mkdirSync(bad, { recursive: true });
+    fs.writeFileSync(path.join(bad, 'config.json'), '{}');
+    const list = storage.listAllDomains();
+    assert.ok(list.includes('gdom'), '正常域被遗漏');
+    assert.ok(!list.includes('x'.repeat(65)), '异常目录名未跳过');
+});
 check('r1: 原型污染防护仍在（权限矩阵）', () => {
     const src = fs.readFileSync(path.join(PROJ, 'lib/routes/manage/system-roles.js'), 'utf8');
     assert.ok(/Object\.create\(null\)/.test(src), '权限矩阵仍使用普通对象');
@@ -89,7 +97,8 @@ check('r1: 文件 ID 拒绝 __proto__', () => {
 });
 check('r1: safeFileId 为唯一实现，用户/域文件共用', () => {
     const { safeFileId } = require('../../lib/storage/fs-utils');
-    for (const id of ['__proto__', 'constructor', 'prototype', '..', '.', 'a/b', 'a\\b', 'a\0b', '']) {
+    for (const id of ['__proto__', 'constructor', 'prototype', '..', '.', 'a/b', 'a\\b', 'a\0b', '',
+        'a:b', 'a?b', 'a*b', 'CON', 'con.txt', 'NUL', 'COM1', 'LPT9', 'foo.', 'foo ']) {
         assert.strictEqual(safeFileId(id), null, '放行了危险 id: ' + JSON.stringify(id));
     }
     assert.strictEqual(safeFileId('abc123'), 'abc123');
@@ -98,6 +107,24 @@ check('r1: safeFileId 为唯一实现，用户/域文件共用', () => {
         assert.ok(/require\('\.\/fs-utils'\)/.test(src), f + ' 未引用 fs-utils');
         assert.ok(!/UNSAFE_ID_RE\s*=/.test(src), f + ' 仍有本地副本，应收敛到 fs-utils');
     }
+});
+check('r1: 文件 MIME 会清理换行和控制字符', () => {
+    const { makeFileMeta, normalizeMime } = require('../../lib/storage/fs-utils');
+    assert.strictEqual(normalizeMime('text/plain\r\nX-Evil: 1'), 'text/plain');
+    assert.strictEqual(normalizeMime('\u0000'), 'application/octet-stream');
+    const meta = makeFileMeta({
+        id: 'mime-test', name: 'a.txt', mime: 'text/plain\r\nX-Evil: 1',
+        buffer: Buffer.from('x'), owner: '1',
+    });
+    assert.strictEqual(meta.mime, 'text/plain');
+});
+check('r1: 损坏的密码哈希不会让登录校验抛错', () => {
+    const { verifyPassword } = require('../../lib/storage/fs-utils');
+    const salt = 'a'.repeat(32);
+    assert.strictEqual(
+        verifyPassword('x', 'scrypt:' + salt + ':' + 'z'.repeat(128)), false);
+    assert.strictEqual(
+        verifyPassword('x', 'scrypt:' + 'z'.repeat(32) + ':' + 'a'.repeat(128)), false);
 });
 check('r1: requireSystemAdmin 三态正确（抽到 manage/_helpers 后回归）', () => {
     const { requireSystemAdmin } = require('../../lib/routes/manage/_helpers');

@@ -104,6 +104,17 @@ function waitFor(ws, pred, ms = 10000) {
         const d = await p;
         assert.strictEqual(d.count, 1);
     });
+    await check('讨论区：表情按字符截断且拒绝控制字符', async () => {
+        const longEmoji = '😀'.repeat(20);
+        const p = waitFor(wsA, d => d.type === 'reaction' && d.emoji && d.emoji.startsWith('😀'));
+        wsB.send(JSON.stringify({ type: 'reaction', message_id: msgId, emoji: longEmoji }));
+        const d = await p;
+        assert.strictEqual(Array.from(d.emoji).length, 16);
+        wsB.send(JSON.stringify({ type: 'reaction', message_id: msgId, emoji: 'x\ny' }));
+        await sleep(300);
+        const keys = Object.keys(storage.findMessage('system', 'general', msgId).reactions || {});
+        assert.ok(keys.every(k => !/[\u0000-\u001F\u007F]/.test(k)), '控制字符被写入回应');
+    });
     await check('讨论区：置顶', async () => {
         const p = waitFor(wsB, d => d.type === 'message_pinned' && d.pinned === true);
         wsA.send(JSON.stringify({ type: 'pin', message_id: msgId }));

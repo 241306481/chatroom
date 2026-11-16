@@ -59,6 +59,12 @@ async function check(name, fn) {
     try { await fn(); results.push(['PASS', name]); }
     catch (e) { results.push(['FAIL', name + ' -> ' + e.message]); }
 }
+check('router 静态路径中的正则元字符按字面匹配', () => {
+    const { route, findRoute } = require('../../lib/router');
+    route('GET', '/__router_test/a.b', () => {});
+    assert.ok(findRoute('GET', '/__router_test/a.b'));
+    assert.strictEqual(findRoute('GET', '/__router_test/axb'), null);
+});
 check('route() 的 priv 声明必须按 (group, bit) 展开传给 checkPriv', () => {
     const src = fs.readFileSync(path.join(ROOT, 'lib/routes/index.js'), 'utf8');
     assert.ok(/checkPriv\(user,\s*p\.group,\s*p\.bit\)/.test(src),
@@ -71,6 +77,21 @@ check('route() 的 priv 声明必须按 (group, bit) 展开传给 checkPriv', ()
 });
 (async () => {
     await waitForServer(PORT);
+    await check('静态资源支持 URL 编码文件名', async () => {
+        const r = await get('/static/js/core/%64om.js');
+        assert.strictEqual(r.status, 200);
+    });
+    await check('静态资源拒绝编码目录穿越', async () => {
+        const r = await get('/static/%2e%2e/server.js');
+        assert.strictEqual(r.status, 404);
+    });
+    await check('非法域名/讨论路径返回 404 而不是 5xx', async () => {
+        for (const p of ['/domain/%00/home', '/domain/system/discuss/%00']) {
+            const r = await get(p);
+            assert.ok(r.status < 500, p + ' 返回 ' + r.status);
+            assert.strictEqual(r.status, 404, p + ' 返回 ' + r.status);
+        }
+    });
     const adminC = cookieOf(await post('/register',
         { nickname: 'bossman', password: 'pw123456', confirm_password: 'pw123456' }));
     await post('/login', { nickname: 'bossman', password: 'pw123456' });
