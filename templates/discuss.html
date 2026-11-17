@@ -47,7 +47,6 @@
         <span class="inline-search-count"></span>
       </div>
       <span class="online-badge">● {{ online_count | default(0) }}/{{ total_count | default(0) }}</span>
-      <button type="button" class="jump-unread-btn" id="jumpUnreadBtn" hidden>跳到未读</button>
       {% if can_pin or can_delete_any or can_delete_own or can_send %}
         <button type="button" class="msg-batch-toggle" id="batchToggleBtn">选择</button>
       {% endif %}
@@ -76,6 +75,8 @@
       {% endif %}
       <button type="button" data-action="batch-cancel">取消选择</button>
     </div>
+    <button type="button" class="jump-unread-btn" id="jumpUnreadBtn"
+            aria-live="polite" hidden>跳到未读</button>
     <div class="message-list" id="messageList"
          data-total="{{ messages_total | default(0) }}"
          data-offset="{{ messages_offset | default(0) }}"

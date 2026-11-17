@@ -131,6 +131,16 @@ const check = (n, f) => {
         assert.ok(fs.existsSync(avatarMod.avatarPath(uid, 'png')));
         assert.strictEqual(u.bio, '普通提交');
     });
+    const big = multipart({ nickname: 'avatester', bio: '超大请求' },
+        { field: 'avatar_file', name: 'big.png', mime: 'image/png', data: Buffer.alloc(3 * 1024 * 1024, 0x61) });
+    const rBig = await req('POST', `/user/${uid}`, { body: big.body, cookie: C, ct: big.ct });
+    check('超大资料头像请求被限制且不落库', () => {
+        assert.strictEqual(rBig.status, 413, rBig.body);
+        assert.ok(rBig.body.includes('头像过大'), rBig.body);
+        const u = storage.loadUser(uid);
+        assert.strictEqual(u.avatar_ext, 'png', '头像被误改');
+        assert.strictEqual(u.bio, '普通提交', '简介被误改');
+    });
     const page = await req('GET', `/user/${uid}`, { cookie: C });
     check('个人页渲染出图片头像', () => {
         assert.ok(page.body.includes('/avatar/' + uid + '/png'),

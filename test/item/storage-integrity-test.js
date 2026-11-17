@@ -1,6 +1,7 @@
 'use strict';
 const assert = require('assert');
 const fs = require('fs');
+const os = require('os');
 const path = require('path');
 const ROOT = path.join(__dirname, '..', '..');
 const DATA = path.join(ROOT, 'data');
@@ -9,6 +10,7 @@ const storage = require('../../lib/storage');
 const paths = require('../../lib/storage/paths');
 const fsUtils = require('../../lib/storage/fs-utils');
 const ipBans = require('../../lib/storage/ip-bans');
+const attachmentStore = require('../../lib/storage/attachment-store');
 const results = [];
 const check = (n, f) => {
     try { f(); results.push(['PASS', n]); }
@@ -85,6 +87,38 @@ check('未读计数会忽略非法值与负数', () => {
     assert.strictEqual(storage.getTotalUnread(B), 3);
     assert.deepStrictEqual(storage.loadUnreadCount(B), { [A]: 3 });
 });
+check('用户配置是标量或数组时按空对象处理', () => {
+    const uid = storage.createUser('integrityC', 'pw123456');
+    const file = paths.userConfigPath(uid);
+    const original = fs.readFileSync(file, 'utf8');
+    for (const bad of ['"str"', '[]', '123', 'true', 'null']) {
+        fs.writeFileSync(file, bad, 'utf8');
+        assert.deepStrictEqual(storage.loadUser(uid), {}, bad + ' 应按空对象处理');
+    }
+    fs.writeFileSync(file, original, 'utf8');
+    assert.strictEqual(storage.loadUser(uid).id, uid);
+});
+check('域配置是标量或数组时按空对象处理', () => {
+    const dn = 'scalar-config-dom';
+    storage.createDomain(dn, 'Scalar Config', A);
+    const file = paths.domainConfigPath(dn);
+    for (const bad of ['"str"', '[]', '123', 'true']) {
+        fs.writeFileSync(file, bad, 'utf8');
+        assert.deepStrictEqual(storage.loadDomain(dn), {}, bad + ' 应按空对象处理');
+    }
+    storage.deleteDomain(dn);
+});
+check('讨论配置是标量或数组时按空对象处理', () => {
+    const dn = 'scalar-disc-dom';
+    storage.createDomain(dn, 'Scalar Discuss', A);
+    storage.saveDiscussion(dn, 'scalar', { name: 'scalar', title: 't' });
+    const file = paths.discussConfigPath(dn, 'scalar');
+    for (const bad of ['"str"', '[]', '123', 'true']) {
+        fs.writeFileSync(file, bad, 'utf8');
+        assert.deepStrictEqual(storage.loadDiscussion(dn, 'scalar'), {}, bad + ' 应按空对象处理');
+    }
+    storage.deleteDomain(dn);
+});
 check('IP 封禁文件是数组时按空规则处理而不是写回数组', () => {
     const file = path.join(DATA, 'ip_bans.json');
     fs.writeFileSync(file, '[]', 'utf8');
@@ -94,6 +128,51 @@ check('IP 封禁文件是数组时按空规则处理而不是写回数组', () =
     assert.strictEqual(data.rules.length, 1);
     assert.strictEqual(data.rules[0].rule, '203.0.113.9');
     ipBans.removeByRule('203.0.113.9');
+});
+check('用户文件索引中的非对象条目不会导致操作异常', () => {
+    const f = storage.addUserFile(A, {
+        filename: 'valid-meta.txt', mime: 'text/plain', buffer: Buffer.from('x'),
+    });
+    const file = paths.userFilesIndexPath(A);
+    fs.writeFileSync(file, JSON.stringify({
+        files: { bad: null, arr: [], str: 'x', [f.id]: f },
+    }), 'utf8');
+    assert.deepStrictEqual(storage.listUserFiles(A).map(x => x.id), [f.id]);
+    assert.throws(() => storage.renameUserFile(A, 'bad', 'x.txt'), /文件不存在/);
+    assert.throws(() => storage.setUserFileVisibility(A, 'bad', 'public'), /文件不存在/);
+    assert.throws(() => storage.renameUserFiles(A, [{ id: 'bad', filename: 'x.txt' }]),
+        /文件不存在/);
+});
+check('域文件索引中的非对象条目不会导致操作异常', () => {
+    const dn = 'bad-meta-files-dom';
+    storage.createDomain(dn, 'Bad Meta Files', A);
+    const f = storage.addDomainFile(dn, {
+        filename: 'valid-meta.txt', mime: 'text/plain', buffer: Buffer.from('x'), uploader: A,
+    });
+    const file = paths.domainFilesIndexPath(dn);
+    fs.writeFileSync(file, JSON.stringify({
+        files: { bad: null, arr: [], str: 'x', [f.id]: f },
+    }), 'utf8');
+    assert.deepStrictEqual(storage.listDomainFiles(dn).map(x => x.id), [f.id]);
+    assert.throws(() => storage.renameDomainFile(dn, 'bad', 'x.txt'), /文件不存在/);
+    assert.throws(() => storage.setDomainFilesPinned(dn, ['bad'], true), /文件不存在/);
+    assert.throws(() => storage.renameDomainFiles(dn, [{ id: 'bad', filename: 'x.txt' }]),
+        /文件不存在/);
+    storage.deleteDomain(dn);
+});
+check('附件索引中的非对象条目不会导致读取异常', () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'chatroom-attach-index-'));
+    const file = path.join(dir, 'index.json');
+    fs.writeFileSync(file, JSON.stringify({
+        files: { bad: null, arr: [], str: 'x', good: { id: 'good', refs: {} } },
+    }), 'utf8');
+    assert.strictEqual(attachmentStore.getAttachment(file, 'bad'), null);
+    assert.deepStrictEqual(attachmentStore.listAttachments(file).map(m => m.id), ['good']);
+    assert.strictEqual(attachmentStore.addRef(file, 'bad', 'u:1', 1), null);
+    assert.deepStrictEqual(
+        attachmentStore.releaseRef(file, path.join(dir, 'files'), 'bad', 'u:1'),
+        { deleted: false, meta: null });
+    fs.rmSync(dir, { recursive: true, force: true });
 });
 for (const [s, n] of results) console.log(s.padEnd(5), n);
 const failed = results.filter(r => r[0] === 'FAIL').length;

@@ -31,48 +31,74 @@
         const idx = messageEls().indexOf(firstUnread);
         return idx >= 0 ? idx + 1 : 0;
     }
+    const initialUnread = findUnread();
+    let trackedUnread = initialUnread;
+    let trackedCount = initialUnread ? unreadCount(initialUnread) : 0;
+    let hideUntil = 0;
+    let hideTimer = 0;
+    let ready = false;
     function refresh() {
-        const unread = findUnread();
-        btn.hidden = !unread;
-        if (unread) {
-            const count = unreadCount(unread);
-            btn.textContent = count > 1 ? '跳到未读 (' + count + ')' : '跳到未读';
+        const show = !!trackedUnread && document.body.contains(trackedUnread)
+            && Date.now() >= hideUntil;
+        btn.hidden = !show;
+        if (show) {
+            btn.textContent = trackedCount > 1
+                ? '跳到未读 (' + trackedCount + ')' : '跳到未读';
         }
-        return unread;
+        return show ? trackedUnread : null;
+    }
+    function clearTracked() {
+        trackedUnread = null;
+        trackedCount = 0;
+        refresh();
     }
     function atBottom() {
         return window.ChatRender && window.ChatRender.isAtBottom
             ? window.ChatRender.isAtBottom() : true;
     }
-    function markRead() {
-        if (document.visibilityState !== 'visible') return;
-        if (!atBottom()) return;
-        writeLast(newestId());
-        refresh();
-    }
-    window.markDiscussionRead = markRead;
-    btn.addEventListener('click', function () {
-        const unread = findUnread();
-        if (!unread) return;
+    function jumpToUnread() {
+        const unread = findUnread() || trackedUnread;
+        if (!unread) return false;
         unread.scrollIntoView({ behavior: 'smooth', block: 'center' });
         unread.classList.add('highlight');
         setTimeout(() => unread.classList.remove('highlight'), 2000);
         writeLast(newestId());
-        refresh();
+        clearTracked();
+        return true;
+    }
+    function markRead(force) {
+        if (document.visibilityState !== 'visible') return;
+        if (!force && !atBottom()) return;
+        if (force) {
+            hideUntil = Date.now() + 1500;
+            clearTimeout(hideTimer);
+            hideTimer = setTimeout(refresh, 1600);
+        }
+        writeLast(newestId());
+        clearTracked();
+    }
+    window.markDiscussionRead = markRead;
+    window.ChatRender = window.ChatRender || {};
+    window.ChatRender.jumpToUnread = jumpToUnread;
+    btn.addEventListener('click', function () {
+        jumpToUnread();
     });
     list.addEventListener('scroll', function () {
-        if (atBottom()) markRead();
+        if (ready && atBottom()) markRead();
+        else refresh();
     }, { passive: true });
     document.addEventListener('visibilitychange', function () {
         if (document.visibilityState === 'visible') {
+            markRead();
             refresh();
         } else if (atBottom()) {
             writeLast(newestId());
         }
     });
-    window.addEventListener('beforeunload', markRead);
+    window.addEventListener('beforeunload', function () { markRead(); });
     if (!readLast()) writeLast(newestId());
     refresh();
+    setTimeout(function () { ready = true; }, 600);
     const inner = list.querySelector('.message-list-inner') || list;
     if (window.MutationObserver) {
         new MutationObserver(refresh).observe(inner, { childList: true });

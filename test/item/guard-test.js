@@ -78,6 +78,14 @@ check('r1: 昵称索引不受 Object.prototype 昵称影响', () => {
         assert.strictEqual(users.findUserByNickname(n), null);
     }
 });
+check('assertSafeName 拒绝 Windows 非法名', () => {
+    const { assertSafeName } = require('../../lib/storage/paths');
+    for (const n of ['a:b', 'a?b', 'a*b', 'a"b', 'a<b', 'a>b', 'a|b',
+        'CON', 'con.txt', 'NUL', 'COM1', 'LPT9', 'foo.', 'foo ', 'a\u0001b']) {
+        assert.throws(() => assertSafeName(n), /非法/, '放行了危险名称: ' + JSON.stringify(n));
+    }
+    assert.strictEqual(assertSafeName('normal-name_1'), 'normal-name_1');
+});
 check('listAllDomains 跳过异常目录名', () => {
     const bad = path.join(DATA, 'domains', 'x'.repeat(65));
     fs.mkdirSync(bad, { recursive: true });

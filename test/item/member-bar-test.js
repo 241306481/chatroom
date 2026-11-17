@@ -31,14 +31,25 @@ check('成员行保留定位锚点', () => {
 check('所有者不出现管理操作', () => {
     assert.ok(/not u\.is_owner/.test(src), '所有者应被排除');
 });
-check('管理操作受 can_manage 控制', () => {
-    assert.ok(/can_manage/.test(src), '缺少 can_manage 判断');
+check('禁言受 can_mute、踢出受 can_kick 分别控制', () => {
+    assert.ok(/\{% if not u\.banned and can_mute %\}/.test(src),
+        '禁言未受 can_mute 控制');
+    assert.ok(/\{% if can_kick and not is_system_domain %\}/.test(src),
+        '踢出未受 can_kick 控制');
+    assert.ok(!/is_domain_view and can_manage/.test(src),
+        '管理操作仍被 can_manage 整体控制');
 });
 const routeSrc = fs.readFileSync(
     path.join(__dirname, '../../lib/routes/domain.js'), 'utf8');
 check('/users 路由传 can_manage 标志', () => {
     assert.ok(/can_manage:\s*can\('manage_user'\)/.test(routeSrc),
         '未传 can_manage');
+});
+check('/users 路由分别传 can_mute/can_kick 标志', () => {
+    assert.ok(/can_mute:\s*can\('mute_member'\)/.test(routeSrc),
+        'can_mute 未使用 mute_member');
+    assert.ok(/can_kick:\s*can\('kick_member'\)/.test(routeSrc),
+        'can_kick 未使用 kick_member');
 });
 check('/users 路由传 roles（供角色下拉）', () => {
     assert.ok(/roles:\s*can\('manage_user'\)/.test(routeSrc), '未传 roles');

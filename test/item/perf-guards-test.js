@@ -65,6 +65,14 @@ storage.ensureSystemDomain();
             await new Promise((resolve) => server.close(resolve));
         }
     });
+    await check('超限请求会主动 drain 正文避免连接悬挂', () => {
+        const routes = read('lib/routes/index.js');
+        assert.ok(/function tooLarge\(\)[\s\S]*?req\.resume\(\)/.test(routes),
+            'tooLarge 应主动 req.resume()');
+        const mp = read('lib/multipart-stream.js');
+        assert.ok(/err\.code === 'too_large'[\s\S]*?req\.resume\(\)/.test(mp),
+            'multipart too_large 应主动 req.resume()');
+    });
     await check('在线状态按连接计数增量维护且不再扫描全部用户', () => {
         storage.setOnline('perf-online', 'dom-a', true);
         storage.setOnline('perf-online', 'dom-a', true);

@@ -62,8 +62,8 @@
               {% if current_user and current_user.id != u.id %}
                 <a href="/messages?target={{ u.id }}" class="mini-btn">私信</a>
               {% endif %}
-              {% if is_domain_view and can_manage and not u.is_owner %}
-                {% if not u.banned %}
+              {% if is_domain_view and not u.is_owner %}
+                {% if not u.banned and can_mute %}
                   <form method="POST" action="/domain/{{ domain_name }}/manage/user" style="display:inline" class="user-inline-form">
                     <input type="hidden" name="action" value="mute">
                     <input type="hidden" name="user_id" value="{{ u.id }}">

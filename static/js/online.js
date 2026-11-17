@@ -65,6 +65,13 @@ window.updateAllOnlineCounts = function () {
     let socket = null, reconnectTimer = null;
     let failCount = 0;
     const MAX_FAILS = 3;
+    function emitDomainEvent(data) {
+        try {
+            window.dispatchEvent(new CustomEvent('chatroom:domain-event', {
+                detail: data,
+            }));
+        } catch (e) {}
+    }
     function connect() {
         socket = new WebSocket(wsUrl);
         socket.onopen = () => {
@@ -73,6 +80,7 @@ window.updateAllOnlineCounts = function () {
         };
         socket.onmessage = ev => {
             let data; try { data = JSON.parse(ev.data); } catch (e) { return; }
+            emitDomainEvent(data);
             if (data.type === 'user_online') window.updateUserStatus(data.user_id, true);
             else if (data.type === 'user_offline') window.updateUserStatus(data.user_id, false);
             else if (data.type === 'online_list') window.applyOnlineList(data.users);

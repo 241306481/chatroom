@@ -85,6 +85,25 @@ check('clear 能清掉计数', () => {
     const hit = limiter.check('dm_send', { ip: '10.3.0.1', user: 'u-clear' });
     assert.strictEqual(hit, null, '清零后应放行');
 });
+check('超长限流键会截断，避免内存膨胀', () => {
+    limiter.resetCounters('search');
+    limiter.note('search', { ip: '10.13.0.1', account: 'k'.repeat(1000) });
+    const list = (limiter.snapshot().search.account || []);
+    assert.ok(list.length > 0, '应记录账号维度计数');
+    assert.ok(list.every(e => e.key.length <= 200), '限流键未截断');
+    limiter.resetCounters('search');
+});
+check('限流配置忽略原型链动作名', () => {
+    const before = limiter.listConfig().length;
+    limiter.saveConfig([
+        { action: 'constructor', label: 'x' },
+        { action: '__proto__', label: 'y' },
+    ]);
+    limiter.invalidate();
+    const list = limiter.listConfig();
+    assert.strictEqual(list.length, before, '原型链动作名被写入配置');
+    assert.ok(!list.some(a => a.action === 'constructor' || a.action === '__proto__'));
+});
 check('resetCounters 清空指定动作', () => {
     limiter.resetCounters('upload_file');
     for (let i = 0; i < 40; i++) {
@@ -323,7 +342,7 @@ check('过期计数会被清理', () => {
 });
 check('页面/文件/搜索都有独立限流档位', () => {
     const { listConfig } = require('../../lib/rate-limit');
-    for (const action of ['page_view', 'file_download', 'search']) {
+    for (const action of ['page_view', 'file_view', 'file_download', 'search']) {
         const c = listConfig().find(a => a.action === action);
         assert.ok(c, action + ' 应有配置');
         assert.ok(c.perIp > 0, action + ' 应有 IP 限制');
@@ -338,7 +357,8 @@ check('页面限流已接到路由分发层', () => {
 check('文件下载限流已接到三个下载路由', () => {
     const src = require('fs').readFileSync(
         path.join(__dirname, '../../lib/routes/files.js'), 'utf8');
-    assert.ok(src.includes("check('file_download'"), '应有下载限流');
+    assert.ok(src.includes("'file_download'"), '应有下载限流档位');
+    assert.ok(src.includes('limiter.check(action, keys)'), '限流 helper 应调用 check');
     const n = (src.match(/limitDownload\(res, req, user\)/g) || []).length;
     assert.ok(n >= 4, '三个下载路由都应接入，实际 ' + n + ' 处');
 });
@@ -346,6 +366,29 @@ check('搜索限流已接入', () => {
     const src = require('fs').readFileSync(
         path.join(__dirname, '../../lib/routes/search.js'), 'utf8');
     assert.ok(src.includes("check('search'"), '搜索应有独立限流');
+});
+check('内联查看限流已接到用户文件与附件路由', () => {
+    const files = require('fs').readFileSync(
+        path.join(__dirname, '../../lib/routes/files.js'), 'utf8');
+    assert.ok(files.includes("'file_view'"), '应有内联查看限流档位');
+    assert.ok(files.includes('limitInline(res, req, user)'), '文件查看应调用 limitInline');
+    const att = require('fs').readFileSync(
+        path.join(__dirname, '../../lib/routes/attachments.js'), 'utf8');
+    assert.ok(att.includes('limitInline'), '附件查看应接入 limitInline');
+    assert.ok(att.includes('!forceDownload && !limitInline'),
+        '内联附件应限流，下载走独立档位');
+});
+check('显式 local 标记优先于 IP，转发回环地址不能豁免', () => {
+    const limiter = require('../../lib/rate-limit');
+    limiter.resetCounters('page_view');
+    const spoof = { ip: '127.0.0.1', account: 'spoof-local', local: false };
+    for (let i = 0; i < 200; i++) limiter.note('page_view', spoof);
+    assert.ok(limiter.check('page_view', spoof), '显式 local:false 不应按回环豁免');
+    limiter.resetCounters('page_view');
+    const trusted = { ip: '10.250.0.1', account: 'trusted-local', local: true };
+    for (let i = 0; i < 200; i++) limiter.note('page_view', trusted);
+    assert.strictEqual(limiter.check('page_view', trusted), null,
+        '显式 local:true 应豁免');
 });
 check('限流计数会持久化并在重启后恢复', () => {
     limiter.resetCounters('login');

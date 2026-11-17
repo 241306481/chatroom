@@ -2,11 +2,11 @@
     function init() {
         const input = document.querySelector('.list-filter-input');
         if (!input) return;
-        const rows = Array.from(document.querySelectorAll('.discuss-row-wrap'));
-        if (!rows.length) return;
+        if (!document.querySelector('[data-discuss-list]')) return;
         const counter = document.querySelector('.list-filter-count');
         function apply() {
             const q = (input.value || '').toLowerCase().trim();
+            const rows = Array.from(document.querySelectorAll('.discuss-row-wrap'));
             let shown = 0;
             rows.forEach(el => {
                 if (!q) { el.hidden = false; shown++; return; }
@@ -18,6 +18,7 @@
         }
         input.addEventListener('input', apply);
         apply();
+        window.DiscussListFilter = { refresh: apply };
     }
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', init);

@@ -217,3 +217,23 @@ html[data-theme="dark"] .history-item {
 }
 html[data-theme="dark"] .history-content { color: #e0e0e0; }
 html[data-theme="dark"] .history-meta { color: #999; }
+html[data-theme="dark"] .msg-collapse-preview,
+html[data-theme="dark"] .pinned-collapse-preview,
+html[data-theme="dark"] .history-collapse-preview {
+  background: #2a2a2a; color: #aaa;
+}
+html[data-theme="dark"] .msg-collapse-btn,
+html[data-theme="dark"] .pinned-collapse-btn,
+html[data-theme="dark"] .history-collapse-btn { color: #999; }
+html[data-theme="dark"] .msg-collapse-btn:hover,
+html[data-theme="dark"] .pinned-collapse-btn:hover,
+html[data-theme="dark"] .history-collapse-btn:hover {
+  color: #4da3ff; background: #1e3a5f;
+}
+html[data-theme="dark"] .jump-unread-btn {
+  background: #163a52; color: #4da3ff; border-color: #1f6f9f;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+}
+html[data-theme="dark"] .jump-unread-btn:hover {
+  background: #1e4a66; color: #69b7ff;
+}

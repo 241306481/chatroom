@@ -2,6 +2,9 @@
     const R = window.ChatRender = window.ChatRender || {};
     function startInlineEdit(root, bubble, onSave) {
         if (!root || !bubble || root.querySelector('.msg-edit-box')) return;
+        if (root.classList.contains('msg-collapsed') && window.toggleMessageCollapse) {
+            window.toggleMessageCollapse(root);
+        }
         const raw = bubble.dataset.raw || bubble.textContent || '';
         bubble.hidden = true;
         const box = document.createElement('div');
@@ -92,6 +95,9 @@
         mark.dataset.action = 'show-message-history';
         mark.dataset.id = id;
         mark.title = editedAt || '';
+        if (window.CollapseUI && window.CollapseUI.refreshMessage) {
+            window.CollapseUI.refreshMessage(el);
+        }
     }
     function historyUrl(id, btn) {
         const dm = btn && btn.closest ? btn.closest('.dm-msg') : null;
@@ -147,6 +153,9 @@
             content.innerHTML = window.renderContent(v.content || '');
             item.appendChild(meta);
             item.appendChild(content);
+            if (window.CollapseUI && window.CollapseUI.attachHistoryItem) {
+                window.CollapseUI.attachHistoryItem(item, meta, content);
+            }
             body.appendChild(item);
         });
         const footer = document.createElement('div');

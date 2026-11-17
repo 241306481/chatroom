@@ -511,6 +511,10 @@ window.toggleSource = function (btn) {
             el.appendChild(copyEl);
         }
     }
+    const msg = btn.closest('.message, .dm-msg');
+    if (msg && window.CollapseUI) window.CollapseUI.refreshMessage(msg);
+    const pin = btn.closest('.pinned-item');
+    if (pin && window.CollapseUI) window.CollapseUI.refreshPinned(pin);
 };
 document.addEventListener('click', function (e) {
     const el = e.target && e.target.closest
@@ -557,6 +561,16 @@ document.addEventListener('click', function (e) {
         break;
     case 'show-message-history':
         if (window.showMessageHistory) window.showMessageHistory(id, el);
+        break;
+    case 'toggle-message-collapse':
+        e.preventDefault();
+        e.stopPropagation();
+        if (window.toggleMessageCollapse) window.toggleMessageCollapse(el);
+        break;
+    case 'toggle-pinned-collapse':
+        e.preventDefault();
+        e.stopPropagation();
+        if (window.togglePinnedCollapse) window.togglePinnedCollapse(el);
         break;
     case 'forward-message':
         if (window.forwardMessage) window.forwardMessage(id, el);

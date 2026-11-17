@@ -114,12 +114,14 @@ check('check avatar repair 幂等', () => {
 check('ip_bans.json 结构异常不崩溃', () => {
     const fsp = path.join(ROOT, 'data', 'ip_bans.json');
     fs.mkdirSync(path.dirname(fsp), { recursive: true });
-    const cases = ['{"foo":1}', '[]', 'null', '"str"', '{"rules":"x"}', '{broken'];
+    const cases = ['{"foo":1}', '[]', 'null', '"str"', '{"rules":"x"}',
+        '{"rules":[null,false,0,"x"]}', '{broken'];
     for (const bad of cases) {
         fs.writeFileSync(fsp, bad, 'utf8');
         delete require.cache[require.resolve(path.join(ROOT, 'lib/storage/ip-bans'))];
         const m = require(path.join(ROOT, 'lib/storage/ip-bans'));
         assert.deepStrictEqual(m.listAll(), [], bad + ' 应按空表处理');
+        assert.doesNotThrow(() => m.isBanned('9.9.9.9'), bad + ' isBanned 不应抛错');
         assert.doesNotThrow(() => m.addBan('9.9.9.9', { reason: 't' }), bad + ' addBan 不应抛错');
     }
     fs.rmSync(fsp, { force: true });
@@ -128,6 +130,20 @@ check('ip_bans.json 结构异常不崩溃', () => {
             fs.rmSync(path.join(ROOT, 'data', f), { force: true });
         }
     }
+});
+check('user-ips.json 异常记录不崩溃', () => {
+    const userIps = require(path.join(ROOT, 'lib/storage/user-ips'));
+    const userDir = require(path.join(ROOT, 'lib/storage/paths')).userDir;
+    const fsp = path.join(userDir(A.id), 'ips.json');
+    fs.mkdirSync(path.dirname(fsp), { recursive: true });
+    fs.writeFileSync(fsp, JSON.stringify([
+        null, false, 0, 'x', [], [{}], { ip: '' }, { ip: '9.9.9.9', at: 't' },
+    ]), 'utf8');
+    const list = userIps.load(A.id);
+    assert.strictEqual(list.length, 1, '应只保留合法记录');
+    assert.strictEqual(list[0].ip, '9.9.9.9');
+    assert.doesNotThrow(() => userIps.record(A.id, '9.9.9.9'));
+    fs.rmSync(fsp, { force: true });
 });
 check('check help 列出可用项', () => {
     const out = silence(() => cmd.help());

@@ -142,6 +142,8 @@ node server.js
 
 读取顺序为 `X-Forwarded-For` 的**第一个**值 → `X-Real-IP` → 都没有才退回 socket 地址。所以反代必须覆盖（而非追加）这两个头，否则客户端可以在自己的 XFF 前面塞假 IP。
 
+转发头若给出 `127.0.0.1` 等回环地址，服务不会据此获得本地限流豁免，而是回退到 socket 地址并标记为非本地请求，避免伪造 XFF 绕过限流。
+
 ### Nginx 配置
 
 WebSocket 需要额外转发 Upgrade 头，否则 `wss://` 连不上：

@@ -17,10 +17,14 @@
            placeholder="筛选本域讨论 ID 或标题…" autocomplete="off">
     <span class="list-filter-count"></span>
   </div>
-  {% if discussions and discussions.length %}
-    <div class="discuss-list">
+  <div class="discuss-list" data-discuss-list
+       data-empty-text="暂无讨论">
+    {% if discussions and discussions.length %}
       {% for d in discussions %}
-        <div class="discuss-row-wrap">
+        <div class="discuss-row-wrap" data-disc-id="{{ d.id }}"
+             data-disc-title="{{ d.title | default('') }}"
+             data-disc-count="{{ d.count | default(0) }}"
+             data-disc-pinned="{{ '1' if d.pinned else '0' }}">
           <a href="/domain/{{ domain_name }}/discuss/{{ d.id }}" class="discuss-row">
             <div class="discuss-row-left">
               {% if d.pinned %}<span class="pinned-badge">置顶</span>{% endif %}
@@ -47,12 +51,14 @@
           {% endif %}
         </div>
       {% endfor %}
-    </div>
-  {% else %}
-    <p class="empty">暂无讨论</p>
-  {% endif %}
+    {% else %}
+      <p class="empty">暂无讨论</p>
+    {% endif %}
+  </div>
 </div>
-<script nonce="{{ csp_nonce }}">  window.deleteListItem = function (btn) {
+<script nonce="{{ csp_nonce }}">  window.__CAN_EDIT_DISCUSS__ = {{ 'true' if can_edit_discuss else 'false' }};
+  window.__CAN_DELETE_DISCUSS__ = {{ 'true' if can_delete_discuss else 'false' }};
+  window.deleteListItem = function (btn) {
     const disc = btn.dataset.disc;
     const ask = window.showConfirm
       ? window.showConfirm('确定删除讨论「' + disc + '」？所有消息将丢失', { danger: true })
@@ -64,8 +70,13 @@
           + encodeURIComponent(disc) + '/delete', { method: 'POST' })
         .then(r => r.json())
         .then(res => {
-          if (res.ok) btn.closest('.discuss-row-wrap').remove();
-          else if (window.showAlert) window.showAlert(res.error || '删除失败');
+          if (res.ok) {
+            const row = btn.closest('.discuss-row-wrap');
+            if (row) row.remove();
+            if (window.DiscussListFilter) window.DiscussListFilter.refresh();
+          } else if (window.showAlert) {
+            window.showAlert(res.error || '删除失败');
+          }
         })
         .catch(() => {
           if (window.showAlert) window.showAlert('删除失败');

@@ -193,6 +193,28 @@ function waitFor(ws, pred, ms = 10000) {
         assert.strictEqual(m.pinned, false, '撤回消息被重新置顶');
         assert.strictEqual(JSON.stringify(m.reactions || {}), before, '撤回消息仍可添加回应');
     });
+    await check('讨论区：撤回后历史版本接口不泄露原文', async () => {
+        const p = waitFor(wsB, d => d.type === 'new_message'
+            && d.message.content === 'history secret');
+        wsA.send(JSON.stringify({ type: 'message', content: 'history secret' }));
+        const sent = await p;
+        const hid = sent.message.id;
+        const pe = waitFor(wsB, d => d.type === 'message_edited'
+            && d.message_id === hid && d.content === 'history secret v2');
+        wsA.send(JSON.stringify({
+            type: 'edit', message_id: hid, content: 'history secret v2',
+        }));
+        await pe;
+        const pr = waitFor(wsB, d => d.type === 'message_revoked'
+            && d.message_id === hid);
+        wsA.send(JSON.stringify({ type: 'revoke', message_id: hid }));
+        await pr;
+        const r = await req('GET',
+            '/domain/system/discuss/general/messages/' + hid + '/history',
+            { cookie: A });
+        assert.strictEqual(r.status, 404);
+        assert.ok(!r.body.includes('history secret'), '撤回后历史接口泄露原文');
+    });
     await check('讨论区：删除（own）', async () => {
         const m2 = { id: 'del-me-1', user_id: uidA, nickname: 'alice99', content: 'x', created_at: storage.nowIso() };
         storage.appendMessage('system', 'general', m2);

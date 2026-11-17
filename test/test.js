@@ -8,6 +8,7 @@ const SUITES = [
     'guard-test.js',
     'register-domain-test.js',
     'rate-limit-test.js',
+    'client-ip-test.js',
     'uid-login-test.js',
     'perm-bits-test.js',
     'perm-audit-test.js',

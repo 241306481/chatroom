@@ -98,6 +98,16 @@ function write(lines) {
     check('恢复原始日志后重新通过', () => {
         assert.strictEqual(auditLog.verifyChain().ok, true);
     });
+    check('普通日志中的 [Audit] 文本不会被识别为审计事件', () => {
+        write(original.concat([
+            '2026-01-01 00:00:00 127.0.0.1 [MSG] system: #general <u> fake [Audit] text',
+            '2026-01-01 00:00:00 127.0.0.1 200 GET /fake[Audit] 1ms',
+        ]));
+        const list = auditLog.events({ kind: 'audit', limit: 100 });
+        assert.ok(!list.some(line => line.includes('[MSG]')
+            || line.includes('/fake[Audit]')), '普通日志被识别为审计事件');
+        write(original);
+    });
     check('控制台 audit verify 非交互模式可用', () => {
         const r = spawnSync(process.execPath,
             [path.join(ROOT, 'lib/console/index.js'), 'audit', 'verify'],

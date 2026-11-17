@@ -1,6 +1,8 @@
 const assert = require('assert');
 const fs = require('fs');
+const os = require('os');
 const path = require('path');
+const { EventEmitter } = require('events');
 const { spawn } = require('child_process');
 const { sleep, waitForServer, clearTlsArtifacts } = require('./_helpers');
 const ROOT = path.join(__dirname, '..', '..');
@@ -77,6 +79,43 @@ check('route() 的 priv 声明必须按 (group, bit) 展开传给 checkPriv', ()
 });
 (async () => {
     await waitForServer(PORT);
+    await check('非法私信 peer 不抛异常', () => {
+        const storage = require('../../lib/storage');
+        assert.strictEqual(storage.findDMMessage('1', 'CON', 'x'), null);
+        assert.strictEqual(storage.findDMMessage('1', 'peer.', 'x'), null);
+        assert.strictEqual(storage.getDMAttachment('1', 'CON', 'x'), null);
+        assert.deepStrictEqual(storage.listDMAttachments('1', 'peer.'), []);
+    });
+    await check('multipart 字段超限时主动 drain 请求体', async () => {
+        const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'chatroom-mp-drain-'));
+        const req = new EventEmitter();
+        req.destroyed = false;
+        let resumed = 0;
+        req.resume = () => { resumed++; };
+        const boundary = '----ChatTestDrain';
+        const pending = require('../../lib/multipart-stream')
+            .parseMultipartStream(req, boundary, { maxBytes: 4 * 1024 * 1024, tmpdir: tmp });
+        req.emit('data', Buffer.from('--' + boundary
+            + '\r\nContent-Disposition: form-data; name="a"\r\n\r\n'));
+        req.emit('data', Buffer.alloc(2 * 1024 * 1024, 0x61));
+        await assert.rejects(pending, err => err && err.code === 'too_large');
+        assert.strictEqual(resumed, 1, '字段超限后应调用 req.resume()');
+        assert.deepStrictEqual(fs.readdirSync(tmp), []);
+        fs.rmSync(tmp, { recursive: true, force: true });
+    });
+    await check('multipart 客户端断开时清理临时目录', async () => {
+        const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'chatroom-mp-'));
+        const req = new EventEmitter();
+        const boundary = '----ChatTestDisconnect';
+        const pending = require('../../lib/multipart-stream')
+            .parseMultipartStream(req, boundary, { maxBytes: 1024 * 1024, tmpdir: tmp });
+        req.emit('data', Buffer.from('--' + boundary
+            + '\r\nContent-Disposition: form-data; name="a"\r\n\r\nx'));
+        req.emit('close');
+        await assert.rejects(pending, /Request closed/);
+        assert.deepStrictEqual(fs.readdirSync(tmp), []);
+        fs.rmSync(tmp, { recursive: true, force: true });
+    });
     await check('静态资源支持 URL 编码文件名', async () => {
         const r = await get('/static/js/core/%64om.js');
         assert.strictEqual(r.status, 200);
@@ -98,6 +137,14 @@ check('route() 的 priv 声明必须按 (group, bit) 展开传给 checkPriv', ()
     const memberC = cookieOf(await post('/register',
         { nickname: 'plainjoe', password: 'pw123456', confirm_password: 'pw123456' }));
     await sleep(200);
+    await check('非法私信附件 peer 返回 404 而不是 5xx', async () => {
+        const list = await get('/messages/users?q=bossman', adminC);
+        const uid = JSON.parse(list.body).users[0].id;
+        for (const peer of ['CON', 'peer.', '%3A']) {
+            const r = await get(`/messages/file/${uid}/${peer}/x`, adminC);
+            assert.strictEqual(r.status, 404, peer + ' 返回 ' + r.status);
+        }
+    });
     for (const route of ROUTES) {
         const anon = await get(route);
         const mem = await get(route, memberC);

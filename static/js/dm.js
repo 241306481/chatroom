@@ -6,6 +6,9 @@
     const onMessagesPage = !!document.getElementById('dmRoot');
     let _dmBannerCount = 0;
     let _dmBanner = null;
+    let _dmBannerShownAt = 0;
+    let _dmBannerGuardTimer = 0;
+    let _dmBannerFirstEl = null;
     function isDmAtBottom() {
         const l = document.getElementById('dmList');
         if (!l) return true;
@@ -22,22 +25,34 @@
         _dmBanner.className = 'new-msg-banner';
         _dmBanner.hidden = true;
         _dmBanner.addEventListener('click', () => {
-            const l = document.getElementById('dmList');
-            if (l) l.scrollTop = 0;
+            const el = _dmBannerFirstEl;
+            if (el && document.body.contains(el)) {
+                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                el.classList.add('highlight');
+                setTimeout(() => el.classList.remove('highlight'), 2000);
+            }
             hideDmBanner();
         });
         host.appendChild(_dmBanner);
         return _dmBanner;
     }
-    function showDmBanner(inc) {
+    function showDmBanner(inc, firstEl) {
         const b = ensureDmBanner();
         if (!b) return;
+        if (!_dmBannerFirstEl && firstEl) _dmBannerFirstEl = firstEl;
         _dmBannerCount += (inc || 1);
+        _dmBannerShownAt = Date.now();
         b.innerHTML = '<span class="arrow">↓</span> ' + _dmBannerCount + ' 条新消息';
         b.hidden = false;
+        clearTimeout(_dmBannerGuardTimer);
+        _dmBannerGuardTimer = setTimeout(function () {
+            if (isDmAtBottom()) hideDmBanner();
+        }, 500);
     }
     function hideDmBanner() {
         _dmBannerCount = 0;
+        _dmBannerFirstEl = null;
+        clearTimeout(_dmBannerGuardTimer);
         if (_dmBanner) _dmBanner.hidden = true;
     }
     let _typingTimer = null;
@@ -67,7 +82,9 @@
         if (!l || l._dmBannerBound) return;
         l._dmBannerBound = true;
         l.addEventListener('scroll', () => {
-            if (isDmAtBottom()) hideDmBanner();
+            if (isDmAtBottom() && Date.now() - _dmBannerShownAt > 500) {
+                hideDmBanner();
+            }
         }, { passive: true });
     }
     if (document.readyState === 'loading') {
@@ -84,9 +101,11 @@
                 const cur = document.body.dataset.dmTarget || '';
                 const isViewing = onMessagesPage && t === cur;
                 if (isViewing) {
-                    appendDM(data.message, false);
+                    const wasAtBottom = isDmAtBottom();
+                    const el = appendDM(data.message, false);
                     socket.send(JSON.stringify({ type: 'dm_read', target: t }));
-                    if (!isDmAtBottom()) showDmBanner(1);
+                    if (wasAtBottom) hideDmBanner();
+                    else showDmBanner(1, el);
                 } else {
                     if (!onMessagesPage) window.bumpUnreadBadge();
                     var nick = data.message.from_nickname || ('用户 ' + t);
@@ -178,6 +197,9 @@
             else el.querySelector('.dm-msg-header').appendChild(mark);
         }
         mark.title = data.edited_at || '';
+        if (window.CollapseUI && window.CollapseUI.refreshMessage) {
+            window.CollapseUI.refreshMessage(el);
+        }
     }
     function renderDMUserList(items) {
         const list = document.getElementById('dmSearchList');
@@ -267,17 +289,18 @@
     };
 function appendDM(msg, isMe) {
         const list = document.getElementById('dmList');
-        if (!list) return;
+        if (!list) return null;
         const inner = list.querySelector('.dm-list-inner') || list;
         const wasAtBottom = Math.abs(list.scrollTop) <= 60;
         const div = window.ChatRender && window.ChatRender.buildDMMessageEl
             ? window.ChatRender.buildDMMessageEl(Object.assign({}, msg, { is_me: !!isMe }))
             : null;
-        if (!div) return;
+        if (!div) return null;
         inner.insertBefore(div, inner.firstElementChild);
         if (wasAtBottom) {
             list.scrollTop = 0;
         }
+        return div;
     }
     (function bindDmLoadOlder() {
         const list = document.getElementById('dmList');

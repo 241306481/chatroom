@@ -157,6 +157,90 @@ function waitFor(ws, pred, ms = 10000) {
         const discussCss = read('static/css/discuss.css');
         assert.ok(discussCss.includes(':focus-visible'));
         assert.ok(discussCss.includes('env(safe-area-inset-bottom'));
+        const jumpJs = read('static/js/chat/jump-unread.js');
+        assert.ok(jumpJs.includes('const show = !!trackedUnread && document.body.contains(trackedUnread)'),
+            '打开讨论时未显示跳到未读');
+        assert.ok(jumpJs.includes('if (ready && atBottom()) markRead();'),
+            '滚动到底部未清理跳到未读');
+        assert.ok(jumpJs.includes('window.ChatRender.jumpToUnread = jumpToUnread'),
+            '未暴露跳到未读跳转接口');
+        assert.ok(discussCss.includes('.jump-unread-btn { position: absolute'),
+            '跳到未读未浮动到右上角');
+        assert.ok(discussCss.includes('overflow-anchor: none'),
+            '消息列表未关闭滚动锚定');
+        const collapseJs = read('static/js/chat/collapse.js');
+        assert.ok(base.includes('js/chat/collapse.js'), '折叠脚本未接入页面');
+        assert.ok(collapseJs.includes("'toggle-message-collapse'"), '缺少消息折叠动作');
+        assert.ok(collapseJs.includes("'toggle-pinned-collapse'"), '缺少置顶折叠动作');
+        assert.ok(collapseJs.includes('attachHistoryItem'), '缺少编辑历史折叠');
+        assert.ok(collapseJs.includes('源码已折叠'), '源码模式未折叠');
+        assert.ok(discussCss.includes('.msg-content[data-mode="source"]'),
+            '折叠未覆盖源码模式');
+        assert.ok(read('static/js/core/dom.js').includes("case 'toggle-message-collapse'"),
+            '折叠动作未分派');
+        assert.ok(read('static/js/chat/render-actions.js').includes('CollapseUI.attachHistoryItem'),
+            '编辑历史未接入折叠');
+        assert.ok(read('static/css/modal.css').includes('overflow-anchor: none'),
+            '编辑历史未关闭滚动锚定');
+        assert.ok(read('static/css/base.css').includes('left: 20px; bottom: 20px'),
+            '消息通知未恢复左下角');
+        const socketJs = read('static/js/chat/socket.js');
+        assert.ok(socketJs.includes('showNewMsgBanner(1, data.message.id)'),
+            '新消息 banner 未携带首条消息 ID');
+        assert.ok(socketJs.includes('markDiscussionRead(true)'),
+            '正在查看时未强制标记已读');
+        assert.ok(!socketJs.includes('window.showNotification({'),
+            '讨论消息仍在左下角弹出通知');
+        assert.ok(socketJs.includes('showDesktopNotification'),
+            '讨论消息未保留桌面通知');
+        const renderUiJs = read('static/js/chat/render-ui.js');
+        assert.ok(renderUiJs.includes('_bannerShownAt'),
+            '新消息 banner 缺少显示保护');
+        assert.ok(renderUiJs.includes('Date.now() - _bannerShownAt > 500'),
+            '新消息 banner 仍会被程序滚动误隐藏');
+        assert.ok(renderUiJs.includes('window.ChatRender.jumpToUnread'),
+            '讨论新消息 banner 未跳到最上方未读');
+        assert.ok(renderUiJs.includes('_bannerFirstId'),
+            '讨论新消息 banner 未记录首条新消息');
+        const dmJs = read('static/js/dm.js');
+        assert.ok(dmJs.includes('const wasAtBottom = isDmAtBottom();'),
+            '私信查看时新消息仍提示跳到未读');
+        assert.ok(dmJs.includes('Date.now() - _dmBannerShownAt > 500'),
+            '私信 banner 仍会被程序滚动误隐藏');
+        assert.ok(dmJs.includes('showDmBanner(1, el)')
+            && dmJs.includes('el.scrollIntoView'),
+            '私信新消息 banner 未跳到最上方未读');
+        const baseHtml = read('templates/base.html');
+        assert.ok(baseHtml.indexOf('js/domain-live.js') > baseHtml.indexOf('js/online.js'),
+            '领域实时脚本未接入或顺序错误');
+        assert.ok(read('templates/home.html').includes('window.__HOME_DISCUSSIONS__'),
+            '首页讨论列表缺少实时数据');
+        assert.ok(read('templates/discuss_list.html').includes('data-discuss-list'),
+            '讨论列表缺少实时列表标记');
+        assert.ok(read('static/js/discuss-list-filter.js')
+            .includes("document.querySelector('[data-discuss-list]')"),
+            '讨论筛选未限定在讨论列表页');
+        assert.ok(read('lib/routes/home.js').includes('pinned: !!cfg.pinned'),
+            '首页讨论数据缺少置顶状态');
+        assert.ok(read('static/js/online.js').includes("'chatroom:domain-event'"),
+            '在线状态未分派领域实时事件');
+        const domainLiveJs = read('static/js/domain-live.js');
+        assert.ok(domainLiveJs.includes('renderHomeMembers')
+            && domainLiveJs.includes('discussion_activity'),
+            '首页成员/讨论实时更新不完整');
+        assert.ok(domainLiveJs.includes('sortDiscussRows')
+            && domainLiveJs.includes('compareDiscussions'),
+            '讨论列表实时更新未保持置顶排序');
+        assert.ok(domainLiveJs.includes('updateHomeCardCount'),
+            '首页新消息计数仍整表重绘');
+        assert.ok(renderUiJs.includes('sortDiscussionSidebar'),
+            '讨论侧栏实时更新未保持置顶排序');
+        const wsIndexJs = read('lib/websocket/index.js');
+        assert.ok(wsIndexJs.includes('broadcastDiscussionActivity')
+            && wsIndexJs.includes('broadcastDiscussionUpdate'),
+            '服务端缺少讨论实时广播');
+        assert.ok(read('lib/routes/discuss.js').includes('broadcastDiscussionUpdate'),
+            '讨论编辑/重命名未广播实时更新');
     });
     const f1 = storage.addUserFile(uidA, { filename: 'alpha.txt', mime: 'text/plain', buffer: Buffer.from('a') });
     const f2 = storage.addUserFile(uidA, { filename: 'beta.txt', mime: 'text/plain', buffer: Buffer.from('b') });

@@ -102,13 +102,17 @@
                 case 'new_message': {
                     const atBottom = R.isAtBottom();
                     R.appendMessage(data.message);
-                    if (window.MY_UID && data.message.user_id !== window.MY_UID && !atBottom) {
-                        R.showNewMsgBanner(1);
+                    if (!atBottom) {
+                        if (window.MY_UID && data.message.user_id !== window.MY_UID) {
+                            R.showNewMsgBanner(1, data.message.id);
+                        }
+                    } else if (R.scrollBottom) {
+                        R.scrollBottom();
                     }
                     if (window.MY_UID && data.message.user_id !== window.MY_UID
-                        && document.hidden && window.showNotification) {
+                        && document.hidden && window.showDesktopNotification) {
                         const nick = data.message.nickname || '新消息';
-                        window.showNotification({
+                        window.showDesktopNotification({
                             title: nick,
                             content: Array.from(String(data.message.content || ''))
                                 .slice(0, 80).join(''),
@@ -130,7 +134,7 @@
                         window.__chatSearchReapply();
                     }
                     if (atBottom && window.markDiscussionRead) {
-                        window.markDiscussionRead();
+                        window.markDiscussionRead(true);
                     }
                     break;
                 }
@@ -168,10 +172,34 @@
                     applyMembersUpdate(data);
                     break;
                 case 'discussion_created':
-                    R.addDiscussionToSidebar(data.id, data.title);
+                    R.addDiscussionToSidebar(data.id, data.title, !!data.pinned);
                     break;
+                case 'discussion_updated': {
+                    if (data.old_id && data.old_id === window.__DISCUSS__) {
+                        location.href = '/domain/' + encodeURIComponent(window.__DOMAIN__ || '')
+                            + '/discuss/' + encodeURIComponent(data.id);
+                        break;
+                    }
+                    R.updateDiscussionInSidebar(data.id, data.title, data.old_id, data.pinned);
+                    if (data.id === window.__DISCUSS__) {
+                        const title = document.querySelector('.discuss-header-title');
+                        if (title) {
+                            title.dataset.value = data.title || '';
+                            title.textContent = data.title || '（无标题）';
+                            title.classList.toggle('empty', !data.title);
+                        }
+                    }
+                    break;
+                }
                 case 'discussion_deleted':
                     R.removeDiscussionFromSidebar(data.id);
+                    if (data.id === window.__DISCUSS__) {
+                        R.showToast('当前讨论已被删除');
+                        setTimeout(function () {
+                            location.href = '/domain/' + encodeURIComponent(window.__DOMAIN__ || '')
+                                + '/discuss';
+                        }, 1200);
+                    }
                     break;
                 case 'discuss_file_added':
                     appendDiscussFile(data.file);

@@ -535,6 +535,80 @@ let proc = null;
         const domRole = await post('/domain/opend/manage/role', { action: 'bogus' }, rootC);
         assert.ok(domRole.body.includes('未知操作'));
     });
+    await check('角色显示名超长会截断且拒绝原型键名', async () => {
+        const sys = await post('/manage/system_roles', {
+            action: 'create', role_name: 'longsys', display: 'S'.repeat(150),
+        }, rootC);
+        assert.strictEqual(sys.status, 200, sys.body);
+        sysRoles.invalidateCache();
+        const savedSys = sysRoles.loadRoles().longsys;
+        assert.ok(savedSys, '系统角色未创建');
+        assert.strictEqual(savedSys.display.length, 100, '系统角色显示名未截断');
+        assert.strictEqual(sysRoles.roleExists('__proto__'), false);
+        assert.strictEqual(sysRoles.roleExists('toString'), false);
+        const badSys = await post('/manage/system_roles', {
+            action: 'create', role_name: 'constructor', display: 'x',
+        }, rootC);
+        assert.ok(badSys.body.includes('角色名不可用'), badSys.body);
+        const dom = await post('/domain/opend/manage/role', {
+            action: 'create', role_name: 'longdom', display: 'D'.repeat(150),
+        }, rootC);
+        assert.strictEqual(dom.status, 200, dom.body);
+        const d = storage.loadDomain('opend');
+        assert.ok(d.roles.longdom, '域角色未创建');
+        assert.strictEqual(d.roles.longdom.display.length, 100, '域角色显示名未截断');
+        const badDom = await post('/domain/opend/manage/role', {
+            action: 'create', role_name: 'prototype', display: 'x',
+        }, rootC);
+        assert.ok(badDom.body.includes('角色名不可用'), badDom.body);
+    });
+    await check('异常成员/封禁/申请结构不会导致页面 500', async () => {
+        const original = storage.loadDomain('opend');
+        const broken = JSON.parse(JSON.stringify(original));
+        broken.members = { [dmodId]: null };
+        broken.bans = { [viewerId]: null };
+        broken.join_applications = { bad: true };
+        broken.roles = 'bad';
+        broken.perm_overrides = 'bad';
+        storage.saveDomain('opend', broken);
+        const users = await get('/domain/opend/users', rootC);
+        assert.strictEqual(users.status, 200, users.body);
+        for (const p of ['/domain/opend/manage/user',
+            '/domain/opend/manage/role', '/domain/opend/manage/permission']) {
+            const r = await get(p, rootC);
+            assert.strictEqual(r.status, 200, p + ' ' + r.body);
+        }
+        const roleCreate = await post('/domain/opend/manage/role', {
+            action: 'create', role_name: 'schemrole', display: 'schema',
+        }, rootC);
+        assert.strictEqual(roleCreate.status, 200, roleCreate.body);
+        const permSave = await post('/domain/opend/manage/permission',
+            { perm_guest: '0' }, rootC);
+        assert.strictEqual(permSave.status, 200, permSave.body);
+        const apps = await get('/domain/opend/manage/applications', rootC);
+        assert.strictEqual(apps.status, 200, apps.body);
+        const globalApps = await get('/manage/join_applications', rootC);
+        assert.strictEqual(globalApps.status, 200, globalApps.body);
+        const globalSingle = await post('/manage/join_applications',
+            { domain_name: 'opend', uid: viewerId, action: 'reject' }, rootC);
+        assert.strictEqual(globalSingle.status, 404, globalSingle.body);
+        const join = await post('/domain/opend/join', { message: 'schema' }, viewerC);
+        assert.ok(join.status < 400, join.body);
+        const saved = storage.loadDomain('opend');
+        assert.ok(Array.isArray(saved.join_applications), '申请列表未恢复为数组');
+        assert.strictEqual(saved.join_applications.length, 1);
+        assert.strictEqual(saved.join_applications[0].uid, viewerId);
+        saved.join_applications.push(null);
+        storage.saveDomain('opend', saved);
+        const globalBatch = await post('/manage/join_applications', {
+            application_ids: 'opend:' + viewerId, action: 'approve',
+        }, rootC);
+        assert.strictEqual(globalBatch.status, 200, globalBatch.body);
+        assert.strictEqual(JSON.parse(globalBatch.body).ok, true, globalBatch.body);
+        const transfer = await get('/domain/opend/manage/transfer', rootC);
+        assert.strictEqual(transfer.status, 200, transfer.body);
+        storage.saveDomain('opend', original);
+    });
     await check('不存在的域管理页返回 404 且不写入数据', async () => {
         for (const p of [
             '/domain/missing/manage/user',
@@ -587,6 +661,24 @@ let proc = null;
         assert.strictEqual(r.status, 403, 'status=' + r.status);
         assert.strictEqual(storage.loadDomain('opend').members[dmodId].role, 'dmod');
     });
+    await check('不能给不存在的用户授予域角色', async () => {
+        const ghost = 'ghost77';
+        const r = await post('/domain/opend/manage/user',
+            { action: 'grant', user_id: ghost, role: 'default' }, dmodC);
+        assert.strictEqual(r.status, 200, r.body);
+        assert.strictEqual(JSON.parse(r.body).ok, false, r.body);
+        assert.ok(r.body.includes('用户不存在'), r.body);
+        assert.strictEqual(storage.loadDomain('opend').members[ghost], undefined);
+        assert.throws(() => auth.grantRole('opend', ghost, 'default'), /用户不存在/);
+        assert.strictEqual(storage.loadDomain('opend').members[ghost], undefined);
+        const ban = await post('/domain/opend/manage/user', {
+            action: 'ban', user_id: ghost, until: '2099-12-31T23:59:59Z',
+        }, rootC);
+        assert.strictEqual(ban.status, 200, ban.body);
+        assert.ok(ban.body.includes('用户不存在'), ban.body);
+        const bans = storage.loadDomain('opend').bans || {};
+        assert.strictEqual(bans[ghost], undefined);
+    });
     await check('域资料文本超长会被截断', async () => {
         const r = await post('/domain/opend/manage/edit', {
             display_name: 'D'.repeat(150),
@@ -612,6 +704,63 @@ let proc = null;
         const after = (storage.loadDomain('opend').join_applications || [])
             .find(a => a.uid === viewerId);
         assert.ok(after, '未知操作误删了申请');
+    });
+    await check('审批已存在成员的申请不会重置角色/经验', async () => {
+        const initial = storage.loadDomain('opend');
+        const before = Object.assign({}, initial.members[dmodId], {
+            level: 7, exp: 123,
+        });
+        initial.members[dmodId] = before;
+        storage.saveDomain('opend', initial);
+        const addApp = () => {
+            const d = storage.loadDomain('opend');
+            d.join_applications = Array.isArray(d.join_applications) ? d.join_applications : [];
+            d.join_applications.push({
+                uid: dmodId, nickname: 'dmodx', message: 'x',
+                created_at: storage.nowIso(),
+            });
+            storage.saveDomain('opend', d);
+        };
+        addApp();
+        const single = await post('/domain/opend/manage/applications',
+            { uid: dmodId, action: 'approve' }, rootC);
+        assert.strictEqual(single.status, 200, single.body);
+        assert.strictEqual(JSON.parse(single.body).ok, true, single.body);
+        let member = storage.loadDomain('opend').members[dmodId];
+        assert.strictEqual(member.role, 'dmod');
+        assert.strictEqual(member.level, 7);
+        assert.strictEqual(member.exp, 123);
+        assert.strictEqual(member.joined_at, before.joined_at);
+        addApp();
+        const batch = await post('/domain/opend/manage/applications',
+            { ids: dmodId, action: 'approve' }, rootC);
+        assert.strictEqual(batch.status, 200, batch.body);
+        assert.strictEqual(JSON.parse(batch.body).ok, true, batch.body);
+        member = storage.loadDomain('opend').members[dmodId];
+        assert.strictEqual(member.role, 'dmod');
+        assert.strictEqual(member.level, 7);
+        assert.strictEqual(member.exp, 123);
+        assert.strictEqual(member.joined_at, before.joined_at);
+        addApp();
+        const globalBatch = await post('/manage/join_applications',
+            { application_ids: 'opend:' + dmodId, action: 'approve' }, rootC);
+        assert.strictEqual(globalBatch.status, 200, globalBatch.body);
+        assert.strictEqual(JSON.parse(globalBatch.body).ok, true, globalBatch.body);
+        member = storage.loadDomain('opend').members[dmodId];
+        assert.strictEqual(member.role, 'dmod');
+        assert.strictEqual(member.level, 7);
+        assert.strictEqual(member.exp, 123);
+        assert.strictEqual(member.joined_at, before.joined_at);
+        addApp();
+        const globalSingle = await post('/manage/join_applications',
+            { domain_name: 'opend', uid: dmodId, action: 'approve' }, rootC);
+        assert.strictEqual(globalSingle.status, 200, globalSingle.body);
+        assert.strictEqual(JSON.parse(globalSingle.body).ok, true, globalSingle.body);
+        member = storage.loadDomain('opend').members[dmodId];
+        assert.strictEqual(member.role, 'dmod');
+        assert.strictEqual(member.level, 7);
+        assert.strictEqual(member.exp, 123);
+        assert.strictEqual(member.joined_at, before.joined_at);
     });
     await check('在线会话页可强制下线且保护高级管理员', async () => {
         const page = await get('/manage/sessions', opsC);

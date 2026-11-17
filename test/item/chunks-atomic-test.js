@@ -79,10 +79,22 @@ check('分片损坏时单条更新被阻止且不覆盖原文件', () => {
         /已损坏/);
     assert.strictEqual(fs.readFileSync(corruptPath, 'utf8'), corruptBefore);
 });
+const badTypeDir = fs.mkdtempSync(path.join(os.tmpdir(), 'chatroom-chunks-badtype-'));
+const badTypeFile = chunks.chunkName(1);
+fs.writeFileSync(chunks.chunkPath(badTypeDir, badTypeFile),
+    '{"id":"ok"}\nnull\n[]\n"str"\n123\ntrue\n', 'utf8');
+check('分片中的非对象行被跳过并标记损坏', () => {
+    assert.deepStrictEqual(chunks.loadAll(badTypeDir).map(m => m.id), ['ok']);
+    assert.strictEqual(chunks.chunkCount(badTypeDir, badTypeFile), -1);
+    assert.throws(
+        () => chunks.update(badTypeDir, 'ok', { value: 1 }),
+        /已损坏/);
+});
 for (const [s, n] of results) console.log(s.padEnd(5), n);
 const failed = results.filter(r => r[0] === 'FAIL').length;
 try { fs.rmSync(dir, { recursive: true, force: true }); } catch (e) {}
 try { fs.rmSync(lockedDir, { recursive: true, force: true }); } catch (e) {}
 try { fs.rmSync(corruptDir, { recursive: true, force: true }); } catch (e) {}
+try { fs.rmSync(badTypeDir, { recursive: true, force: true }); } catch (e) {}
 console.log('\n' + (results.length - failed) + ' passed, ' + failed + ' failed');
 process.exit(failed ? 1 : 0);
