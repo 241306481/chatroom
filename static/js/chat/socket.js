@@ -101,8 +101,13 @@
             switch (data.type) {
                 case 'new_message': {
                     const atBottom = R.isAtBottom();
+                    const editing = !!document.querySelector('.msg-edit-box');
+                    if (window.ChatSendQueue
+                        && data.message.user_id === window.MY_UID) {
+                        window.ChatSendQueue.ack(data.message);
+                    }
                     R.appendMessage(data.message);
-                    if (!atBottom) {
+                    if (!atBottom || editing) {
                         if (window.MY_UID && data.message.user_id !== window.MY_UID) {
                             R.showNewMsgBanner(1, data.message.id);
                         }
@@ -133,7 +138,7 @@
                     if (typeof window.__chatSearchReapply === 'function') {
                         window.__chatSearchReapply();
                     }
-                    if (atBottom && window.markDiscussionRead) {
+                    if (atBottom && !editing && window.markDiscussionRead) {
                         window.markDiscussionRead(true);
                     }
                     break;
@@ -147,6 +152,9 @@
                 case 'message_edited':
                     if (R.applyEdit) {
                         R.applyEdit(data.message_id, data.content, data.edited_at);
+                    }
+                    if (typeof window.__chatSearchReapply === 'function') {
+                        window.__chatSearchReapply();
                     }
                     break;
                 case 'message_pinned':
@@ -213,14 +221,32 @@
                     setTimeout(function () { location.href = '/home'; }, 1500);
                     break;
                 case 'error':
+                    if (window.ChatSendQueue) window.ChatSendQueue.restore();
                     R.showToast(data.msg);
                     break;
             }
         };
-        socket.onclose = () => { reconnectTimer = setTimeout(connect, 3000); };
+        socket.onclose = ev => {
+            if (ev && ev.code === 4001) {
+                setTimeout(function () { location.href = '/home'; }, 1500);
+                return;
+            }
+            if (ev && ev.code === 4003) return;
+            reconnectTimer = setTimeout(connect, 3000);
+        };
         socket.onerror = () => {};
     }
     connect();
+    document.addEventListener('chat-inline-edit-closed', function () {
+        if (!R.isAtBottom()) return;
+        if (window.markDiscussionRead) window.markDiscussionRead(true);
+        if (R.hideNewMsgBanner) R.hideNewMsgBanner();
+    });
+    document.addEventListener('visibilitychange', function () {
+        if (document.visibilityState !== 'visible' || !R.isAtBottom()) return;
+        if (window.markDiscussionRead) window.markDiscussionRead(true);
+        if (R.hideNewMsgBanner) R.hideNewMsgBanner();
+    });
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', () => window.ChatRender.renderAllHistory());
     } else {

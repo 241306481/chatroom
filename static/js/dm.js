@@ -9,10 +9,21 @@
     let _dmBannerShownAt = 0;
     let _dmBannerGuardTimer = 0;
     let _dmBannerFirstEl = null;
+    let _lastDmReadAt = 0;
     function isDmAtBottom() {
         const l = document.getElementById('dmList');
         if (!l) return true;
         return Math.abs(l.scrollTop) <= 60;
+    }
+    function markCurrentDmRead(force) {
+        if (!onMessagesPage || document.visibilityState !== 'visible') return;
+        const target = document.body.dataset.dmTarget || '';
+        if (!target || !socket || socket.readyState !== WebSocket.OPEN) return;
+        const now = Date.now();
+        if (!force && now - _lastDmReadAt < 1000) return;
+        _lastDmReadAt = now;
+        socket.send(JSON.stringify({ type: 'dm_read', target }));
+        clearActiveBadge();
     }
     function ensureDmBanner() {
         if (_dmBanner && document.body.contains(_dmBanner)) return _dmBanner;
@@ -32,6 +43,7 @@
                 setTimeout(() => el.classList.remove('highlight'), 2000);
             }
             hideDmBanner();
+            markCurrentDmRead();
         });
         host.appendChild(_dmBanner);
         return _dmBanner;
@@ -56,6 +68,7 @@
         if (_dmBanner) _dmBanner.hidden = true;
     }
     let _typingTimer = null;
+    let _pendingDM = null;
     function showTyping(name) {
         const el = document.getElementById('dmTyping');
         if (!el) return;
@@ -63,6 +76,69 @@
         el.hidden = false;
         if (_typingTimer) clearTimeout(_typingTimer);
         _typingTimer = setTimeout(() => { el.hidden = true; }, 3000);
+    }
+    function notifyIncomingDM(msg, target) {
+        const nick = msg.from_nickname || ('用户 ' + target);
+        window.showNotification({
+            title: nick,
+            content: Array.from(String(msg.content || '')).slice(0, 80).join(''),
+            color: msg.from_avatar_color || '#1890ff',
+            avatar: Array.from(nick)[0] || '?',
+            avatarUid: msg.from,
+            avatarExt: msg.from_avatar_ext || '',
+            tag: 'dm-' + target,
+            onClick: function () {
+                location.href = '/messages?target=' + encodeURIComponent(target);
+            },
+        });
+    }
+    function ensureConversationRow(target, msg) {
+        let row = document.querySelector(
+            '.dm-conv[data-uid="' + CSS.escape(String(target)) + '"]');
+        if (row || !onMessagesPage) return row;
+        const aside = document.querySelector('.dm-sidebar');
+        if (!aside) return null;
+        const nick = (msg && msg.from_nickname) || String(target);
+        const user = {
+            id: (msg && msg.from) || target,
+            nickname: nick,
+            avatar_color: (msg && msg.from_avatar_color) || '#888',
+            avatar_ext: (msg && msg.from_avatar_ext) || '',
+        };
+        row = document.createElement('a');
+        row.className = 'dm-conv';
+        row.href = '/messages?target=' + encodeURIComponent(target);
+        row.dataset.uid = String(target);
+        if (window.Avatar) {
+            row.appendChild(window.Avatar.build(user, 'avatar-circle'));
+        } else {
+            const av = document.createElement('span');
+            av.className = 'avatar-circle';
+            av.style.background = user.avatar_color;
+            av.textContent = nick[0] || '?';
+            row.appendChild(av);
+        }
+        const name = document.createElement('span');
+        name.className = 'dm-conv-nick';
+        name.textContent = nick;
+        row.appendChild(name);
+        const empty = aside.querySelector('.empty');
+        if (empty) empty.remove();
+        const first = aside.querySelector('.dm-conv');
+        if (first) aside.insertBefore(row, first);
+        else aside.appendChild(row);
+        return row;
+    }
+    function bumpConversationUnread(target, msg) {
+        const row = ensureConversationRow(target, msg);
+        if (!row) return;
+        let badge = row.querySelector('.badge-unread');
+        if (!badge) {
+            badge = document.createElement('span');
+            badge.className = 'badge-unread';
+            row.appendChild(badge);
+        }
+        badge.textContent = String(parseInt(badge.textContent || '0', 10) + 1);
     }
     function markDmRead() {
         const list = document.getElementById('dmList');
@@ -84,6 +160,7 @@
         l.addEventListener('scroll', () => {
             if (isDmAtBottom() && Date.now() - _dmBannerShownAt > 500) {
                 hideDmBanner();
+                markCurrentDmRead();
             }
         }, { passive: true });
     }
@@ -102,27 +179,29 @@
                 const isViewing = onMessagesPage && t === cur;
                 if (isViewing) {
                     const wasAtBottom = isDmAtBottom();
+                    const editing = !!document.querySelector('.msg-edit-box');
                     const el = appendDM(data.message, false);
-                    socket.send(JSON.stringify({ type: 'dm_read', target: t }));
-                    if (wasAtBottom) hideDmBanner();
-                    else showDmBanner(1, el);
+                    if (document.hidden) {
+                        notifyIncomingDM(data.message, t);
+                        if (!wasAtBottom || editing) showDmBanner(1, el);
+                    } else if (wasAtBottom && !editing) {
+                        markCurrentDmRead(true);
+                        hideDmBanner();
+                    } else {
+                        showDmBanner(1, el);
+                    }
                 } else {
-                    if (!onMessagesPage) window.bumpUnreadBadge();
-                    var nick = data.message.from_nickname || ('用户 ' + t);
-                    window.showNotification({
-                        title: nick,
-                        content: Array.from(String(data.message.content || '')).slice(0, 80).join(''),
-                        color: data.message.from_avatar_color || '#1890ff',
-                        avatar: Array.from(nick)[0] || '?',
-                        avatarUid: data.message.from,
-                        avatarExt: data.message.from_avatar_ext || '',
-                        tag: 'dm-' + t,
-                        onClick: function () { location.href = '/messages?target=' + t; },
-                    });
+                    window.bumpUnreadBadge();
+                    if (onMessagesPage) bumpConversationUnread(t, data.message);
+                    notifyIncomingDM(data.message, t);
                 }
             } else if (data.type === 'dm_sent') {
                 const t = data.message.to;
                 const cur = document.body.dataset.dmTarget || '';
+                if (_pendingDM && _pendingDM.target === String(t)
+                    && _pendingDM.content === data.message.content) {
+                    _pendingDM = null;
+                }
                 if (onMessagesPage && t === cur) appendDM(data.message, true);
             } else if (data.type === 'dm_edited') {
                 applyDMEdit(data);
@@ -132,12 +211,44 @@
             } else if (data.type === 'dm_read') {
                 const cur = document.body.dataset.dmTarget || '';
                 if (onMessagesPage && data.by === cur) markDmRead();
+            } else if (data.type === 'kicked') {
+                if (window.showToast) window.showToast('你已被禁止访问');
+                setTimeout(function () { location.href = '/home'; }, 1500);
+            } else if (data.type === 'error') {
+                if (_pendingDM) {
+                    const cur = document.body.dataset.dmTarget || '';
+                    const ta = document.getElementById('dmInput');
+                    if (ta && _pendingDM.target === cur && !ta.value.trim()) {
+                        ta.value = _pendingDM.content;
+                        ta.dispatchEvent(new Event('input', { bubbles: true }));
+                    }
+                    _pendingDM = null;
+                }
+                if (window.showToast) window.showToast(data.msg);
             }
         };
-        socket.onclose = () => { setTimeout(connect, 3000); };
+        socket.onclose = ev => {
+            if (ev && ev.code === 4001) {
+                setTimeout(function () { location.href = '/home'; }, 1500);
+                return;
+            }
+            if (ev && ev.code === 4003) return;
+            setTimeout(connect, 3000);
+        };
         socket.onerror = () => {};
     }
     connect();
+    document.addEventListener('visibilitychange', function () {
+        if (document.visibilityState !== 'visible' || !onMessagesPage) return;
+        if (!isDmAtBottom()) return;
+        hideDmBanner();
+        markCurrentDmRead(true);
+    });
+    document.addEventListener('chat-inline-edit-closed', function () {
+        if (!onMessagesPage || !isDmAtBottom()) return;
+        hideDmBanner();
+        markCurrentDmRead(true);
+    });
     let _typingSentAt = 0;
     document.addEventListener('input', function (e) {
         if (!onMessagesPage || !e.target || e.target.id !== 'dmInput') return;
@@ -155,6 +266,7 @@
         if (!ta || !target) return;
         const content = ta.value.trim();
         if (!content || !socket || socket.readyState !== WebSocket.OPEN) return;
+        _pendingDM = { target: String(target), content, at: Date.now() };
         socket.send(JSON.stringify({ type: 'dm_send', target, content }));
         ta.value = '';
         ta.dispatchEvent(new Event('input', { bubbles: true }));
@@ -179,6 +291,14 @@
         });
     };
     function applyDMEdit(data) {
+        const preserve = window.ChatRender && window.ChatRender.preserveEditView;
+        if (preserve) {
+            preserve(function () { applyDMEditDom(data); });
+            return;
+        }
+        applyDMEditDom(data);
+    }
+    function applyDMEditDom(data) {
         const el = document.querySelector(
             '.dm-msg[data-id="' + CSS.escape(data.message_id) + '"]');
         if (!el) return;
@@ -189,9 +309,12 @@
         bubble.dataset.rendered = '1';
         let mark = el.querySelector('.dm-edited');
         if (!mark) {
-            mark = document.createElement('span');
+            mark = document.createElement('button');
+            mark.type = 'button';
             mark.className = 'dm-edited';
             mark.textContent = '已编辑';
+            mark.dataset.action = 'show-message-history';
+            mark.dataset.id = data.message_id;
             const time = el.querySelector('.dm-time');
             if (time && time.parentNode) time.parentNode.insertBefore(mark, time.nextSibling);
             else el.querySelector('.dm-msg-header').appendChild(mark);
@@ -292,12 +415,17 @@ function appendDM(msg, isMe) {
         if (!list) return null;
         const inner = list.querySelector('.dm-list-inner') || list;
         const wasAtBottom = Math.abs(list.scrollTop) <= 60;
+        const editBox = inner.querySelector('.msg-edit-box');
+        const editTop = editBox ? editBox.getBoundingClientRect().top : 0;
         const div = window.ChatRender && window.ChatRender.buildDMMessageEl
             ? window.ChatRender.buildDMMessageEl(Object.assign({}, msg, { is_me: !!isMe }))
             : null;
         if (!div) return null;
         inner.insertBefore(div, inner.firstElementChild);
-        if (wasAtBottom) {
+        if (editBox) {
+            const delta = editBox.getBoundingClientRect().top - editTop;
+            if (delta) list.scrollTop += delta;
+        } else if (wasAtBottom) {
             list.scrollTop = 0;
         }
         return div;
@@ -342,6 +470,9 @@ function appendDM(msg, isMe) {
                             return;
                         }
                         const inner = list.querySelector('.dm-list-inner') || list;
+                        const olderEditBox = inner.querySelector('.msg-edit-box');
+                        const olderEditTop = olderEditBox
+                            ? olderEditBox.getBoundingClientRect().top : 0;
                         res.messages.slice().reverse().forEach(m => {
                             const div = window.ChatRender
                                 && window.ChatRender.buildDMMessageEl
@@ -350,10 +481,15 @@ function appendDM(msg, isMe) {
                                 : null;
                             if (div) inner.appendChild(div);
                         });
+                        if (olderEditBox) {
+                            const delta = olderEditBox.getBoundingClientRect().top
+                                - olderEditTop;
+                            if (delta) list.scrollTop += delta;
+                        }
                         before = res.next_before || before;
                         hasMore = !!res.has_more;
                         const grew = list.scrollHeight - prevHeight;
-                        if (grew > 0) list.scrollTop = prevTop - grew;
+                        if (!olderEditBox && grew > 0) list.scrollTop = prevTop - grew;
                     }).catch(() => {
                         hideLoading();
                         loading = false;

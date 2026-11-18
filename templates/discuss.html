@@ -145,7 +145,7 @@
                         <button type="button" data-action="revoke-message" data-id="{{ msg.id }}" title="撤回">↩️</button>
                       {% endif %}
                     {% endif %}
-                    {% if can_delete_any or msg.user_id == current_user.id %}
+                    {% if can_delete_any or (msg.user_id == current_user.id and can_delete_own) %}
                       <button type="button" data-action="delete-message" data-id="{{ msg.id }}" title="删除" aria-label="删除">🗑️</button>
                     {% endif %}
                   </div>

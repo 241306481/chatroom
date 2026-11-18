@@ -31,11 +31,13 @@
         box.appendChild(ta);
         box.appendChild(bar);
         bubble.parentNode.insertBefore(box, bubble.nextSibling);
-        ta.focus();
+        ta.focus({ preventScroll: true });
         ta.setSelectionRange(raw.length, raw.length);
+        if (box.scrollIntoView) box.scrollIntoView({ block: 'nearest' });
         function close() {
             box.remove();
             bubble.hidden = false;
+            document.dispatchEvent(new CustomEvent('chat-inline-edit-closed'));
         }
         function submit() {
             const val = ta.value.trim();
@@ -59,6 +61,28 @@
             }
         });
     }
+    function cancelInlineEdit(root) {
+        const box = root && root.querySelector('.msg-edit-box');
+        if (!box) return false;
+        const bubble = root.querySelector('.msg-content, .dm-bubble');
+        box.remove();
+        if (bubble) bubble.hidden = false;
+        return true;
+    }
+    function preserveEditView(fn) {
+        const box = document.querySelector('.msg-edit-box');
+        if (!box) { fn(); return; }
+        const top = box.getBoundingClientRect().top;
+        fn();
+        if (!box.isConnected) return;
+        const delta = box.getBoundingClientRect().top - top;
+        if (!delta) return;
+        const list = document.getElementById('messageList');
+        const dmList = document.getElementById('dmList');
+        const scroller = list && list.contains(box) ? list
+            : (dmList && dmList.contains(box) ? dmList : (list || dmList));
+        if (scroller) scroller.scrollTop += delta;
+    }
     function editMessage(id, btn) {
         const root = btn && btn.closest ? btn.closest('.message') : null;
         if (!root) return;
@@ -75,29 +99,50 @@
         });
     }
     function applyEdit(id, content, editedAt) {
-        const el = document.querySelector('.message[data-id="' + CSS.escape(id) + '"]');
-        if (!el) return;
-        const bubble = el.querySelector('.msg-content');
-        if (!bubble) return;
-        bubble.dataset.raw = content;
-        bubble.innerHTML = window.renderContent(content);
-        bubble.dataset.rendered = '1';
-        let mark = el.querySelector('.msg-edited');
-        if (!mark) {
-            mark = document.createElement('button');
-            mark.type = 'button';
-            mark.className = 'msg-edited';
-            mark.textContent = '已编辑';
-            const time = el.querySelector('.msg-time');
-            if (time && time.parentNode) time.parentNode.insertBefore(mark, time.nextSibling);
-            else el.querySelector('.msg-header').appendChild(mark);
+        preserveEditView(function () {
+        const safeId = CSS.escape(id);
+        const el = document.querySelector('.message[data-id="' + safeId + '"]');
+        if (el) {
+            const bubble = el.querySelector('.msg-content');
+            if (bubble) {
+                bubble.dataset.raw = content;
+                bubble.innerHTML = window.renderContent(content);
+                bubble.dataset.rendered = '1';
+                let mark = el.querySelector('.msg-edited');
+                if (!mark) {
+                    mark = document.createElement('button');
+                    mark.type = 'button';
+                    mark.className = 'msg-edited';
+                    mark.textContent = '已编辑';
+                    const time = el.querySelector('.msg-time');
+                    if (time && time.parentNode) time.parentNode.insertBefore(mark, time.nextSibling);
+                    else el.querySelector('.msg-header').appendChild(mark);
+                }
+                mark.dataset.action = 'show-message-history';
+                mark.dataset.id = id;
+                mark.title = editedAt || '';
+                if (window.CollapseUI && window.CollapseUI.refreshMessage) {
+                    window.CollapseUI.refreshMessage(el);
+                }
+            }
         }
-        mark.dataset.action = 'show-message-history';
-        mark.dataset.id = id;
-        mark.title = editedAt || '';
-        if (window.CollapseUI && window.CollapseUI.refreshMessage) {
-            window.CollapseUI.refreshMessage(el);
+        const pin = document.querySelector(
+            '.pinned-item[data-id="' + safeId + '"] .pinned-content');
+        if (pin) {
+            pin.dataset.raw = content;
+            pin.innerHTML = window.renderContent(content);
+            pin.dataset.rendered = '1';
+            if (window.CollapseUI && window.CollapseUI.refreshPinned) {
+                window.CollapseUI.refreshPinned(pin.closest('.pinned-item'));
+            }
         }
+        const preview = Array.from(String(content || '')).slice(0, 80).join('');
+        document.querySelectorAll(
+            '.message[data-reply-to="' + safeId + '"] .reply-quote-content'
+        ).forEach(function (quote) {
+            quote.textContent = preview;
+        });
+        });
     }
     function historyUrl(id, btn) {
         const dm = btn && btn.closest ? btn.closest('.dm-msg') : null;
@@ -221,9 +266,18 @@
         });
     }
     function applyRevoke(data) {
+        preserveEditView(function () {
         const el = document.querySelector('.message[data-id="' + data.message_id + '"]');
-        if (!el) return;
+        if (!el) {
+            R.updateReplyQuotes(data.message_id, true);
+            if (data.was_pinned) updatePinnedPanel(data.message_id, false, null);
+            return;
+        }
+        cancelInlineEdit(el);
         el.classList.add('revoked-msg');
+        el.removeAttribute('data-reply-to');
+        const quote = el.querySelector('.msg-reply-quote');
+        if (quote) quote.remove();
         const content = el.querySelector('.msg-content');
         if (content) {
             content.classList.add('msg-revoked');
@@ -250,14 +304,12 @@
             el.classList.remove('pinned');
             const icon = el.querySelector('.pin-icon');
             if (icon) icon.remove();
-            const panel = document.querySelector('.pinned-panel');
-            if (panel) {
-                const item = panel.querySelector('.pinned-item[data-id="' + data.message_id + '"]');
-                if (item) item.remove();
-            }
+            updatePinnedPanel(data.message_id, false, null);
         }
+        });
     }
     function updatePinned(id, pinned, msg) {
+        preserveEditView(function () {
         const el = document.querySelector('.message[data-id="' + id + '"]');
         if (el) {
             el.classList.toggle('pinned', pinned);
@@ -273,6 +325,7 @@
             }
         }
         updatePinnedPanel(id, pinned, msg);
+        });
     }
     function updatePinnedPanel(id, pinned, msg) {
         const panel = document.querySelector('.pinned-panel');
@@ -285,7 +338,7 @@
                 if (!empty) {
                     empty = document.createElement('p');
                     empty.className = 'empty';
-                    empty.textContent = '暂无公告';
+                    empty.textContent = '暂无置顶消息';
                     panel.appendChild(empty);
                 }
             }
@@ -302,12 +355,22 @@
         item.className = 'pinned-item' + (msg && msg.is_system ? ' system-pin' : '');
         const canPin = window.__CAN_PIN__ === true;
         const raw = msg ? (msg.content || '') : '';
+        const nick = msg ? (msg.nickname || '') : '';
+        const createdAt = msg ? (msg.created_at || '') : '';
         item.innerHTML =
+            '<div class="pinned-meta-top">' +
+              '<span class="pinned-nick">' + esc(nick) + '</span>' +
+              '<span class="pinned-time">' + esc(createdAt) + '</span>' +
+              '<button type="button" class="pinned-src-btn" data-action="scroll-to-message" ' +
+                'data-id="' + escAttr(id) + '" title="定位原消息">↩</button>' +
+              '<button type="button" class="pinned-src-btn" data-action="toggle-source" ' +
+                'title="查看源码">📄</button>' +
+              '</div>' +
             '<div class="pinned-content md-body" data-raw="' + escAttr(raw) + '"></div>' +
-            '<div class="pinned-meta">' + esc(msg ? msg.nickname : '') + '</div>' +
             (canPin
                 ? '<div class="pinned-actions"><button type="button" title="取消置顶" data-action="unpin-message" data-id="' + escAttr(id) + '">📌</button></div>'
                 : '');
+        item.classList.remove('pinned-collapsed');
         const content = item.querySelector('.pinned-content');
         content.innerHTML = window.renderContent(raw);
         content.dataset.rendered = '1';
@@ -331,12 +394,14 @@
         b.querySelector('.count').textContent = String(count);
     }
     function applyReaction(msgId, emoji, userId, added, count) {
+        preserveEditView(function () {
         const c = document.getElementById('reactions-' + msgId);
         if (!c) return;
         const existing = c.querySelector('[data-emoji="' + CSS.escape(emoji) + '"]');
         let mine = existing ? existing.classList.contains('mine') : false;
         if (userId === window.MY_UID) mine = !!added;
         renderReaction(c, msgId, emoji, count, mine);
+        });
     }
     function initReactionsIn(el) {
         if (el.dataset.rendered === '1') return;
@@ -354,6 +419,8 @@
         document.querySelectorAll('.msg-reactions[data-reactions]').forEach(initReactionsIn);
     }
     R.startInlineEdit = startInlineEdit;
+    R.cancelInlineEdit = cancelInlineEdit;
+    R.preserveEditView = preserveEditView;
     R.revokeMessage = revokeMessage;
     R.applyRevoke = applyRevoke;
     R.applyEdit = applyEdit;

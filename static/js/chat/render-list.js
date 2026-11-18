@@ -4,31 +4,58 @@
         const list = document.getElementById('messageList');
         if (!list) return;
         const inner = list.querySelector('.message-list-inner') || list;
+        const editBox = inner.querySelector('.msg-edit-box');
+        const editTop = editBox ? editBox.getBoundingClientRect().top : 0;
         const empty = inner.querySelector('.empty');
         if (empty) empty.remove();
         inner.insertBefore(R.buildMessageEl(msg), inner.firstElementChild);
+        if (editBox) {
+            const delta = editBox.getBoundingClientRect().top - editTop;
+            if (delta) list.scrollTop += delta;
+        }
+        if (window.MessageBatch && window.MessageBatch.refresh) {
+            window.MessageBatch.refresh();
+        }
     }
     function prependMessage(msg) {
         const list = document.getElementById('messageList');
         if (!list) return;
         const inner = list.querySelector('.message-list-inner') || list;
         if (inner.querySelector('.message[data-id="' + (msg.id || '') + '"]')) return;
+        const editBox = inner.querySelector('.msg-edit-box');
+        const editTop = editBox ? editBox.getBoundingClientRect().top : 0;
         const div = R.buildMessageEl(msg);
         inner.appendChild(div);
+        if (editBox) {
+            const delta = editBox.getBoundingClientRect().top - editTop;
+            if (delta) list.scrollTop += delta;
+        }
         const re = div.querySelector('.msg-reactions[data-reactions]');
         if (re) R.initReactionsIn(re);
+        if (window.MessageBatch && window.MessageBatch.refresh) {
+            window.MessageBatch.refresh();
+        }
     }
     function removeMessage(id) {
         const el = document.querySelector('.message[data-id="' + id + '"]');
         if (el) el.remove();
     }
     function applyDelete(messageId) {
-        const el = document.querySelector('.message[data-id="' + messageId + '"]');
-        if (el) el.remove();
-        const pin = document.querySelector(
-            '.pinned-item[data-id="' + messageId + '"]');
-        if (pin) pin.remove();
-        updateReplyQuotes(messageId, false);
+        const preserve = R.preserveEditView || function (fn) { fn(); };
+        preserve(function () {
+            const el = document.querySelector('.message[data-id="' + messageId + '"]');
+            if (el) el.remove();
+            const pin = document.querySelector(
+                '.pinned-item[data-id="' + messageId + '"]');
+            if (pin) {
+                if (R.updatePinnedPanel) R.updatePinnedPanel(messageId, false, null);
+                else pin.remove();
+            }
+            updateReplyQuotes(messageId, false);
+            if (window.MessageBatch && window.MessageBatch.refresh) {
+                window.MessageBatch.refresh();
+            }
+        });
     }
     function updateReplyQuotes(messageId, revoked) {
         document.querySelectorAll('[data-reply-to="' + messageId + '"]').forEach(msgEl => {

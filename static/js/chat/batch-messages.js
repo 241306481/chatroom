@@ -4,6 +4,9 @@
     function checks() {
         return Array.from(document.querySelectorAll('[data-msg-check]'));
     }
+    function currentIds() {
+        return checks().filter(el => el.checked).map(el => el.value);
+    }
     function refresh() {
         const list = checks();
         selected = new Set(list.filter(el => el.checked).map(el => el.value));
@@ -43,24 +46,26 @@
     }
     window.toggleMessageBatch = toggleMessageBatch;
     window.batchPinSelected = function (pinned) {
-        if (!selected.size) {
+        const ids = currentIds();
+        if (!ids.length) {
             window.showAlert('请先选择消息');
             return;
         }
-        send(Array.from(selected), { type: 'batch_pin', pinned: !!pinned });
+        send(ids, { type: 'batch_pin', pinned: !!pinned });
     };
     window.batchDeleteSelected = function () {
-        if (!selected.size) {
+        const ids = currentIds();
+        if (!ids.length) {
             window.showAlert('请先选择消息');
             return;
         }
-        window.showConfirm('删除选中的 ' + selected.size + ' 条消息？').then(function (ok) {
+        window.showConfirm('删除选中的 ' + ids.length + ' 条消息？').then(function (ok) {
             if (!ok) return;
-            send(Array.from(selected), { type: 'batch_delete' });
+            send(ids, { type: 'batch_delete' });
         });
     };
     window.batchForwardSelected = function (mode) {
-        if (!selected.size) {
+        if (!currentIds().length) {
             window.showAlert('请先选择消息');
             return;
         }
@@ -73,7 +78,8 @@
     };
     window.MessageBatch = {
         clear: clear,
-        selectedIds: function () { return Array.from(selected); },
+        refresh: refresh,
+        selectedIds: currentIds,
         done: function (count) {
             clear();
             toggleMessageBatch(false);

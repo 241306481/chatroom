@@ -142,6 +142,12 @@ function waitFor(ws, pred, ms = 10000) {
         assert.ok(read('static/js/chat/forward.js').includes('message_ids'));
         assert.ok(read('static/js/chat/forward.js').includes('forward_mode'));
         assert.ok(read('static/js/chat/batch-messages.js').includes('batchForwardSelected'));
+        assert.ok(read('static/js/chat/batch-messages.js').includes('currentIds'),
+            '批量操作仍使用可能过期的选中集合');
+        assert.ok(read('static/js/chat/actions.js').includes('ChatSendQueue'),
+            '发送失败后未恢复消息内容');
+        assert.ok(read('static/js/chat/socket.js').includes('ChatSendQueue.restore'),
+            '发送错误未触发输入恢复');
         assert.ok(/outCount[\s\S]{0,120}limiter\.note\(limitAction/.test(read('lib/routes/forward.js')),
             '批量转发未按条数计入限流');
         assert.ok(read('lib/routes/forward.js').includes('target_user'), '转发目标缺少用户支持');
@@ -180,6 +186,13 @@ function waitFor(ws, pred, ms = 10000) {
             '折叠动作未分派');
         assert.ok(read('static/js/chat/render-actions.js').includes('CollapseUI.attachHistoryItem'),
             '编辑历史未接入折叠');
+        assert.ok(read('static/js/chat/render-actions.js').includes('CollapseUI.refreshPinned'),
+            '编辑置顶消息后折叠预览未刷新');
+        assert.ok(read('templates/discuss.html')
+            .includes('(msg.user_id == current_user.id and can_delete_own)'),
+            '删除自己的消息按钮未检查域内权限');
+        assert.ok(read('static/js/chat/render-message.js').includes('(isOwn && canDeleteOwn)'),
+            '实时消息删除按钮未检查域内权限');
         assert.ok(read('static/css/modal.css').includes('overflow-anchor: none'),
             '编辑历史未关闭滚动锚定');
         assert.ok(read('static/css/base.css').includes('left: 20px; bottom: 20px'),
@@ -210,11 +223,67 @@ function waitFor(ws, pred, ms = 10000) {
         assert.ok(dmJs.includes('showDmBanner(1, el)')
             && dmJs.includes('el.scrollIntoView'),
             '私信新消息 banner 未跳到最上方未读');
+        assert.ok(dmJs.includes('if (document.hidden)')
+            && dmJs.includes('notifyIncomingDM'),
+            '后台私信会被误标已读或缺少通知');
+        assert.ok(dmJs.includes('bumpConversationUnread')
+            && dmJs.includes('ensureConversationRow'),
+            '私信会话列表未实时更新未读');
+        assert.ok(dmJs.includes("data.type === 'error'"),
+            '私信发送失败没有提示');
+        assert.ok(dmJs.includes('_pendingDM'),
+            '私信发送失败后未恢复内容');
+        assert.ok(dmJs.includes('markCurrentDmRead'),
+            '私信回到底部后未补发已读');
+        assert.ok(dmJs.includes("mark.dataset.action = 'show-message-history'"),
+            '实时编辑私信后缺少历史入口');
+        const renderActionsJs = read('static/js/chat/render-actions.js');
+        assert.ok(renderActionsJs.includes('R.startInlineEdit = startInlineEdit'),
+            '私信编辑缺少可用的行内编辑器');
+        assert.ok(renderActionsJs.includes('R.cancelInlineEdit = cancelInlineEdit')
+            && renderActionsJs.includes('cancelInlineEdit(el);'),
+            '编辑目标被撤回时编辑器未关闭');
+        assert.ok(renderActionsJs.includes('function preserveEditView')
+            && renderActionsJs.includes('R.preserveEditView = preserveEditView')
+            && (renderActionsJs.match(/preserveEditView\(function/g) || []).length >= 4,
+            '其他消息编辑、置顶、表情或撤回会移动编辑器');
+        assert.ok(read('static/js/chat/render-list.js').includes('R.preserveEditView'),
+            '其他消息被删除时会移动编辑器');
+        assert.ok(dmJs.includes('applyDMEditDom')
+            && dmJs.includes('ChatRender.preserveEditView'),
+            '私信其他消息编辑会移动编辑器');
+        const renderListJs = read('static/js/chat/render-list.js');
+        assert.ok(renderActionsJs.includes("removeAttribute('data-reply-to')")
+            && renderActionsJs.includes("el.querySelector('.msg-reply-quote')"),
+            '实时撤回后仍残留回复引用');
+        assert.ok(renderListJs.includes("inner.querySelector('.msg-edit-box')")
+            && renderListJs.includes('list.scrollTop += delta'),
+            '新消息会移动正在编辑的消息');
+        assert.ok(dmJs.includes("inner.querySelector('.msg-edit-box')")
+            && dmJs.includes('list.scrollTop += delta'),
+            '私信新消息会移动正在编辑的消息');
+        assert.ok(read('static/js/chat/socket.js').includes('!atBottom || editing'),
+            '新消息仍会自动滚动并移动编辑器');
+        assert.ok(/function prependMessage[\s\S]*?msg-edit-box/.test(renderListJs),
+            '加载更早消息会移动正在编辑的消息');
+        assert.ok(dmJs.includes('olderEditBox')
+            && dmJs.includes('list.scrollTop += delta')
+            && dmJs.includes('!olderEditBox && grew > 0'),
+            '私信加载更早消息会移动正在编辑的消息');
+        assert.ok(renderActionsJs.includes("chat-inline-edit-closed"),
+            '编辑器关闭后未恢复已读状态');
+        assert.ok(socketJs.includes("chat-inline-edit-closed")
+            && dmJs.includes("chat-inline-edit-closed"),
+            '讨论或私信未监听编辑器关闭事件');
+        assert.ok(/message_edited[\s\S]*?__chatSearchReapply/.test(socketJs),
+            '编辑消息后未刷新搜索结果');
         const baseHtml = read('templates/base.html');
         assert.ok(baseHtml.indexOf('js/domain-live.js') > baseHtml.indexOf('js/online.js'),
             '领域实时脚本未接入或顺序错误');
         assert.ok(read('templates/home.html').includes('window.__HOME_DISCUSSIONS__'),
             '首页讨论列表缺少实时数据');
+        assert.ok(read('lib/routes/home.js').includes('messageView.forwardContent'),
+            '首页转发置顶公告缺少正文');
         assert.ok(read('templates/discuss_list.html').includes('data-discuss-list'),
             '讨论列表缺少实时列表标记');
         assert.ok(read('static/js/discuss-list-filter.js')
@@ -224,6 +293,14 @@ function waitFor(ws, pred, ms = 10000) {
             '首页讨论数据缺少置顶状态');
         assert.ok(read('static/js/online.js').includes("'chatroom:domain-event'"),
             '在线状态未分派领域实时事件');
+        const onlineJs = read('static/js/online.js');
+        assert.ok(onlineJs.includes('RETRY_MAX_MS'),
+            '在线状态 WS 断线后未持续重连');
+        assert.ok(onlineJs.includes("data.type === 'kicked'")
+            && onlineJs.includes('ev.code === 4001'),
+            '在线状态页收到踢出后未跳转且会继续重连');
+        assert.ok(read('lib/websocket/status.js').includes('badge_only: true'),
+            '在线徽标连接被拒时缺少静默标记');
         const domainLiveJs = read('static/js/domain-live.js');
         assert.ok(domainLiveJs.includes('renderHomeMembers')
             && domainLiveJs.includes('discussion_activity'),
@@ -449,6 +526,23 @@ function waitFor(ws, pred, ms = 10000) {
         assert.deepStrictEqual(versions,
             ['batch one', 'edited one', 'edited two']);
     });
+    await check('消息：单条删除会清掉置顶标记', async () => {
+        const pNew = waitFor(wsB, d => d.type === 'new_message'
+            && d.message.content === 'single pinned delete');
+        wsA.send(JSON.stringify({ type: 'message', content: 'single pinned delete' }));
+        const id = (await pNew).message.id;
+        const pPin = waitFor(wsA, d => d.type === 'message_pinned'
+            && d.message_id === id && d.pinned === true);
+        wsA.send(JSON.stringify({ type: 'pin', message_id: id }));
+        await pPin;
+        const pDel = waitFor(wsB, d => d.type === 'message_deleted'
+            && d.message_id === id);
+        wsA.send(JSON.stringify({ type: 'delete', message_id: id }));
+        await pDel;
+        const m = storage.findMessage('system', 'general', id);
+        assert.strictEqual(m.deleted, true);
+        assert.strictEqual(m.pinned, false);
+    });
     await check('消息：批量删除会清掉置顶标记', async () => {
         const p = waitFor(wsA, d => d.type === 'batch_result' && d.op === 'delete');
         wsA.send(JSON.stringify({ type: 'batch_delete', message_ids: ids }));
@@ -493,6 +587,30 @@ function waitFor(ws, pred, ms = 10000) {
         assert.ok(viewContent(got).includes('**原消息**'));
         assert.ok(viewContent(got).includes('转发自'));
         assert.strictEqual(got.forwarded_from.id, src.id);
+        const ws = await openRetry(() => new WebSocket(
+            `ws://127.0.0.1:${PORT}/ws/discuss/system/fwd`,
+            { headers: { Cookie: A, Origin: `http://127.0.0.1:${PORT}` } }));
+        const p = waitFor(ws, d => d.type === 'new_message'
+            && d.message.content === 'reply-forward');
+        ws.send(JSON.stringify({
+            type: 'message', content: 'reply-forward', reply_to: got.id,
+        }));
+        const reply = await p;
+        const pinP = waitFor(ws, d => d.type === 'message_pinned'
+            && d.message_id === got.id && d.pinned === true);
+        ws.send(JSON.stringify({ type: 'pin', message_id: got.id }));
+        const pin = await pinP;
+        ws.close();
+        assert.ok(reply.message.reply_info
+            && reply.message.reply_info.content.includes('原消息'),
+            '实时回复转发消息时未显示转发正文');
+        assert.ok(pin.message && pin.message.content.includes('原消息'),
+            '实时置顶转发消息时未显示转发正文');
+        const { buildDiscussData } = require('../../lib/routes/discuss');
+        const page = buildDiscussData('system', 'fwd', storage.loadUser(uidA));
+        const pinned = page.pinned_messages.find(p => p.id === got.id);
+        assert.ok(pinned && pinned.content.includes('原消息'),
+            '刷新后置顶转发消息缺少转发正文');
     });
     await check('转发：锁定转发时的消息版本', async () => {
         const src = {

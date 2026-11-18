@@ -1,4 +1,31 @@
 (function () {
+    const pendingSends = [];
+    window.ChatSendQueue = {
+        ack: function (msg) {
+            if (!msg) return;
+            const idx = pendingSends.findIndex(p => p.content === msg.content);
+            if (idx >= 0) pendingSends.splice(idx, 1);
+        },
+        restore: function () {
+            const now = Date.now();
+            for (let i = pendingSends.length - 1; i >= 0; i--) {
+                const p = pendingSends[i];
+                if (now - p.at > 30000) {
+                    pendingSends.splice(i, 1);
+                    continue;
+                }
+                pendingSends.splice(i, 1);
+                const input = document.getElementById('msgInput');
+                if (!input || input.value.trim()) return;
+                input.value = p.content;
+                if (p.replyTo && window.ChatReply && !window.ChatReply.state.id) {
+                    window.setReplyTo(p.replyTo);
+                }
+                input.dispatchEvent(new Event('input', { bubbles: true }));
+                return;
+            }
+        },
+    };
     window.sendMessage = function () {
         const input = document.getElementById('msgInput');
         if (!input) return;
@@ -11,6 +38,8 @@
         const payload = { type: 'message', content };
         const replyTo = window.ChatReply && window.ChatReply.state.id;
         if (replyTo) payload.reply_to = replyTo;
+        pendingSends.push({ content, replyTo: replyTo || '', at: Date.now() });
+        if (pendingSends.length > 20) pendingSends.shift();
         window.ChatWS.send(payload);
         input.value = '';
         input.dispatchEvent(new Event('input', { bubbles: true }));

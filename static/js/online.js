@@ -64,7 +64,8 @@ window.updateAllOnlineCounts = function () {
     const wsUrl = WS_PROTOCOL + '://' + location.host + '/ws/status/' + encodeURIComponent(DOMAIN);
     let socket = null, reconnectTimer = null;
     let failCount = 0;
-    const MAX_FAILS = 3;
+    const RETRY_BASE_MS = 3000;
+    const RETRY_MAX_MS = 30000;
     function emitDomainEvent(data) {
         try {
             window.dispatchEvent(new CustomEvent('chatroom:domain-event', {
@@ -86,12 +87,24 @@ window.updateAllOnlineCounts = function () {
             else if (data.type === 'online_list') window.applyOnlineList(data.users);
             else if (data.type === 'members_update') {
                 if (window.MemberList) window.MemberList.apply(data);
+            } else if (data.type === 'kicked') {
+                if (window.showToast) window.showToast('你已被移出 ' + (data.domain || '当前') + ' 域');
+                setTimeout(function () { location.href = '/home'; }, 1500);
+            } else if (data.type === 'domain_deleted') {
+                if (window.showToast) window.showToast('域 ' + (data.name || '当前域') + ' 已被删除');
+                setTimeout(function () { location.href = '/home'; }, 1500);
             }
         };
-        socket.onclose = () => {
-            if (failCount >= MAX_FAILS) return;
+        socket.onclose = ev => {
+            if (ev && ev.code === 4001) {
+                setTimeout(function () { location.href = '/home'; }, 1500);
+                return;
+            }
+            if (ev && ev.code === 4003) return;
             failCount++;
-            reconnectTimer = setTimeout(connect, 3000);
+            const delay = Math.min(RETRY_MAX_MS,
+                RETRY_BASE_MS * Math.pow(2, Math.min(failCount - 1, 3)));
+            reconnectTimer = setTimeout(connect, delay);
         };
         socket.onerror = () => {};
     }

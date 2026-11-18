@@ -20,10 +20,11 @@
         if (msg.reply_to) div.dataset.replyTo = msg.reply_to;
         const canPin = window.__CAN_PIN__ === true;
         const canDeleteAny = window.__CAN_DELETE_ANY__ === true;
+        const canDeleteOwn = window.__CAN_DELETE_OWN__ === true;
         const canAddReaction = window.__CAN_ADD_REACTION__ === true;
         const isOwn = msg.user_id === window.MY_UID;
         const showPin = canPin && !msg.revoked;
-        const showDelete = canDeleteAny || isOwn;
+        const showDelete = canDeleteAny || (isOwn && canDeleteOwn);
         const revoked = !!msg.revoked;
         const nick = window.Avatar.avatarText(msg.nickname);
         const color = window.Avatar.safeColor(msg.avatar_color);
@@ -46,9 +47,9 @@
                            <span class="reply-quote-content">${esc(msg.reply_info.content)}</span>
                        </div>`)
             : '';
-        const revokeBtn = !revoked && (isOwn
-            ? window.__CAN_REVOKE_OWN__ === true
-            : window.__CAN_REVOKE_ANY__ === true)
+        const canRevoke = window.__CAN_REVOKE_ANY__ === true
+            || (isOwn && window.__CAN_REVOKE_OWN__ === true);
+        const revokeBtn = !revoked && canRevoke
             ? `<button type="button" data-action="revoke-message" data-id="${escAttr(msg.id)}" title="撤回">↩️</button>`
             : '';
         const editBtn = !revoked && !msg.forwarded_from && isOwn && window.__CAN_SEND__ === true
