@@ -295,6 +295,12 @@
                 case 'message_revoked':
                     R.applyRevoke(data);
                     break;
+                case 'edit_ack':
+                    if (R.applyEdit && data.content !== undefined) {
+                        R.applyEdit(data.message_id, data.content, data.edited_at);
+                    }
+                    if (window.ChatEditQueue) window.ChatEditQueue.ack(data.edit_id);
+                    break;
                 case 'message_edited':
                     if (window.ChatEditQueue) window.ChatEditQueue.ack(data.message_id);
                     if (R.applyEdit) {

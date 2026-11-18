@@ -102,12 +102,13 @@
                 visibility: root.dataset.imageVisibility,
             });
         });
-        bindDraft(root, ta, previewApi);
+        if (!root.dataset.noDraft) bindDraft(root, ta, previewApi);
         window.EditorTable.attach({
             root, ta, refresh: previewApi.refresh, closeAll,
         });
         window.EditorResize.attach({
             root, wrapper, resizeOp, paneEdit, panePreview, heightResize,
+            keepTop: root.dataset.keepTop === '1',
         });
         if (modeBtns.length) {
             function setMode(mode) {

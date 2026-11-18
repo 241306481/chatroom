@@ -349,6 +349,9 @@
                     appendDM(data.message, true);
                     lastDmId = data.message.id || lastDmId;
                 }
+            } else if (data.type === 'edit_ack') {
+                if (data.content !== undefined) applyDMEdit(data);
+                if (window.ChatEditQueue) window.ChatEditQueue.ack(data.edit_id);
             } else if (data.type === 'dm_edited') {
                 if (window.ChatEditQueue) window.ChatEditQueue.ack(data.message_id);
                 applyDMEdit(data);
@@ -427,7 +430,7 @@
         const target = document.body.dataset.dmTarget || '';
         if (!bubble || !target || !window.ChatRender
             || !window.ChatRender.startInlineEdit) return;
-        window.ChatRender.startInlineEdit(root, bubble, function (val, settle) {
+        window.ChatRender.startInlineEdit(root, bubble, function (val, settle, reqId) {
             if (!socket || socket.readyState !== WebSocket.OPEN) {
                 window.showToast('未就绪');
                 settle(false);
@@ -435,6 +438,7 @@
             }
             socket.send(JSON.stringify({
                 type: 'dm_edit', target, message_id: id, content: val,
+                edit_id: reqId,
             }));
         }, id);
     };

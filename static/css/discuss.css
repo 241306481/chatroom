@@ -343,6 +343,15 @@ button.msg-edited, button.dm-edited {
 }
 button.msg-edited:hover, button.dm-edited:hover { color: #1890ff; }
 .msg-edit-box { margin: 6px 0; }
+.msg-edit-box .md-editor { width: 100%; box-sizing: border-box; }
+.msg-edit-box .md-editor-footer { flex-wrap: wrap; gap: 6px; }
+.msg-edit-box .md-editor-footer-left { flex-wrap: wrap; gap: 4px 10px; }
+.msg-edit-box .md-editor-footer-left .msg-edit-hint {
+  margin: 0 0 0 4px; padding-left: 8px; border-left: 1px solid #e5e5e5;
+}
+.msg-edit-box .md-editor-footer-right .msg-edit-actions {
+  margin-top: 0; gap: 6px;
+}
 .msg-edit-input { width: 100%; box-sizing: border-box; min-height: 64px; padding: 8px;
   border: 1px solid #40a9ff; border-radius: 6px; font: inherit; font-size: 14px;
   line-height: 1.6; resize: vertical; outline: none; }

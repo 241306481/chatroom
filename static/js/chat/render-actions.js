@@ -1,18 +1,29 @@
 (function () {
     const R = window.ChatRender = window.ChatRender || {};
     const pendingEdits = [];
-    function takePendingEdit(id) {
+    function takePendingEdits(id) {
         const key = String(id);
-        const idx = pendingEdits.findIndex(p => p.id === key);
-        if (idx < 0) return null;
-        const p = pendingEdits.splice(idx, 1)[0];
-        clearTimeout(p.timer);
-        return p;
+        let cleared = false;
+        for (let i = pendingEdits.length - 1; i >= 0; i--) {
+            const p = pendingEdits[i];
+            if (p.id !== key) continue;
+            clearTimeout(p.timer);
+            pendingEdits.splice(i, 1);
+            cleared = true;
+        }
+        return cleared;
     }
     window.ChatEditQueue = {
-        ack: function (id) {
-            const p = takePendingEdit(id);
-            if (p) p.done(true);
+        ack: function (token) {
+            if (!token) return false;
+            const key = String(token);
+            const idx = pendingEdits.findIndex(
+                p => p.reqId === key || p.id === key);
+            if (idx < 0) return false;
+            const p = pendingEdits.splice(idx, 1)[0];
+            clearTimeout(p.timer);
+            p.done(true);
+            return true;
         },
         fail: function () {
             const p = pendingEdits.pop();
@@ -31,10 +42,50 @@
         bubble.hidden = true;
         const box = document.createElement('div');
         box.className = 'msg-edit-box';
-        const ta = document.createElement('textarea');
-        ta.className = 'msg-edit-input';
-        ta.value = raw;
-        ta.rows = Math.min(10, Math.max(2, raw.split('\n').length + 1));
+        const editorSource = document.querySelector(
+            '.message-input-area [data-context-edit], .dm-input-area [data-context-edit]'
+        ) || document.querySelector('[data-context-edit]');
+        let ta = null;
+        let editor = null;
+        if (editorSource && typeof window.initContextEdit === 'function') {
+            editor = editorSource.cloneNode(true);
+            editor.removeAttribute('data-ctx-init');
+            editor.dataset.noDraft = '1';
+            editor.dataset.keepTop = '1';
+            editor.dataset.editorMode = 'split';
+            editor.style.setProperty('--md-editor-height', '220px');
+            const suffix = '-msg-edit-' + (id || Date.now()) + '-'
+                + Math.random().toString(36).slice(2, 6);
+            editor.querySelectorAll('[id]').forEach(function (el) {
+                el.id += suffix;
+            });
+            const submit = editor.querySelector('.md-editor-submit');
+            if (submit) submit.remove();
+            const heightResize = editor.querySelector('[data-height-resize]');
+            if (heightResize) {
+                heightResize.dataset.heightResizePos = 'bottom';
+                heightResize.classList.remove('md-editor-height-resize-top');
+                heightResize.classList.add('md-editor-height-resize-bottom');
+                const content = editor.querySelector('.md-editor-content');
+                if (content && content.parentNode) {
+                    content.parentNode.insertBefore(heightResize, content.nextSibling);
+                }
+            }
+            ta = editor.querySelector('textarea');
+            if (ta) {
+                ta.value = raw;
+                ta.rows = Math.min(10, Math.max(2, raw.split('\n').length + 1));
+                box.appendChild(editor);
+            }
+        }
+        if (!ta) {
+            editor = null;
+            ta = document.createElement('textarea');
+            ta.className = 'msg-edit-input';
+            ta.value = raw;
+            ta.rows = Math.min(10, Math.max(2, raw.split('\n').length + 1));
+            box.appendChild(ta);
+        }
         const bar = document.createElement('div');
         bar.className = 'msg-edit-actions';
         const hint = document.createElement('span');
@@ -47,22 +98,32 @@
         save.type = 'button';
         save.className = 'primary';
         save.textContent = '保存';
-        bar.appendChild(hint);
         bar.appendChild(cancel);
         bar.appendChild(save);
-        box.appendChild(ta);
-        box.appendChild(bar);
+        if (editor) {
+            const footerLeft = editor.querySelector('.md-editor-footer-left');
+            const footerRight = editor.querySelector('.md-editor-footer-right');
+            if (footerLeft) footerLeft.appendChild(hint);
+            else bar.insertBefore(hint, cancel);
+            if (footerRight) footerRight.appendChild(bar);
+            else box.appendChild(bar);
+        } else {
+            bar.insertBefore(hint, cancel);
+            box.appendChild(bar);
+        }
         bubble.parentNode.insertBefore(box, bubble.nextSibling);
+        if (editor) window.initContextEdit(editor);
         ta.focus({ preventScroll: true });
         ta.setSelectionRange(raw.length, raw.length);
         if (box.scrollIntoView) box.scrollIntoView({ block: 'nearest' });
         function close() {
-            if (id) takePendingEdit(id);
+            if (id) takePendingEdits(id);
             box.remove();
             bubble.hidden = false;
             document.dispatchEvent(new CustomEvent('chat-inline-edit-closed'));
         }
         function submit() {
+            if (save.disabled) return;
             const val = ta.value.trim();
             if (!val) {
                 if (window.showToast) window.showToast('消息不能为空');
@@ -71,29 +132,37 @@
             if (val === raw.trim()) { close(); return; }
             save.disabled = true;
             let settled = false;
+            let entry = null;
             function settle(ok) {
                 if (settled) return;
                 settled = true;
-                if (id) takePendingEdit(id);
+                if (entry) {
+                    const idx = pendingEdits.indexOf(entry);
+                    if (idx >= 0) pendingEdits.splice(idx, 1);
+                    if (entry.timer) clearTimeout(entry.timer);
+                    entry = null;
+                }
                 if (ok) { close(); return; }
                 save.disabled = false;
                 ta.focus();
             }
             if (!id) {
-                onSave(val, settle);
+                onSave(val, settle, '');
                 return;
             }
             const key = String(id);
-            const entry = { id: key, done: settle, timer: null };
+            const reqId = 'edit-' + Date.now().toString(36) + '-'
+                + Math.random().toString(36).slice(2, 8);
+            entry = { id: key, reqId: reqId, done: settle, timer: null };
             pendingEdits.push(entry);
             entry.timer = setTimeout(function () {
                 const idx = pendingEdits.indexOf(entry);
-                if (idx < 0) return;
-                pendingEdits.splice(idx, 1);
+                if (idx >= 0) pendingEdits.splice(idx, 1);
+                entry = null;
                 settle(false);
                 if (window.showToast) window.showToast('保存超时，请重试');
             }, 5000);
-            onSave(val, settle);
+            onSave(val, settle, reqId);
         }
         cancel.addEventListener('click', close);
         save.addEventListener('click', submit);
@@ -134,13 +203,15 @@
         if (!root) return;
         const bubble = root.querySelector('.msg-content');
         if (!bubble || bubble.classList.contains('msg-revoked')) return;
-        startInlineEdit(root, bubble, function (val, settle) {
+        startInlineEdit(root, bubble, function (val, settle, reqId) {
             if (!window.ChatWS || !window.ChatWS.isOpen()) {
                 if (window.showToast) window.showToast('未就绪');
                 settle(false);
                 return;
             }
-            window.ChatWS.send({ type: 'edit', message_id: id, content: val });
+            window.ChatWS.send({
+                type: 'edit', message_id: id, content: val, edit_id: reqId,
+            });
         }, id);
     }
     function applyEdit(id, content, editedAt) {
