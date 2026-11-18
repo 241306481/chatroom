@@ -7,17 +7,22 @@ if (!fs.existsSync(TMP)) fs.mkdirSync(TMP, { recursive: true });
 const GROUPS = [
     {
         name: '账号与权限',
-        suites: ['auth-test.js', 'guard-test.js', 'permission-test.js'],
+        suites: ['auth-test.js', 'guard-test.js'],
     },
     {
-        name: '网络与安全',
-        suites: ['rate-limit-test.js', 'route-safety-test.js', 'stage3-security-test.js'],
-    },
-    {
-        name: '消息与文件',
+        name: '安全与渲染',
         suites: [
-            'batch-ops-test.js', 'dm-storage-test.js', 'dom-sanitize-test.js',
-            'attachment-route-test.js', 'storage-integrity-test.js',
+            'route-safety-test.js', 'stage3-security-core-test.js',
+            'stage3-security-auth-test.js', 'stage3-security-files-test.js',
+            'stage3-security-sessions-test.js', 'dom-sanitize-test.js',
+        ],
+    },
+    {
+        name: '消息与存储',
+        suites: [
+            'batch-files-test.js', 'batch-messages-test.js',
+            'batch-forward-test.js', 'batch-admin-test.js',
+            'storage-integrity-test.js',
         ],
     },
 ];
