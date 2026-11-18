@@ -35,7 +35,8 @@
     };
     function startInlineEdit(root, bubble, onSave, id) {
         if (!root || !bubble || root.querySelector('.msg-edit-box')) return;
-        if (root.classList.contains('msg-collapsed') && window.toggleMessageCollapse) {
+        const wasCollapsed = root.classList.contains('msg-collapsed');
+        if (wasCollapsed && window.toggleMessageCollapse) {
             window.toggleMessageCollapse(root);
         }
         const raw = bubble.dataset.raw || bubble.textContent || '';
@@ -120,6 +121,11 @@
             if (id) takePendingEdits(id);
             box.remove();
             bubble.hidden = false;
+            if (wasCollapsed && root.isConnected
+                && !root.classList.contains('revoked-msg')
+                && window.toggleMessageCollapse) {
+                window.toggleMessageCollapse(root);
+            }
             document.dispatchEvent(new CustomEvent('chat-inline-edit-closed'));
         }
         function submit() {
@@ -224,6 +230,9 @@
                 bubble.dataset.raw = content;
                 bubble.innerHTML = window.renderContent(content);
                 bubble.dataset.rendered = '1';
+                bubble.removeAttribute('data-mode');
+                const copyBtn = bubble.querySelector('.source-copy-btn');
+                if (copyBtn) copyBtn.remove();
                 let mark = el.querySelector('.msg-edited');
                 if (!mark) {
                     mark = document.createElement('button');

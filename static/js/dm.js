@@ -459,6 +459,9 @@
         bubble.dataset.raw = data.content;
         bubble.innerHTML = window.renderContent(data.content);
         bubble.dataset.rendered = '1';
+        bubble.removeAttribute('data-mode');
+        const copyBtn = bubble.querySelector('.source-copy-btn');
+        if (copyBtn) copyBtn.remove();
         let mark = el.querySelector('.dm-edited');
         if (!mark) {
             mark = document.createElement('button');
