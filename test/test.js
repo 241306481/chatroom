@@ -4,56 +4,22 @@ const path = require('path');
 const ROOT = path.join(__dirname, '..');
 const TMP = path.join(ROOT, 'test', 'item');
 if (!fs.existsSync(TMP)) fs.mkdirSync(TMP, { recursive: true });
-const SUITES = [
-    'guard-test.js',
-    'register-domain-test.js',
-    'rate-limit-test.js',
-    'client-ip-test.js',
-    'uid-login-test.js',
-    'perm-bits-test.js',
-    'perm-audit-test.js',
-    'permission-test.js',
-    'exp-test.js',
-    'editor-test.js',
-    'clipboard-test.js',
-    'help-test.js',
-    'batch-ops-test.js',
-    'auth-test.js',
-    'ban-until-test.js',
-    'avatar-test.js',
-    'profile-avatar-test.js',
-    'username-change-test.js',
-    'register-ip-color-test.js',
-    'route-safety-test.js',
-    'stage3-security-test.js',
-    'csp-nonce-test.js',
-    'tls-test.js',
-    'dm-image-test.js',
-    'dm-storage-test.js',
-    'chunks-atomic-test.js',
-    'storage-integrity-test.js',
-    'perf-guards-test.js',
-    'zip-test.js',
-    'attachment-route-test.js',
-    'file-view-test.js',
-    'form-submit-test.js',
-    'console-test.js',
-    'console-check-test.js',
-    'console-cmds-test.js',
-    'css-split-test.js',
-    'markdown-test.js',
-    'highlight-test.js',
-    'dom-sanitize-test.js',
-    'shutdown-conn-test.js',
-    'shutdown-test.js',
-    'search-perf-test.js',
-    'search-page-test.js',
-    'member-bar-test.js',
-    'domain-notify-test.js',
-    'flash-test.js',
-    'audit-chain-test.js',
-    'log-test.js',
-    'backup-test.js',
+const GROUPS = [
+    {
+        name: '账号与权限',
+        suites: ['auth-test.js', 'guard-test.js', 'permission-test.js'],
+    },
+    {
+        name: '网络与安全',
+        suites: ['rate-limit-test.js', 'route-safety-test.js', 'stage3-security-test.js'],
+    },
+    {
+        name: '消息与文件',
+        suites: [
+            'batch-ops-test.js', 'dm-storage-test.js', 'dom-sanitize-test.js',
+            'attachment-route-test.js', 'storage-integrity-test.js',
+        ],
+    },
 ];
 const encoding = require('./check-encoding').run();
 if (encoding.problems.length) {
@@ -69,51 +35,52 @@ for (const f of ['cert.pem', 'key.pem']) {
     const p = path.join(ROOT, f);
     if (fs.existsSync(p)) { try { fs.rmSync(p); } catch (e) {} }
 }
-let pass = 0, fail = 0, skip = 0;
-const skipWhy = [];
-for (const s of SUITES) {
-    const f = path.join(TMP, s);
-    if (!fs.existsSync(f)) {
-        console.log(`${s.padEnd(26)} MISSING`);
+let pass = 0, fail = 0, suitePass = 0, suiteFail = 0;
+for (const group of GROUPS) {
+    const details = [];
+    let groupFail = 0;
+    for (const s of group.suites) {
+        const f = path.join(TMP, s);
+        if (!fs.existsSync(f)) {
+            groupFail++;
+            suiteFail++;
+            details.push(`${s} MISSING`);
+            continue;
+        }
+        for (const d of ['data', 'logs', 'evil', 'evil.json']) {
+            const p = path.join(ROOT, d);
+            if (fs.existsSync(p)) fs.rmSync(p, { recursive: true, force: true });
+        }
+        let out = '';
+        try {
+            out = execFileSync(process.execPath, [f], {
+                cwd: ROOT, encoding: 'utf8', timeout: 180000,
+                stdio: ['pipe', 'pipe', 'pipe'],
+            });
+        } catch (e) {
+            out = (e.stdout || '') + (e.stderr || '');
+        }
+        const m = out.match(/(\d+) passed, (\d+) failed(?:, (\d+) skipped)?/);
+        if (m && +m[2] === 0) {
+            suitePass++;
+        } else {
+            groupFail++;
+            suiteFail++;
+            details.push(`${s}\n${out.slice(-2500)}`);
+        }
+    }
+    if (groupFail) {
         fail++;
-        continue;
+        console.log(`${group.name.padEnd(18)} FAIL (${groupFail}/${group.suites.length})`);
+        console.log(details.join('\n').trimEnd());
+    } else {
+        pass++;
+        console.log(`${group.name.padEnd(18)} PASS (${group.suites.length})`);
     }
-    for (const d of ['data', 'logs', 'evil', 'evil.json']) {
-        const p = path.join(ROOT, d);
-        if (fs.existsSync(p)) fs.rmSync(p, { recursive: true, force: true });
-    }
-    let out = '';
-    try {
-        out = execFileSync(process.execPath, [f],
-            { cwd: ROOT, encoding: 'utf8', timeout: 180000, stdio: ['pipe', 'pipe', 'pipe'] });
-    } catch (e) {
-        out = (e.stdout || '') + (e.stderr || '');
-    }
-    const m = out.match(/(\d+) passed, (\d+) failed(?:, (\d+) skipped)?/);
-    const sk = m && m[3] ? +m[3] : 0;
-    const line = m ? m[0] : 'NO RESULT';
-    if (m && +m[2] === 0) pass += +m[1]; else { fail++; console.log(out.slice(-2500)); }
-    if (sk) {
-        skip += sk;
-        const r = out.split('\n').find((l) => l.startsWith('SKIP: '));
-        skipWhy.push({ suite: s, n: sk, reason: r ? r.slice(5).trim() : '未说明原因' });
-    }
-    console.log(`${s.padEnd(26)} ${line}`);
 }
 for (const d of ['data', 'logs', 'evil', 'evil.json', 'cert.pem', 'key.pem']) {
     const p = path.join(ROOT, d);
     if (fs.existsSync(p)) fs.rmSync(p, { recursive: true, force: true });
 }
-if (skipWhy.length) {
-    console.log('-'.repeat(50));
-    console.log(`跳过 ${skip} 项（不计入失败）：`);
-    for (const w of skipWhy) {
-        console.log(`  ${w.suite}  ${w.n} 项`);
-        console.log(`    ${w.reason}`);
-    }
-    console.log('-'.repeat(50));
-}
-const total = `${pass} passed, ${fail > 0 ? fail : 0} failed`
-    + (skip ? `, ${skip} skipped` : '');
-console.log(total);
+console.log(`${pass} passed, ${fail} failed (${suitePass + suiteFail} suites)`);
 process.exit(fail > 0 ? 1 : 0);

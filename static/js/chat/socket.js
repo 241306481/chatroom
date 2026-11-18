@@ -27,9 +27,25 @@
         const base = '/domain/' + encodeURIComponent(DOMAIN)
             + '/discuss/' + encodeURIComponent(DISCUSS) + '/messages';
         const added = [];
+        const seen = new Set();
+        let oldestAt = '';
         let before = '';
         let pages = 0;
         function finish() {
+            if (oldestAt && lastMessageId === anchor) {
+                let anchorGone = false;
+                document.querySelectorAll('#messageList .message[data-id]')
+                    .forEach(function (el) {
+                        if (seen.has(el.dataset.id)) return;
+                        const time = el.querySelector('.msg-time');
+                        const at = time ? String(time.textContent || '') : '';
+                        if (at && at >= oldestAt && R.applyDelete) {
+                            if (el.dataset.id === anchor) anchorGone = true;
+                            R.applyDelete(el.dataset.id);
+                        }
+                    });
+                if (anchorGone) lastMessageId = newestMessageId();
+            }
             if (!added.length) return;
             let newest = '';
             let newestAt = '';
@@ -74,6 +90,9 @@
                     let found = !anchor;
                     msgs.forEach(function (m) {
                         if (!m || !m.id) return;
+                        seen.add(m.id);
+                        const at = String(m.created_at || '');
+                        if (at && (!oldestAt || at < oldestAt)) oldestAt = at;
                         if (hasMessage(m.id)) {
                             if (m.id === anchor) found = true;
                             const el = document.querySelector(
@@ -90,6 +109,23 @@
                                 if (bubble
                                     && String(bubble.dataset.raw || '') !== String(m.content || '')) {
                                     R.applyEdit(m.id, m.content, m.edited_at);
+                                }
+                                const pinned = !!m.pinned;
+                                if (R.updatePinned
+                                    && pinned !== el.classList.contains('pinned')) {
+                                    R.updatePinned(m.id, pinned, pinned ? m : null);
+                                }
+                                const reactions = el.querySelector(
+                                    '.msg-reactions[data-reactions]');
+                                const json = String(m.reactions_json || '{}');
+                                if (reactions && R.preserveEditView && R.initReactionsIn
+                                    && reactions.dataset.reactions !== json) {
+                                    R.preserveEditView(function () {
+                                        reactions.dataset.reactions = json;
+                                        reactions.innerHTML = '';
+                                        delete reactions.dataset.rendered;
+                                        R.initReactionsIn(reactions);
+                                    });
                                 }
                             }
                             return;
@@ -260,6 +296,7 @@
                     R.applyRevoke(data);
                     break;
                 case 'message_edited':
+                    if (window.ChatEditQueue) window.ChatEditQueue.ack(data.message_id);
                     if (R.applyEdit) {
                         R.applyEdit(data.message_id, data.content, data.edited_at);
                     }
@@ -331,12 +368,14 @@
                     setTimeout(function () { location.href = '/home'; }, 1500);
                     break;
                 case 'error':
+                    if (window.ChatEditQueue) window.ChatEditQueue.fail();
                     if (window.ChatSendQueue) window.ChatSendQueue.restore();
                     R.showToast(data.msg);
                     break;
             }
         };
         socket.onclose = ev => {
+            if (window.ChatEditQueue) window.ChatEditQueue.fail();
             if (ev && ev.code === 4001) {
                 setTimeout(function () { location.href = '/home'; }, 1500);
                 return;

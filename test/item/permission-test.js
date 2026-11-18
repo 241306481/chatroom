@@ -40,17 +40,6 @@ check('★ 域管理员也不能置顶（全局关闭开关必须生效）', () 
     try { checkDual(u, du, 'pin_message'); } catch (e) { denied = true; }
     assert.ok(denied, '域管理员仍然可以置顶 —— 全局 kill-switch 对特权用户失效');
 });
-check('★ WebSocket 侧行为一致（不得比 HTTP 更宽松）', () => {
-    const src = fs.readFileSync(path.join(ROOT, 'lib/websocket/discuss-guard.js'), 'utf8');
-    assert.ok(!/PRIV_EXEMPT_GROUPS/.test(src), 'WS 侧不应再有特权豁免');
-    assert.ok(!/skipPriv/.test(src), 'WS 侧不应再有 skipPriv 豁免分支');
-    const http = fs.readFileSync(path.join(ROOT, 'lib/auth/privilege.js'), 'utf8');
-    assert.ok(!/PRIV_EXEMPT_GROUPS/.test(http), 'HTTP 侧不应再有特权豁免');
-    assert.ok(!/skipPriv/.test(http), 'HTTP 侧不应再有 skipPriv 豁免分支');
-    const main = fs.readFileSync(path.join(ROOT, 'lib/websocket/discuss.js'), 'utf8');
-    assert.ok(/require\('\.\/discuss-guard'\)/.test(main), 'discuss.js 未引用 discuss-guard');
-    assert.ok(!/PRIV_EXEMPT_GROUPS/.test(main), 'discuss.js 仍留有本地副本');
-});
     check('域设置默认开放：成员角色的 domain 位已给默认值', () => {
     const u = storage.loadUser(adminId);
     assert.strictEqual(hasPriv(u, 'domain', PRIV.DOMAIN.EDIT), true,

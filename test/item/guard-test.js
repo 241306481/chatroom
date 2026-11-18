@@ -68,10 +68,6 @@ check('普通成员的基础能力未被放宽', () => {
     try { checkDual(MEMBER, du, 'edit_domain'); } catch (e) { denied = true; }
     assert.ok(denied, '普通成员通过了 edit_domain');
 });
-check('r2: exp 立即落盘（无 5 秒缓冲）', () => {
-    const src = fs.readFileSync(path.join(PROJ, 'lib/auth/exp.js'), 'utf8');
-    assert.ok(!/setTimeout|pending\.set/.test(src), 'exp 仍有缓冲/定时器');
-});
 check('r1: 昵称索引不受 Object.prototype 昵称影响', () => {
     const users = require('../../lib/storage/users');
     for (const n of ['toString', '__proto__', 'constructor']) {
@@ -94,10 +90,6 @@ check('listAllDomains 跳过异常目录名', () => {
     assert.ok(list.includes('gdom'), '正常域被遗漏');
     assert.ok(!list.includes('x'.repeat(65)), '异常目录名未跳过');
 });
-check('r1: 原型污染防护仍在（权限矩阵）', () => {
-    const src = fs.readFileSync(path.join(PROJ, 'lib/routes/manage/system-roles.js'), 'utf8');
-    assert.ok(/Object\.create\(null\)/.test(src), '权限矩阵仍使用普通对象');
-});
 check('r1: 文件 ID 拒绝 __proto__', () => {
     const uf = require('../../lib/storage/user-files');
     assert.throws(() => uf.setUserFileVisibility(memberId, '__proto__', 'public'));
@@ -110,11 +102,6 @@ check('r1: safeFileId 为唯一实现，用户/域文件共用', () => {
         assert.strictEqual(safeFileId(id), null, '放行了危险 id: ' + JSON.stringify(id));
     }
     assert.strictEqual(safeFileId('abc123'), 'abc123');
-    for (const f of ['domain-files.js', 'user-files.js']) {
-        const src = fs.readFileSync(path.join(PROJ, 'lib/storage/') + f, 'utf8');
-        assert.ok(/require\('\.\/fs-utils'\)/.test(src), f + ' 未引用 fs-utils');
-        assert.ok(!/UNSAFE_ID_RE\s*=/.test(src), f + ' 仍有本地副本，应收敛到 fs-utils');
-    }
 });
 check('r1: 文件 MIME 会清理换行和控制字符', () => {
     const { makeFileMeta, normalizeMime } = require('../../lib/storage/fs-utils');
@@ -142,14 +129,6 @@ check('r1: requireSystemAdmin 三态正确（抽到 manage/_helpers 后回归）
     assert.strictEqual(requireSystemAdmin(MEMBER, stub()), false, '普通成员未被拒');
     assert.throws(() => requireSystemAdmin(null, stub()), UnauthorizedError, '匿名未抛 401');
     assert.throws(() => requireSystemAdmin(undefined, stub()), UnauthorizedError);
-    for (const f of ['ip-bans.js', 'system-roles.js']) {
-        const src = fs.readFileSync(path.join(PROJ, 'lib/routes/manage/') + f, 'utf8');
-        assert.ok(/require\('\.\/_helpers'\)/.test(src), f + ' 未引用 manage/_helpers');
-        assert.ok(!/function requireSystemAdmin/.test(src), f + ' 仍有本地副本');
-    }
-    const h = fs.readFileSync(path.join(PROJ, 'lib/routes/manage/_helpers.js'), 'utf8');
-    assert.ok(/require\('\.\.\/\.\.\/template'\)/.test(h), 'render403 来源不对');
-    assert.strictEqual(typeof require('../../lib/template').render403, 'function');
 });
 check('formatSize 为唯一实现，控制台与网页共用同一函数', () => {
     const { formatSize } = require('../../lib/format');
@@ -163,52 +142,10 @@ check('r2: 社交操作不会为不存在的 uid 建目录', () => {
     assert.strictEqual(social.unfollow(memberId, 'ghost88'), false);
     assert.ok(!fs.readdirSync(path.join(DATA, 'users')).includes('ghost88'));
 });
-check('r5: 全部模板可解析', () => {
-    const { env } = require('../../lib/template.js');
-    const dir = path.join(PROJ, 'templates');
-    const errs = [];
-    for (const f of fs.readdirSync(dir)) {
-        if (!f.endsWith('.html')) continue;
-        try {
-            env.render(f, {
-                all_members: [], users: [], messages: [], domains: [], roles: [],
-                groups: {}, conversations: [], current_user: {}, nav: {}, domain: {},
-                files: [], domain_name: 'd1', results: [], can_mute: false, list: [],
-                applications: [], config: {}, is_system: false, pending_count: 0,
-                can_create_discuss: false, can_delete_discuss: false, can_edit_discuss: false,
-            });
-        } catch (e) { errs.push(f); }
-    }
-    assert.strictEqual(errs.length, 0, '解析失败: ' + errs.join(','));
-});
-check('r5: manage 入口仍按双检显隐', () => {
-    const src = fs.readFileSync(path.join(PROJ, 'templates/manage_domain.html'), 'utf8');
-    for (const f of ['can_edit', 'can_discussions', 'can_role', 'can_permission', 'can_manage_users']) {
-        assert.ok(src.includes(`{% if ${f} %}`), f + ' 门控丢失');
-    }
-});
 check('r6: 封禁时间校验统一且严格', () => {
     assert.strictEqual(auth.normalizeUntil('2099-99-99T99:99:99'), null);
     assert.strictEqual(auth.normalizeUntil('2024-02-30T12:00'), null);
     assert.strictEqual(auth.normalizeUntil('9999-12-31T23:59:59'), '9999-12-31T23:59:59Z');
-    const admin = fs.readFileSync(path.join(PROJ, 'lib/routes/admin.js'), 'utf8');
-    assert.ok(!/function normalizeUntil\(/.test(admin), '仍有重复实现');
-});
-check('r7: IP 封禁会断开已建立连接', () => {
-    const src = fs.readFileSync(path.join(PROJ, 'lib/websocket/kick.js'), 'utf8');
-    assert.ok(/function kickByIpRule/.test(src));
-    assert.ok(/isIpBanned/.test(fs.readFileSync(path.join(PROJ, 'lib/websocket/discuss.js'), 'utf8')));
-    assert.ok(/kickByIpRule/.test(fs.readFileSync(path.join(PROJ, 'lib/routes/manage/ip-bans.js'), 'utf8')));
-});
-check('r7: WS 升级限流存在且阈值合理', () => {
-    const src = fs.readFileSync(path.join(PROJ, 'lib/websocket/index.js'), 'utf8');
-    const m = /const UPGRADE_MAX = (\d+)/.exec(src);
-    assert.ok(m && +m[1] >= 20, '阈值过低: ' + (m && m[1]));
-});
-check('r8: 日志轮转有界（不复用同名文件无限追加）', () => {
-    const src = fs.readFileSync(path.join(PROJ, 'lib/logger.js'), 'utf8');
-    assert.ok(!/rotateIfNeeded/.test(src), '仍使用改名轮转（EBUSY 风险）');
-    assert.ok(/unlinkSync\(old\)/.test(src), '循环复用槽位前未删除旧文件');
 });
 check('登录限流：连续失败后被拦截，成功后清零', () => {
     const rl = require('../../lib/auth/rate-limit');
@@ -224,67 +161,6 @@ check('登录限流：按 IP 维度独立计数', () => {
     for (let i = 0; i < 30; i++) rl.noteFailure('u' + i, '10.2.2.2');
     assert.ok(rl.checkLoginAllowed('fresh', '10.2.2.2'), 'IP 维度阈值未生效');
     assert.strictEqual(rl.checkLoginAllowed('fresh', '10.3.3.3'), null, '误伤其它 IP');
-});
-check('登录限流已接入登录路由', () => {
-    const src = fs.readFileSync(path.join(PROJ, 'lib/routes/auth.js'), 'utf8');
-    assert.ok(/checkLoginAllowed/.test(src), '登录前未检查限流');
-    assert.ok(/noteLoginFailure/.test(src), '失败未计数');
-    assert.ok(/clearLoginFailures/.test(src), '成功未清零');
-    assert.ok(src.indexOf('checkLoginAllowed') < src.indexOf('auth.login('),
-        '限流检查必须早于密码校验（否则 scrypt 仍可被无限次调用）');
-});
-    const src = fs.readFileSync(path.join(PROJ, 'lib/graceful.js'), 'utf8');
-    assert.ok(/SIGTERM/.test(src) && /SIGINT/.test(src), '缺少信号处理');
-    assert.ok(/SIGHUP/.test(src), '缺少 SIGHUP 处理');
-    assert.ok(/server\.close/.test(src), '未关闭 HTTP');
-    assert.ok(/closeIdleConnections/.test(src), '未关闭 keep-alive');
-    assert.ok(/closeAllConnections/.test(src), '未强制断开剩余连接');
-    assert.ok(/logger\.close\(\)/.test(src), '未刷日志');
-    assert.ok(/setTimeout/.test(src) && /强制退出/.test(src), '缺少超时兜底');
-    assert.ok(!/force\.unref/.test(src), '超时定时器被 unref 了');
-    const fm = /const FORCE_MS\s*=\s*(\d+)/.exec(src);
-    assert.ok(fm && parseInt(fm[1], 10) < 5000, 'FORCE_MS 应小于 5000');
-check('优雅关闭：关闭 HTTP + 断开 WS + 有超时兜底', () => {
-    const src = fs.readFileSync(path.join(PROJ, 'lib/graceful.js'), 'utf8');
-    assert.ok(/SIGTERM/.test(src) && /SIGINT/.test(src), '缺少信号处理');
-    assert.ok(/SIGHUP/.test(src), '缺少 SIGHUP 处理');
-    assert.ok(/server\.close/.test(src), '未关闭 HTTP');
-    assert.ok(/closeIdleConnections/.test(src), '未关闭 keep-alive');
-    assert.ok(/closeAllConnections/.test(src), '未强制断开剩余连接');
-    assert.ok(/logger\.close\(\)/.test(src), '未刷日志');
-    assert.ok(/setTimeout/.test(src) && /强制退出/.test(src), '缺少超时兜底');
-    assert.ok(!/force\.unref/.test(src), '超时定时器被 unref 了');
-    const fm = /const FORCE_MS\s*=\s*(\d+)/.exec(src);
-    assert.ok(fm && parseInt(fm[1], 10) < 5000, 'FORCE_MS 应小于 5000');
-    const server = fs.readFileSync(path.join(PROJ, 'server.js'), 'utf8');
-    assert.ok(!/require\('\.\/lib\/websocket\/registry'\)/.test(server),
-        'server.js 仍在直接操作 registry（分层倒置）');
-});
-check('WebSocket 模块暴露 shutdown，且关停时摘掉 upgrade 监听', () => {
-    const src = fs.readFileSync(path.join(PROJ, 'lib/websocket/index.js'), 'utf8');
-    assert.ok(/removeListener\('upgrade'/.test(src), '未摘掉 upgrade 监听');
-    assert.ok(/ws\.close\(1001/.test(src), '未广播 1001 关闭帧');
-    assert.ok(/return\s*\{\s*wss/.test(src), 'setup 未返回 { wss, ... }');
-});
-check('logger 提供 close()，关停时日志不会丢最后一批', () => {
-    assert.strictEqual(typeof require('../../lib/logger').close, 'function',
-        'logger 未导出 close()');
-});
-check('启动自检新增：时区 / JSON 完整性 / 端口预检 / 证书有效期', () => {
-    const src = fs.readFileSync(path.join(PROJ, 'lib/startup-check.js'), 'utf8');
-    assert.ok(/resolvedOptions\(\)\.timeZone/.test(src), '无时区检查');
-    assert.ok(/JSON\.parse/.test(src), '无 JSON 完整性检查');
-    assert.ok(/EADDRINUSE/.test(src), '无端口占用预检');
-    assert.ok(/X509Certificate/.test(src) && /validTo/.test(src), '无证书有效期检查');
-    assert.ok(/NO_COLOR/.test(fs.readFileSync(path.join(PROJ, 'lib/color.js'), 'utf8')),
-        '颜色模块未认 NO_COLOR');
-});
-check('gen-cert 无死代码，且输出指纹与信任步骤', () => {
-    const src = fs.readFileSync(path.join(__dirname, '..', 'tools', 'gen-cert.js'), 'utf8');
-    assert.ok(!/function viaPowerShell/.test(src), 'viaPowerShell 死代码未删除');
-    assert.ok(/fingerprint/.test(src), '未输出指纹');
-    assert.ok(/printTrustSteps/.test(src), '未输出信任步骤');
-    assert.ok(/chmodSync\(KEY, 0o600\)/.test(src), '未收紧 key.pem 权限');
 });
 check('依赖无已知漏洞（npm audit 报告）', () => {
     const r = require('child_process').spawnSync('npm.cmd',

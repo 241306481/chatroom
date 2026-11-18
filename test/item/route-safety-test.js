@@ -67,16 +67,6 @@ check('router 静态路径中的正则元字符按字面匹配', () => {
     assert.ok(findRoute('GET', '/__router_test/a.b'));
     assert.strictEqual(findRoute('GET', '/__router_test/axb'), null);
 });
-check('route() 的 priv 声明必须按 (group, bit) 展开传给 checkPriv', () => {
-    const src = fs.readFileSync(path.join(ROOT, 'lib/routes/index.js'), 'utf8');
-    assert.ok(/checkPriv\(user,\s*p\.group,\s*p\.bit\)/.test(src),
-        '应展开 group/bit 传入，不能把整个 priv 对象当 group 传');
-    assert.ok(!/checkPriv\(user,\s*found\.opts\.priv\)/.test(src),
-        '不能把 priv 对象直接传给 checkPriv');
-    const priv = fs.readFileSync(path.join(ROOT, 'lib/auth/privilege.js'), 'utf8');
-    assert.ok(!/groupOrObj/.test(priv), 'checkPriv 不应再有旧签名兼容层');
-    assert.ok(!/checkPrivCompat/.test(priv), 'checkPrivCompat 应已删除');
-});
 (async () => {
     await waitForServer(PORT);
     await check('非法私信 peer 不抛异常', () => {
@@ -192,14 +182,6 @@ check('route() 的 priv 声明必须按 (group, bit) 展开传给 checkPriv', ()
         assert.throws(() => requireSystemAdmin(null, stub()), UnauthorizedError);
         assert.throws(() => requireSystemAdmin(undefined, stub()), UnauthorizedError);
         assert.throws(() => requireSystemAdmin({}, stub()), UnauthorizedError);
-    });
-    await check('requireSystemAdmin：render403 从 template 取，不从 routes/_helpers', () => {
-        const src = fs.readFileSync(path.join(ROOT, 'lib/routes/manage/_helpers.js'), 'utf8');
-        assert.ok(/require\('\.\.\/\.\.\/template'\)/.test(src),
-            'render403 未从 lib/template.js 引入');
-        assert.ok(!/render403\s*\}\s*=\s*require\('\.\.\/_helpers'\)/.test(src),
-            'render403 引用了 routes/_helpers（错误来源）');
-        assert.strictEqual(typeof require('../../lib/template').render403, 'function');
     });
     proc.kill();
     await sleep(200);

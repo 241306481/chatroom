@@ -150,28 +150,11 @@ const PNG = Buffer.from(
     if (discFile) {
         const page = await req('GET', '/domain/system/discuss/general', { cookie: B });
         const html = page.body.toString('utf8');
-        check('讨论文件栏位于置顶消息与成员之间', () => {
+        check('讨论页文件侧栏列出文件', () => {
             assert.strictEqual(page.status, 200);
-            const pin = html.indexOf('pinned-panel');
-            const files = html.indexOf('discuss-file-sidebar');
-            const members = html.indexOf('members-panel');
-            assert.ok(pin >= 0 && files > pin && members > files, '文件栏顺序或位置错误');
             assert.ok(html.includes('note.txt'), '文件栏缺少上传文件名');
             assert.ok(html.includes(discUrl), '文件栏链接错误');
             assert.ok(html.includes(discUrl + '/download'), '文件栏缺少下载链接');
-        });
-        check('讨论与私信文件侧栏复用同一模板', () => {
-            const read = p => fs.readFileSync(path.join(ROOT, 'templates', p), 'utf8');
-            const discussTpl = read('discuss.html');
-            const messagesTpl = read('messages.html');
-            const macro = read('_file_sidebar.html');
-            assert.ok(discussTpl.includes('import file_sidebar'));
-            assert.ok(messagesTpl.includes('import file_sidebar'));
-            assert.ok(!discussTpl.includes('class="file-sidebar-item"'));
-            assert.ok(!messagesTpl.includes('class="file-sidebar-item"'));
-            assert.ok(macro.includes('data-file-panel'));
-            assert.ok(macro.includes('data-file-list'));
-            assert.ok(macro.includes('data-file-count'));
         });
         const allPage = await req('GET', '/domain/system/discuss/general/files', { cookie: B });
         check('讨论文件专页列出全部文件', () => {

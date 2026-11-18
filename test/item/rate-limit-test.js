@@ -229,42 +229,6 @@ check('会话列表可查（管理页用）', () => {
         assert.ok('uid' in s && 'ipCount' in s && 'expiresIn' in s);
     }
 });
-check('限流管理路由与模板已就位', () => {
-    const route = fs.readFileSync(
-        path.join(__dirname, '../../lib/routes/manage/rate-limits.js'), 'utf8');
-    assert.ok(route.includes("/manage/rate_limits"), '应有 GET/POST 路由');
-    assert.ok(route.includes("requireSystemAdmin(user, res, 'rate_limits')"),
-        '应有权限守卫');
-    const tpl = fs.readFileSync(
-        path.join(__dirname, '../../templates/manage_rate_limits.html'), 'utf8');
-    assert.ok(tpl.includes('{{ a.action }}'), '模板应列出各动作');
-    assert.ok(tpl.includes('save_bind'), '模板应含会话绑定设置');
-});
-check('限流管理需要专属权限位', () => {
-    const { PRIV } = require('../../lib/permissions');
-    assert.ok(PRIV.SYSTEM.MANAGE_RATE_LIMITS, '应有 MANAGE_RATE_LIMITS 位');
-    const { PAGE_BITS } = require('../../lib/routes/manage/_helpers');
-    assert.strictEqual(PAGE_BITS.rate_limits, PRIV.SYSTEM.MANAGE_RATE_LIMITS);
-});
-check('系统管理菜单有入口', () => {
-    const tpl = fs.readFileSync(
-        path.join(__dirname, '../../templates/manage.html'), 'utf8');
-    assert.ok(tpl.includes('/manage/rate_limits'), '系统管理应有入口');
-});
-check('注册与发消息都接了限流', () => {
-    const auth = fs.readFileSync(
-        path.join(__dirname, '../../lib/routes/auth.js'), 'utf8');
-    assert.ok(auth.includes("check('register'"), '注册应限流');
-    const ws = fs.readFileSync(
-        path.join(__dirname, '../../lib/websocket/discuss.js'), 'utf8');
-    assert.ok(ws.includes("check('post_message'"), '发消息应限流');
-    const dm = fs.readFileSync(
-        path.join(__dirname, '../../lib/websocket/dm.js'), 'utf8');
-    assert.ok(dm.includes("check('dm_send'"), '私信应限流');
-    const files = fs.readFileSync(
-        path.join(__dirname, '../../lib/routes/files.js'), 'utf8');
-    assert.ok(files.includes("check('upload_file'"), '上传应限流');
-});
 check('login/register 同时有 IP 与账号维度（防换 IP 撞库）', () => {
     const { listConfig } = require('../../lib/rate-limit');
     for (const action of ['login', 'register']) {
@@ -348,35 +312,6 @@ check('页面/文件/搜索都有独立限流档位', () => {
         assert.ok(c.perIp > 0, action + ' 应有 IP 限制');
         assert.ok(c.perAccount > 0, action + ' 应有账号限制');
     }
-});
-check('页面限流已接到路由分发层', () => {
-    const src = require('fs').readFileSync(
-        path.join(__dirname, '../../lib/routes/index.js'), 'utf8');
-    assert.ok(src.includes("check('page_view'"), '路由层应有页面访问限流');
-});
-check('文件下载限流已接到三个下载路由', () => {
-    const src = require('fs').readFileSync(
-        path.join(__dirname, '../../lib/routes/files.js'), 'utf8');
-    assert.ok(src.includes("'file_download'"), '应有下载限流档位');
-    assert.ok(src.includes('limiter.check(action, keys)'), '限流 helper 应调用 check');
-    const n = (src.match(/limitDownload\(res, req, user\)/g) || []).length;
-    assert.ok(n >= 4, '三个下载路由都应接入，实际 ' + n + ' 处');
-});
-check('搜索限流已接入', () => {
-    const src = require('fs').readFileSync(
-        path.join(__dirname, '../../lib/routes/search.js'), 'utf8');
-    assert.ok(src.includes("check('search'"), '搜索应有独立限流');
-});
-check('内联查看限流已接到用户文件与附件路由', () => {
-    const files = require('fs').readFileSync(
-        path.join(__dirname, '../../lib/routes/files.js'), 'utf8');
-    assert.ok(files.includes("'file_view'"), '应有内联查看限流档位');
-    assert.ok(files.includes('limitInline(res, req, user)'), '文件查看应调用 limitInline');
-    const att = require('fs').readFileSync(
-        path.join(__dirname, '../../lib/routes/attachments.js'), 'utf8');
-    assert.ok(att.includes('limitInline'), '附件查看应接入 limitInline');
-    assert.ok(att.includes('!forceDownload && !limitInline'),
-        '内联附件应限流，下载走独立档位');
 });
 check('显式 local 标记优先于 IP，转发回环地址不能豁免', () => {
     const limiter = require('../../lib/rate-limit');

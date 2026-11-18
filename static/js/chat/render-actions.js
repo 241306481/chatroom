@@ -1,6 +1,28 @@
 (function () {
     const R = window.ChatRender = window.ChatRender || {};
-    function startInlineEdit(root, bubble, onSave) {
+    const pendingEdits = [];
+    function takePendingEdit(id) {
+        const key = String(id);
+        const idx = pendingEdits.findIndex(p => p.id === key);
+        if (idx < 0) return null;
+        const p = pendingEdits.splice(idx, 1)[0];
+        clearTimeout(p.timer);
+        return p;
+    }
+    window.ChatEditQueue = {
+        ack: function (id) {
+            const p = takePendingEdit(id);
+            if (p) p.done(true);
+        },
+        fail: function () {
+            const p = pendingEdits.pop();
+            if (!p) return false;
+            clearTimeout(p.timer);
+            p.done(false);
+            return true;
+        },
+    };
+    function startInlineEdit(root, bubble, onSave, id) {
         if (!root || !bubble || root.querySelector('.msg-edit-box')) return;
         if (root.classList.contains('msg-collapsed') && window.toggleMessageCollapse) {
             window.toggleMessageCollapse(root);
@@ -35,6 +57,7 @@
         ta.setSelectionRange(raw.length, raw.length);
         if (box.scrollIntoView) box.scrollIntoView({ block: 'nearest' });
         function close() {
+            if (id) takePendingEdit(id);
             box.remove();
             bubble.hidden = false;
             document.dispatchEvent(new CustomEvent('chat-inline-edit-closed'));
@@ -47,7 +70,30 @@
             }
             if (val === raw.trim()) { close(); return; }
             save.disabled = true;
-            onSave(val, close);
+            let settled = false;
+            function settle(ok) {
+                if (settled) return;
+                settled = true;
+                if (id) takePendingEdit(id);
+                if (ok) { close(); return; }
+                save.disabled = false;
+                ta.focus();
+            }
+            if (!id) {
+                onSave(val, settle);
+                return;
+            }
+            const key = String(id);
+            const entry = { id: key, done: settle, timer: null };
+            pendingEdits.push(entry);
+            entry.timer = setTimeout(function () {
+                const idx = pendingEdits.indexOf(entry);
+                if (idx < 0) return;
+                pendingEdits.splice(idx, 1);
+                settle(false);
+                if (window.showToast) window.showToast('保存超时，请重试');
+            }, 5000);
+            onSave(val, settle);
         }
         cancel.addEventListener('click', close);
         save.addEventListener('click', submit);
@@ -88,15 +134,14 @@
         if (!root) return;
         const bubble = root.querySelector('.msg-content');
         if (!bubble || bubble.classList.contains('msg-revoked')) return;
-        startInlineEdit(root, bubble, function (val, close) {
+        startInlineEdit(root, bubble, function (val, settle) {
             if (!window.ChatWS || !window.ChatWS.isOpen()) {
                 if (window.showToast) window.showToast('未就绪');
-                close();
+                settle(false);
                 return;
             }
             window.ChatWS.send({ type: 'edit', message_id: id, content: val });
-            close();
-        });
+        }, id);
     }
     function applyEdit(id, content, editedAt) {
         preserveEditView(function () {

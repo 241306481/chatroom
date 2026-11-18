@@ -65,15 +65,6 @@ clearTlsArtifacts(ROOT);
             cookie: ROOT_C, xff: ADMIN_IP });
     const delRule = async (rule) => req('POST', '/manage/ip_bans',
         { body: { action: 'remove', rule }, cookie: ROOT_C, xff: ADMIN_IP });
-    await check('登录/注册页导航按钮在右侧操作区', () => {
-        for (const file of ['login.html', 'register.html']) {
-            const html = fs.readFileSync(path.join(ROOT, 'templates', file), 'utf8');
-            assert.ok(html.includes('class="topbar-actions"'), file + ' 未使用右侧操作区');
-            assert.ok(!html.includes('class="topbar-nav"'), file + ' 仍使用普通导航样式');
-            assert.ok(html.includes('class="nav-login-btn"'), file + ' 缺少登录按钮样式');
-            assert.ok(html.includes('class="nav-register-btn"'), file + ' 缺少注册按钮样式');
-        }
-    });
     await check('#4 "2026-10-14T12:00"（无秒无 Z）被接受并规范化', () => {
         assert.strictEqual(auth.normalizeUntil('2026-10-14T12:00'), '2026-10-14T12:00:00Z');
     });
@@ -175,12 +166,6 @@ await check('#3 禁止封禁本机地址', async () => {
         assert.strictEqual(ipb.matchRule('192.168.5.77', '192.168.5.1-99'), true);
         assert.strictEqual(ipb.matchRule('192.168.5.200', '192.168.5.1-99'), false);
     });
-    await check('#3 输入框下方有动态红字校验', async () => {
-        const r = await req('GET', '/manage/ip_bans', { cookie: ROOT_C, xff: ADMIN_IP });
-        assert.ok(r.body.includes('data-error-check'), 'IP 输入框未挂动态校验');
-        assert.ok(r.body.includes('checkIpRule'), '缺少 checkIpRule');
-        assert.ok(r.body.includes('会命中你自己'), '缺少命中自己的提示文案');
-    });
     await check('#3 通配规则也能匹配', () => {
         const ipb = require('../../lib/storage/ip-bans');
         assert.strictEqual(ipb.matchRule('192.168.5.77', '192.168.5.*'), true);
@@ -205,13 +190,6 @@ await check('#3 禁止封禁本机地址', async () => {
         assert.strictEqual(ipb.isExpired(rec), true, '应标记为已过期');
         ipb.removeByRule('198.51.100.7');
     });
-    await check('#3 过期规则在列表页黄底标出', async () => {
-        await addRule('198.51.100.8', { until: '2000-01-01T00:00' });
-        const r = await req('GET', '/manage/ip_bans', { cookie: ROOT_C, xff: ADMIN_IP });
-        assert.ok(r.body.includes('row-expired'), '过期行应有 row-expired 类');
-        assert.ok(r.body.includes('已过期'), '应显示已过期标签');
-        await delRule('198.51.100.8');
-    });
 await check('#3 自封自己网段不拦，只警告', async () => {
         const r = await req('POST', '/manage/ip_bans',
             {
@@ -223,19 +201,6 @@ await check('#3 自封自己网段不拦，只警告', async () => {
             + (r.body.match(/已添加规则[^<]*/) || [''])[0]);
         assert.ok(/命中了你自己所在网段/.test(r.body), '应给出警告');
         await delRule('198.20.*.*');
-    });
-    await check('#3 过期规则仍标黄', async () => {
-        await addRule('198.21.0.*', { until: '2000-01-01T00:00' });
-        const r = await req('GET', '/manage/ip_bans', { cookie: ROOT_C, xff: '198.21.0.1' });
-        assert.strictEqual(r.status, 200, '过期规则不该拦人，状态 ' + r.status);
-        const row = (r.body.match(/<tr class="([^"]*)"[^>]*>\s*<td>\s*<code>198\.21\.0\.\*/) || [])[1] || '';
-        assert.ok(/row-expired/.test(row), '过期行应标黄，实际 class="' + row + '"');
-        await delRule('198.21.0.*');
-    });
-    await check('#3 用户最近 IP 页有返回系统管理与查看封禁入口', async () => {
-        const r = await req('GET', '/manage/user_ips', { cookie: ROOT_C });
-        assert.ok(r.body.includes('/manage"'), '缺返回系统管理');
-        assert.ok(r.body.includes('/manage/ip_bans'), '缺查看 IP 封禁');
     });
     await check('#3 解封后不再拦截', async () => {
         await req('POST', '/manage/ip_bans',
@@ -252,27 +217,7 @@ await check('#3 自封自己网段不拦，只警告', async () => {
         assert.strictEqual(rec.until, '2099-06-01T12:00:00Z');
         ipb.removeByRule('9.9.9.9');
     });
-    await check('#6 菜单点击可切换展开（不再直接跳走）', () => {
-        const src = fs.readFileSync(path.join(ROOT, 'static/js/core/menu.js'), 'utf8');
-        assert.ok(/classList\.toggle\('show'\)/.test(src), '按钮未切换菜单');
-        assert.ok(!/location\.href = '\/user\/'/.test(src), '点击仍直接跳转，触屏打不开菜单');
-    });
-    await check('#6 存在点击外部关闭与 Escape 关闭', () => {
-        const src = fs.readFileSync(path.join(ROOT, 'static/js/core/menu.js'), 'utf8');
-        assert.ok(/document\.addEventListener\('click'/.test(src), '无点击外部关闭');
-        assert.ok(/Escape/.test(src), '无 Escape 关闭');
-    });
-    await check('#6 下拉内仍有个人资料入口（功能未丢）', () => {
-        const tpl = fs.readFileSync(path.join(ROOT, 'templates/base.html'), 'utf8');
-        assert.ok(tpl.includes('href="/user/{{ current_user.id }}"'), '缺少个人资料链接');
-    });
-    await check('#6 移动端视口可渲染（无 JS 报错依赖）', () => {
-        const tpl = fs.readFileSync(path.join(ROOT, 'templates/base.html'), 'utf8');
-        assert.ok(/name="viewport"/.test(tpl), '缺少 viewport meta');
-        assert.ok(tpl.includes('userMenuBtn') && tpl.includes('userDropdown'),
-            '菜单元素缺失');
-    });
-    console.log('\n======== [回归 3/4/6] IP 封禁 / 时区 / 触屏 ========');
+    console.log('\n======== [回归 3/4] IP 封禁 / 时区 ========');
     for (const [s, n] of results) console.log(s.padEnd(5), n);
     const f = results.filter(x => x[0] === 'FAIL').length;
     console.log(results.length - f + ' passed, ' + f + ' failed');

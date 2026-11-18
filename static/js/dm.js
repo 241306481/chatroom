@@ -350,6 +350,7 @@
                     lastDmId = data.message.id || lastDmId;
                 }
             } else if (data.type === 'dm_edited') {
+                if (window.ChatEditQueue) window.ChatEditQueue.ack(data.message_id);
                 applyDMEdit(data);
             } else if (data.type === 'dm_typing') {
                 const cur = document.body.dataset.dmTarget || '';
@@ -361,6 +362,7 @@
                 if (window.showToast) window.showToast('你已被禁止访问');
                 setTimeout(function () { location.href = '/home'; }, 1500);
             } else if (data.type === 'error') {
+                if (window.ChatEditQueue) window.ChatEditQueue.fail();
                 if (_pendingDM) {
                     const cur = document.body.dataset.dmTarget || '';
                     const ta = document.getElementById('dmInput');
@@ -374,6 +376,7 @@
             }
         };
         socket.onclose = ev => {
+            if (window.ChatEditQueue) window.ChatEditQueue.fail();
             if (ev && ev.code === 4001) {
                 setTimeout(function () { location.href = '/home'; }, 1500);
                 return;
@@ -424,17 +427,16 @@
         const target = document.body.dataset.dmTarget || '';
         if (!bubble || !target || !window.ChatRender
             || !window.ChatRender.startInlineEdit) return;
-        window.ChatRender.startInlineEdit(root, bubble, function (val, close) {
+        window.ChatRender.startInlineEdit(root, bubble, function (val, settle) {
             if (!socket || socket.readyState !== WebSocket.OPEN) {
                 window.showToast('未就绪');
-                close();
+                settle(false);
                 return;
             }
             socket.send(JSON.stringify({
                 type: 'dm_edit', target, message_id: id, content: val,
             }));
-            close();
-        });
+        }, id);
     };
     function applyDMEdit(data) {
         const preserve = window.ChatRender && window.ChatRender.preserveEditView;
