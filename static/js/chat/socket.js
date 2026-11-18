@@ -7,6 +7,109 @@
     const wsUrl = `${WS_PROTOCOL}://${location.host}/ws/discuss/${DOMAIN}/${DISCUSS}`;
     let socket = null;
     let reconnectTimer = null;
+    let lastMessageId = '';
+    function newestMessageId() {
+        const inner = document.querySelector('#messageList .message-list-inner')
+            || document.getElementById('messageList');
+        if (!inner) return '';
+        const el = inner.querySelector('.message[data-id]');
+        return el ? el.dataset.id : '';
+    }
+    function hasMessage(id) {
+        if (!id) return false;
+        return !!document.querySelector(
+            '.message[data-id="' + CSS.escape(String(id)) + '"]');
+    }
+    function resyncMessages() {
+        const R = window.ChatRender;
+        if (!R) return;
+        const anchor = lastMessageId || newestMessageId();
+        const base = '/domain/' + encodeURIComponent(DOMAIN)
+            + '/discuss/' + encodeURIComponent(DISCUSS) + '/messages';
+        const added = [];
+        let before = '';
+        let pages = 0;
+        function finish() {
+            if (!added.length) return;
+            let newest = '';
+            let newestAt = '';
+            added.forEach(function (m) {
+                const at = String(m.created_at || '');
+                if (!newestAt || at >= newestAt) {
+                    newestAt = at;
+                    newest = m.id;
+                }
+            });
+            if (lastMessageId === anchor && newest) lastMessageId = newest;
+            const others = added.filter(function (m) {
+                return m.user_id !== window.MY_UID && !m.revoked;
+            });
+            const atBottom = R.isAtBottom && R.isAtBottom();
+            const editing = !!document.querySelector('.msg-edit-box');
+            if (atBottom && !editing && !document.hidden) {
+                if (R.scrollBottom) R.scrollBottom();
+                if (window.markDiscussionRead) window.markDiscussionRead(true);
+            } else if (others.length && R.showNewMsgBanner) {
+                others.sort(function (a, b) {
+                    return String(a.created_at || '')
+                        .localeCompare(String(b.created_at || ''));
+                });
+                R.showNewMsgBanner(others.length, others[0].id);
+            }
+            if (typeof window.__chatSearchReapply === 'function') {
+                window.__chatSearchReapply();
+            }
+        }
+        function loadPage() {
+            const q = '?limit=100' + (before
+                ? '&before=' + encodeURIComponent(before) : '');
+            fetch(base + q, { headers: { 'Accept': 'application/json' } })
+                .then(function (r) { return r.json(); })
+                .then(function (res) {
+                    if (!res || !res.ok || !Array.isArray(res.messages)) {
+                        finish();
+                        return;
+                    }
+                    const msgs = res.messages;
+                    let found = !anchor;
+                    msgs.forEach(function (m) {
+                        if (!m || !m.id) return;
+                        if (hasMessage(m.id)) {
+                            if (m.id === anchor) found = true;
+                            const el = document.querySelector(
+                                '.message[data-id="' + CSS.escape(String(m.id)) + '"]');
+                            if (m.revoked && el && !el.classList.contains('revoked-msg')) {
+                                R.applyRevoke({
+                                    message_id: m.id,
+                                    revoked_by: m.revoked_by,
+                                    revoked_by_nickname: m.revoked_by_nickname,
+                                    was_pinned: el.classList.contains('pinned'),
+                                });
+                            } else if (!m.revoked && el) {
+                                const bubble = el.querySelector('.msg-content');
+                                if (bubble
+                                    && String(bubble.dataset.raw || '') !== String(m.content || '')) {
+                                    R.applyEdit(m.id, m.content, m.edited_at);
+                                }
+                            }
+                            return;
+                        }
+                        R.appendMessage(m);
+                        added.push(m);
+                    });
+                    before = res.next_before
+                        || (msgs[0] && msgs[0].id) || '';
+                    pages++;
+                    if (!found && res.has_more && before && pages < 10) {
+                        loadPage();
+                        return;
+                    }
+                    finish();
+                })
+                .catch(function () {});
+        }
+        loadPage();
+    }
     window.ChatWS = {
         send(payload) {
             if (socket && socket.readyState === WebSocket.OPEN) {
@@ -93,6 +196,8 @@
             if (reconnectTimer) { clearTimeout(reconnectTimer); reconnectTimer = null; }
             if (window.MY_UID) window.updateUserStatus(window.MY_UID, true);
             window.ChatRender.initReactions();
+            if (!lastMessageId) lastMessageId = newestMessageId();
+            resyncMessages();
         };
         socket.onmessage = ev => {
             let data;
@@ -106,7 +211,12 @@
                         && data.message.user_id === window.MY_UID) {
                         window.ChatSendQueue.ack(data.message);
                     }
+                    if (hasMessage(data.message.id)) {
+                        lastMessageId = data.message.id || lastMessageId;
+                        break;
+                    }
                     R.appendMessage(data.message);
+                    lastMessageId = data.message.id || lastMessageId;
                     if (!atBottom || editing) {
                         if (window.MY_UID && data.message.user_id !== window.MY_UID) {
                             R.showNewMsgBanner(1, data.message.id);

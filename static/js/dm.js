@@ -10,6 +10,147 @@
     let _dmBannerGuardTimer = 0;
     let _dmBannerFirstEl = null;
     let _lastDmReadAt = 0;
+    let lastDmId = '';
+    function newestDmId() {
+        const inner = document.querySelector('#dmList .dm-list-inner')
+            || document.getElementById('dmList');
+        if (!inner) return '';
+        const el = inner.querySelector('.dm-msg[data-id]');
+        return el ? el.dataset.id : '';
+    }
+    function hasDmMessage(id) {
+        if (!id) return false;
+        return !!document.querySelector(
+            '.dm-msg[data-id="' + CSS.escape(String(id)) + '"]');
+    }
+    function setUnreadTotal(value) {
+        const total = Math.max(0, parseInt(value, 10) || 0);
+        document.querySelectorAll('a[href="/messages"]').forEach(function (a) {
+            let badge = a.querySelector('.badge-unread');
+            if (!total) {
+                if (badge) badge.remove();
+                return;
+            }
+            if (!badge) {
+                badge = document.createElement('span');
+                badge.className = 'badge-unread';
+                a.appendChild(badge);
+            }
+            badge.textContent = String(total);
+        });
+    }
+    function applyDMState(res) {
+        setUnreadTotal(res.total);
+        if (!onMessagesPage) return;
+        (res.conversations || []).forEach(function (c) {
+            const row = ensureConversationRow(c.other, {
+                from: c.other,
+                from_nickname: c.nickname,
+                from_avatar_color: c.avatar_color,
+                from_avatar_ext: c.avatar_ext,
+            });
+            if (!row) return;
+            let badge = row.querySelector('.badge-unread');
+            if (c.unread > 0) {
+                if (!badge) {
+                    badge = document.createElement('span');
+                    badge.className = 'badge-unread';
+                    row.appendChild(badge);
+                }
+                badge.textContent = String(c.unread);
+            } else if (badge) {
+                badge.remove();
+            }
+        });
+    }
+    function syncDMState() {
+        fetch('/messages/state', { headers: { 'Accept': 'application/json' } })
+            .then(r => r.json()).then(applyDMState).catch(() => {});
+    }
+    function resyncDM() {
+        syncDMState();
+        if (!onMessagesPage) return;
+        const target = document.body.dataset.dmTarget || '';
+        if (!target) return;
+        const anchor = lastDmId || newestDmId();
+        const base = '/messages/' + encodeURIComponent(target) + '/history';
+        const added = [];
+        let before = '';
+        let pages = 0;
+        function finish() {
+            if (!added.length) return;
+            let newest = '';
+            let newestAt = '';
+            added.forEach(function (m) {
+                const at = String(m.created_at || '');
+                if (!newestAt || at >= newestAt) {
+                    newestAt = at;
+                    newest = m.id;
+                }
+            });
+            if (lastDmId === anchor && newest) lastDmId = newest;
+            const incoming = added.filter(function (m) {
+                return !m.is_me && m.from !== window.MY_UID;
+            });
+            const atBottom = isDmAtBottom();
+            const editing = !!document.querySelector('.msg-edit-box');
+            if (atBottom && !editing && !document.hidden) {
+                hideDmBanner();
+                markCurrentDmRead(true);
+                setTimeout(syncDMState, 300);
+            } else if (incoming.length) {
+                incoming.sort(function (a, b) {
+                    return String(a.created_at || '')
+                        .localeCompare(String(b.created_at || ''));
+                });
+                const id = incoming[0].id;
+                const el = document.querySelector(
+                    '.dm-msg[data-id="' + CSS.escape(String(id)) + '"]');
+                showDmBanner(incoming.length, el);
+            }
+        }
+        function loadPage() {
+            const q = '?limit=100' + (before
+                ? '&before=' + encodeURIComponent(before) : '');
+            fetch(base + q, { headers: { 'Accept': 'application/json' } })
+                .then(r => r.json()).then(function (res) {
+                    if (!res || !res.ok || !Array.isArray(res.messages)) {
+                        finish();
+                        return;
+                    }
+                    const msgs = res.messages;
+                    let found = !anchor;
+                    msgs.forEach(function (m) {
+                        if (!m || !m.id) return;
+                        if (hasDmMessage(m.id)) {
+                            if (m.id === anchor) found = true;
+                            const el = document.querySelector(
+                                '.dm-msg[data-id="' + CSS.escape(String(m.id)) + '"]');
+                            const bubble = el && el.querySelector('.dm-bubble');
+                            if (bubble
+                                && String(bubble.dataset.raw || '') !== String(m.content || '')) {
+                                applyDMEdit({
+                                    message_id: m.id,
+                                    content: m.content,
+                                    edited_at: m.edited_at,
+                                });
+                            }
+                            return;
+                        }
+                        if (appendDM(m, !!m.is_me)) added.push(m);
+                    });
+                    before = res.next_before
+                        || (msgs[0] && msgs[0].id) || '';
+                    pages++;
+                    if (!found && res.has_more && before && pages < 10) {
+                        loadPage();
+                        return;
+                    }
+                    finish();
+                }).catch(() => {});
+        }
+        loadPage();
+    }
     function isDmAtBottom() {
         const l = document.getElementById('dmList');
         if (!l) return true;
@@ -171,6 +312,7 @@
     }
     function connect() {
         socket = new WebSocket(wsUrl);
+        socket.onopen = () => resyncDM();
         socket.onmessage = ev => {
             const data = JSON.parse(ev.data);
             if (data.type === 'dm_new') {
@@ -181,6 +323,7 @@
                     const wasAtBottom = isDmAtBottom();
                     const editing = !!document.querySelector('.msg-edit-box');
                     const el = appendDM(data.message, false);
+                    lastDmId = data.message.id || lastDmId;
                     if (document.hidden) {
                         notifyIncomingDM(data.message, t);
                         if (!wasAtBottom || editing) showDmBanner(1, el);
@@ -202,7 +345,10 @@
                     && _pendingDM.content === data.message.content) {
                     _pendingDM = null;
                 }
-                if (onMessagesPage && t === cur) appendDM(data.message, true);
+                if (onMessagesPage && t === cur) {
+                    appendDM(data.message, true);
+                    lastDmId = data.message.id || lastDmId;
+                }
             } else if (data.type === 'dm_edited') {
                 applyDMEdit(data);
             } else if (data.type === 'dm_typing') {
@@ -414,6 +560,9 @@ function appendDM(msg, isMe) {
         const list = document.getElementById('dmList');
         if (!list) return null;
         const inner = list.querySelector('.dm-list-inner') || list;
+        const existing = msg && msg.id ? inner.querySelector(
+            '.dm-msg[data-id="' + CSS.escape(String(msg.id)) + '"]') : null;
+        if (existing) return existing;
         const wasAtBottom = Math.abs(list.scrollTop) <= 60;
         const editBox = inner.querySelector('.msg-edit-box');
         const editTop = editBox ? editBox.getBoundingClientRect().top : 0;

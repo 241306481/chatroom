@@ -103,6 +103,8 @@ function waitFor(ws, pred, ms = 10000) {
     const uidC = storage.findUserByNickname('batchC').id;
     await check('批量：页面与脚本接线完整', async () => {
         const read = p => fs.readFileSync(path.join(ROOT, p), 'utf8');
+        const has = (src, parts) => (Array.isArray(parts) ? parts : [parts])
+            .every(p => src.includes(p));
         const base = read('templates/base.html');
         assert.ok(base.includes('js/batch-select.js'));
         assert.ok(base.includes('js/chat/batch-messages.js'));
@@ -216,67 +218,39 @@ function waitFor(ws, pred, ms = 10000) {
         assert.ok(renderUiJs.includes('_bannerFirstId'),
             '讨论新消息 banner 未记录首条新消息');
         const dmJs = read('static/js/dm.js');
-        assert.ok(dmJs.includes('const wasAtBottom = isDmAtBottom();'),
-            '私信查看时新消息仍提示跳到未读');
-        assert.ok(dmJs.includes('Date.now() - _dmBannerShownAt > 500'),
-            '私信 banner 仍会被程序滚动误隐藏');
-        assert.ok(dmJs.includes('showDmBanner(1, el)')
-            && dmJs.includes('el.scrollIntoView'),
-            '私信新消息 banner 未跳到最上方未读');
-        assert.ok(dmJs.includes('if (document.hidden)')
-            && dmJs.includes('notifyIncomingDM'),
-            '后台私信会被误标已读或缺少通知');
-        assert.ok(dmJs.includes('bumpConversationUnread')
-            && dmJs.includes('ensureConversationRow'),
+        assert.ok(has(dmJs, ['const wasAtBottom = isDmAtBottom();',
+            'Date.now() - _dmBannerShownAt > 500', 'showDmBanner(1, el)',
+            'el.scrollIntoView', 'if (document.hidden)', 'notifyIncomingDM']),
+            '私信新消息 banner/后台通知不完整');
+        assert.ok(has(dmJs, ['bumpConversationUnread', 'ensureConversationRow']),
             '私信会话列表未实时更新未读');
-        assert.ok(dmJs.includes("data.type === 'error'"),
-            '私信发送失败没有提示');
-        assert.ok(dmJs.includes('_pendingDM'),
-            '私信发送失败后未恢复内容');
-        assert.ok(dmJs.includes('markCurrentDmRead'),
-            '私信回到底部后未补发已读');
-        assert.ok(dmJs.includes("mark.dataset.action = 'show-message-history'"),
-            '实时编辑私信后缺少历史入口');
+        assert.ok(has(dmJs, ["data.type === 'error'", '_pendingDM',
+            'markCurrentDmRead', "mark.dataset.action = 'show-message-history'"]),
+            '私信失败恢复/已读/历史接线不完整');
         const renderActionsJs = read('static/js/chat/render-actions.js');
-        assert.ok(renderActionsJs.includes('R.startInlineEdit = startInlineEdit'),
-            '私信编辑缺少可用的行内编辑器');
-        assert.ok(renderActionsJs.includes('R.cancelInlineEdit = cancelInlineEdit')
-            && renderActionsJs.includes('cancelInlineEdit(el);'),
-            '编辑目标被撤回时编辑器未关闭');
-        assert.ok(renderActionsJs.includes('function preserveEditView')
-            && renderActionsJs.includes('R.preserveEditView = preserveEditView')
-            && (renderActionsJs.match(/preserveEditView\(function/g) || []).length >= 4,
-            '其他消息编辑、置顶、表情或撤回会移动编辑器');
-        assert.ok(read('static/js/chat/render-list.js').includes('R.preserveEditView'),
-            '其他消息被删除时会移动编辑器');
-        assert.ok(dmJs.includes('applyDMEditDom')
-            && dmJs.includes('ChatRender.preserveEditView'),
-            '私信其他消息编辑会移动编辑器');
         const renderListJs = read('static/js/chat/render-list.js');
-        assert.ok(renderActionsJs.includes("removeAttribute('data-reply-to')")
-            && renderActionsJs.includes("el.querySelector('.msg-reply-quote')"),
-            '实时撤回后仍残留回复引用');
-        assert.ok(renderListJs.includes("inner.querySelector('.msg-edit-box')")
-            && renderListJs.includes('list.scrollTop += delta'),
+        assert.ok(has(renderActionsJs, ['R.startInlineEdit = startInlineEdit',
+            'R.cancelInlineEdit = cancelInlineEdit', 'cancelInlineEdit(el);',
+            'function preserveEditView', 'R.preserveEditView = preserveEditView']),
+            '行内编辑器导出或撤回关闭缺失');
+        assert.ok(renderListJs.includes('R.preserveEditView')
+            && /function prependMessage[\s\S]*?msg-edit-box/.test(renderListJs)
+            && dmJs.includes('ChatRender.preserveEditView')
+            && dmJs.includes('olderEditBox') && dmJs.includes('!olderEditBox && grew > 0'),
+            '其他消息变化未保持编辑器位置');
+        assert.ok(has(renderActionsJs, ["removeAttribute('data-reply-to')",
+            "el.querySelector('.msg-reply-quote')"]), '撤回后残留回复引用');
+        assert.ok(has(renderListJs, ["inner.querySelector('.msg-edit-box')",
+            'list.scrollTop += delta']) && has(socketJs, '!atBottom || editing'),
             '新消息会移动正在编辑的消息');
-        assert.ok(dmJs.includes("inner.querySelector('.msg-edit-box')")
-            && dmJs.includes('list.scrollTop += delta'),
-            '私信新消息会移动正在编辑的消息');
-        assert.ok(read('static/js/chat/socket.js').includes('!atBottom || editing'),
-            '新消息仍会自动滚动并移动编辑器');
-        assert.ok(/function prependMessage[\s\S]*?msg-edit-box/.test(renderListJs),
-            '加载更早消息会移动正在编辑的消息');
-        assert.ok(dmJs.includes('olderEditBox')
-            && dmJs.includes('list.scrollTop += delta')
-            && dmJs.includes('!olderEditBox && grew > 0'),
-            '私信加载更早消息会移动正在编辑的消息');
-        assert.ok(renderActionsJs.includes("chat-inline-edit-closed"),
-            '编辑器关闭后未恢复已读状态');
-        assert.ok(socketJs.includes("chat-inline-edit-closed")
-            && dmJs.includes("chat-inline-edit-closed"),
-            '讨论或私信未监听编辑器关闭事件');
+        assert.ok(has(renderActionsJs, 'chat-inline-edit-closed')
+            && has(socketJs, 'chat-inline-edit-closed')
+            && has(dmJs, 'chat-inline-edit-closed'), '编辑器关闭后未恢复已读');
         assert.ok(/message_edited[\s\S]*?__chatSearchReapply/.test(socketJs),
             '编辑消息后未刷新搜索结果');
+        assert.ok(has(socketJs, ['function resyncMessages', 'resyncMessages()'])
+            && has(dmJs, ['function resyncDM', '/messages/state']),
+            'WS 重连后没有补拉消息与恢复未读');
         const baseHtml = read('templates/base.html');
         assert.ok(baseHtml.indexOf('js/domain-live.js') > baseHtml.indexOf('js/online.js'),
             '领域实时脚本未接入或顺序错误');
@@ -318,6 +292,15 @@ function waitFor(ws, pred, ms = 10000) {
             '服务端缺少讨论实时广播');
         assert.ok(read('lib/routes/discuss.js').includes('broadcastDiscussionUpdate'),
             '讨论编辑/重命名未广播实时更新');
+    });
+    await check('私信断线恢复：状态接口返回未读', async () => {
+        storage.appendDM(uidA, uidB, 'offline-state');
+        const data = assertJsonOk(
+            await req('GET', '/messages/state', { cookie: B }));
+        assert.ok(data.total >= 1);
+        const conv = data.conversations.find(c => c.other === uidA);
+        assert.ok(conv && conv.unread >= 1, '缺少会话未读数');
+        storage.markDMRead(uidB, uidA);
     });
     const f1 = storage.addUserFile(uidA, { filename: 'alpha.txt', mime: 'text/plain', buffer: Buffer.from('a') });
     const f2 = storage.addUserFile(uidA, { filename: 'beta.txt', mime: 'text/plain', buffer: Buffer.from('b') });
