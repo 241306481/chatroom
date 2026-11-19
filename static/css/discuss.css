@@ -60,8 +60,8 @@
 .msg-collapse-btn:hover, .pinned-collapse-btn:hover,
 .history-collapse-btn:hover { color: #1890ff; background: #e6f7ff; }
 .msg-collapse-preview, .pinned-collapse-preview, .history-collapse-preview {
-  display: none; padding: 6px 9px; border-radius: 6px; background: #f5f5f5;
-  color: #777; font-size: 13px; line-height: 1.5; word-break: break-word; }
+  display: none; padding: 0; color: #999; font-size: 13px; line-height: 1.5;
+  word-break: break-word; }
 .message.msg-collapsed .msg-content,
 .message.msg-collapsed .msg-content[data-mode="source"],
 .dm-msg.msg-collapsed .dm-bubble,
@@ -95,8 +95,10 @@
   cursor: pointer; flex-shrink: 0; }
 .msg-batch-mode .msg-check { display: inline-block; }
 .message.selected { background: #e6f7ff; border-radius: 6px; padding: 8px; }
-.msg-actions { margin-left: auto; opacity: 0.35; transition: opacity 0.15s;
+.msg-actions { opacity: 0.35; transition: opacity 0.15s;
   display: flex; gap: 4px; }
+.msg-actions-left { margin-right: auto; }
+.msg-actions-right { margin-left: auto; }
 .message:hover .msg-actions { opacity: 1; }
 .msg-actions button { background: transparent; border: none; cursor: pointer;
   font-size: 13px; color: #888; padding: 2px 6px; border-radius: 3px;

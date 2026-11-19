@@ -131,12 +131,14 @@
 </header>
 {% if site_announcement %}
 <section class="site-announcement" aria-label="站点公告">
-  <span class="site-announcement-label">📢 站点公告</span>
+  <div class="site-announcement-head">
+    <span class="site-announcement-label">📢 站点公告</span>
+    <button type="button" class="site-announcement-toggle" aria-expanded="false">展开</button>
+  </div>
   <div class="site-announcement-body">
     <div class="site-announcement-content announcement-content md-body"
          data-raw="{{ site_announcement | e }}"></div>
   </div>
-  <button type="button" class="site-announcement-toggle" aria-expanded="false">展开</button>
 </section>
 {% endif %}
 <main class="app-main">

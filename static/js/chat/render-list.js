@@ -71,9 +71,13 @@
     function renderAllHistory() {
         document.querySelectorAll('.msg-content[data-raw]').forEach(function (el) {
             if (el.dataset.rendered === '1') return;
+            if (el.dataset.forwardRef) {
+                if (window.ChatForwardCard) window.ChatForwardCard.enhance(el);
+                el.dataset.rendered = '1';
+                return;
+            }
             el.innerHTML = window.renderContent(el.dataset.raw || '');
             el.dataset.rendered = '1';
-            if (window.ChatForwardCard) window.ChatForwardCard.enhance(el);
         });
     }
     R.appendMessage = appendMessage;

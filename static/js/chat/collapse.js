@@ -5,6 +5,40 @@
         return '消息已折叠';
     }
 
+    const STORE_PREFIX = 'chatroom:collapsed:';
+    let storeCache = null;
+    let storeCacheKey = '';
+    function storeKey() {
+        const domain = window.__DOMAIN__ || '';
+        const uid = window.__CURRENT_UID__ || '';
+        const path = (window.location && window.location.pathname) || '';
+        return STORE_PREFIX + domain + ':' + uid + ':' + path;
+    }
+    function readStore() {
+        const key = storeKey();
+        if (storeCache && storeCacheKey === key) return storeCache;
+        let data = null;
+        try { data = JSON.parse(localStorage.getItem(key) || '{}'); } catch (e) {}
+        storeCache = data && typeof data === 'object' ? data : {};
+        storeCacheKey = key;
+        return storeCache;
+    }
+    function messageId(root) {
+        return String((root && root.dataset && root.dataset.id) || '').trim();
+    }
+    function isCollapsed(root) {
+        const id = messageId(root);
+        return !!id && readStore()[id] === true;
+    }
+    function rememberCollapsed(root, collapsed) {
+        const id = messageId(root);
+        if (!id) return;
+        const data = readStore();
+        if (collapsed) data[id] = true;
+        else delete data[id];
+        try { localStorage.setItem(storeKey(), JSON.stringify(data)); } catch (e) {}
+    }
+
     function preserve(container, anchor, fn) {
         if (!container || !anchor || !anchor.getBoundingClientRect) {
             fn();
@@ -48,6 +82,14 @@
         };
     }
 
+    function applyCollapsed(root, parts, btn, collapsed) {
+        root.classList.toggle('msg-collapsed', collapsed);
+        if (collapsed) ensurePreview(root, parts.content, 'msg-collapse-preview');
+        if (!btn) return;
+        btn.textContent = collapsed ? '展开' : '收起';
+        btn.title = collapsed ? '展开消息' : '折叠消息';
+    }
+
     function enhanceMessage(root) {
         if (!root || !root.matches || !root.matches('.message, .dm-msg')) return;
         if (root.classList.contains('revoked-msg')) return;
@@ -56,9 +98,16 @@
         if (!parts.header || !parts.content || !parts.container) return;
         if (parts.header.querySelector('.msg-collapse-btn')) return;
         const btn = makeButton('msg-collapse-btn', 'toggle-message-collapse', '折叠消息');
-        const actions = parts.header.querySelector('.msg-actions');
-        if (actions) parts.header.insertBefore(btn, actions);
-        else parts.header.appendChild(btn);
+        const actions = parts.header.querySelector('.msg-actions-left')
+            || parts.header.querySelector('.msg-actions');
+        if (actions) {
+            const source = actions.querySelector('[data-action="toggle-source"]');
+            if (source) actions.insertBefore(btn, source.nextSibling);
+            else actions.appendChild(btn);
+        } else {
+            parts.header.appendChild(btn);
+        }
+        if (isCollapsed(root)) applyCollapsed(root, parts, btn, true);
     }
 
     function refreshMessage(root) {
@@ -79,13 +128,9 @@
         const btn = root.querySelector('.msg-collapse-btn');
         const collapsed = !root.classList.contains('msg-collapsed');
         preserve(parts.container, parts.header || root, function () {
-            root.classList.toggle('msg-collapsed', collapsed);
+            applyCollapsed(root, parts, btn, collapsed);
         });
-        if (collapsed) ensurePreview(root, parts.content, 'msg-collapse-preview');
-        if (btn) {
-            btn.textContent = collapsed ? '展开' : '收起';
-            btn.title = collapsed ? '展开消息' : '折叠消息';
-        }
+        rememberCollapsed(root, collapsed);
     }
 
     function pinnedParts(root) {

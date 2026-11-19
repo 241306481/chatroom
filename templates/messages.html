@@ -93,7 +93,7 @@
                           data-action="toggle-source" title="查看源码">📄</button>
                 </div>
                 <div class="dm-bubble md-body" data-raw="{{ m.content | e }}"
-                     {% if m.forwarded_from %}data-forward-ref="{{ m.forwarded_from | jsdump | e }}"{% endif %}></div>
+                     {% if m.forwarded_from %}data-forward-ref="{{ m.forwarded_from | jsdump | forceescape }}"{% endif %}></div>
               </div>
             </div>
           {% endfor %}

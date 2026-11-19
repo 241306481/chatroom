@@ -3,7 +3,7 @@
 {% block content %}
 <div class="page-container">
   <h1>编辑域 · {{ domain_name }}</h1>
-  <form method="POST" action="/domain/{{ domain_name }}/manage/edit" class="form-stack">
+  <form method="POST" action="/domain/{{ domain_name }}/manage/edit" class="form-stack form-wide">
     <label>显示名
       <input type="text" name="display_name" value="{{ domain.display_name or domain_name }}">
     </label>

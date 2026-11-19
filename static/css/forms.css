@@ -1,4 +1,5 @@
 .form-stack { display: flex; flex-direction: column; gap: 12px; max-width: 600px; }
+.form-stack.form-wide { max-width: 920px; }
 .form-stack > label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; }
 .form-stack > label > input,
 .form-stack > label > textarea,

@@ -130,6 +130,12 @@ const setup = async () => {
         assertJsonOk(r);
         assert.strictEqual(JSON.parse(r.body).count, 2);
         assert.strictEqual(storage.getMessageStats('system', 'fwd').total, before + 3);
+        const page = await req('GET', '/domain/system/discuss/fwd', { cookie: A });
+        assert.strictEqual(page.status, 200);
+        assert.ok(!page.body.includes('data-forward-ref="{"type"'),
+            'forward ref attribute must be escaped');
+        assert.ok(page.body.includes('data-forward-ref="{&quot;'),
+            'forward ref attribute is missing escaped JSON');
     });
     await check('转发：分条转发保持原消息顺序', async () => {
         storage.saveDiscussion('system', 'fwd-order', {
@@ -235,6 +241,52 @@ const setup = async () => {
         });
         assert.strictEqual(r.status, 200, r.body);
         assert.strictEqual(JSON.parse(r.body).ok, false);
+    });
+    await check('forward: nested merged card keeps sender and structure', async () => {
+        storage.saveDiscussion('system', 'fwd-nested', {
+            name: 'fwd-nested', title: 'fwd-nested', created_at: storage.nowIso(),
+        });
+        const merged = storage.loadMessagePage('system', 'fwd', { limit: 100 }).messages
+            .find(m => m.forwarded_from && m.forwarded_from.items
+                && m.forwarded_from.items.length > 1);
+        assert.ok(merged, 'missing merged source');
+        const r = await req('POST', '/forward', {
+            cookie: A,
+            body: {
+                message_id: merged.id, source_type: 'discuss',
+                source_domain: 'system', source_disc: 'fwd',
+                target_domain: 'system', target_disc: 'fwd-nested',
+            },
+        });
+        assertJsonOk(r);
+        const got = storage.loadMessagePage('system', 'fwd-nested', { limit: 100 }).messages
+            .find(m => m.forwarded_from && m.forwarded_from.id === merged.id);
+        assert.ok(got, 'missing nested forward');
+        const item = got.forwarded_from.items[0];
+        assert.strictEqual(item.sender, 'batchA');
+        assert.strictEqual(item.sender_id, uidA);
+        assert.ok(item.sender_avatar_color, 'missing sender avatar color');
+        assert.ok(item.forwarded_from && Array.isArray(item.forwarded_from.items),
+            'nested forward structure missing');
+        assert.strictEqual(item.forwarded_from.items.length, 2);
+        assert.strictEqual(
+            messageView.forwardContent(got.forwarded_from),
+            messageView.forwardContent(merged.forwarded_from),
+            'nested forward source should match inner source');
+    });
+    await check('forward: sender avatar follows current user', async () => {
+        const u = storage.loadUser(uidA);
+        u.nickname = 'renamed-forwarder';
+        u.avatar_color = '#123456';
+        storage.saveUser(uidA, u);
+        const { buildDiscussData } = require('../../lib/routes/discuss');
+        const page = buildDiscussData('system', 'fwd-nested', storage.loadUser(uidB));
+        const got = page.messages.find(m => m.forwarded_from
+            && m.forwarded_from.items && m.forwarded_from.items.length);
+        assert.ok(got, 'missing hydrated forward');
+        const item = got.forwarded_from.items[0];
+        assert.strictEqual(item.sender, 'renamed-forwarder');
+        assert.strictEqual(item.sender_avatar_color, '#123456');
     });
     await finish('批量转发');
 })().catch(fatal);

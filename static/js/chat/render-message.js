@@ -85,13 +85,15 @@
                     ${msg.is_mod ? '<span class="badge mod">MOD</span>' : ''}
                     <span class="msg-time">${esc(msg.created_at)}</span>
                     ${msg.edited_at ? '<button type="button" class="msg-edited" data-action="show-message-history" data-id="' + escAttr(msg.id) + '" title="' + escAttr(msg.edited_at) + '">已编辑</button>' : ''}
-                    ${replyBtn}
-                    <div class="msg-actions">
+                    <div class="msg-actions msg-actions-left">
+                        ${replyBtn}
+                        ${reactionBtn}
+                        ${sourceBtn}
+                    </div>
+                    <div class="msg-actions msg-actions-right">
                         ${editBtn}
                         ${linkBtn}
                         ${forwardBtn}
-                        ${sourceBtn}
-                        ${reactionBtn}
                         ${showPin ? `<button type="button" data-action="pin-message" data-id="${escAttr(msg.id)}" title="置顶">📌</button>` : ''}
                         ${revokeBtn}
                         ${showDelete ? `<button type="button" data-action="delete-message" data-id="${escAttr(msg.id)}" title="删除">🗑️</button>` : ''}

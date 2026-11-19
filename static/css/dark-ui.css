@@ -231,6 +231,22 @@ html[data-theme="dark"] .forward-record-item { background: #252525;
   border-color: #3a3a3a; }
 html[data-theme="dark"] .forward-record-content { color: #e0e0e0; }
 html[data-theme="dark"] .forward-record-origin { color: #999; }
+html[data-theme="dark"] .forward-record-sender { color: #e0e0e0; }
+html[data-theme="dark"] .forward-record-sender a { color: #69b1ff; }
+html[data-theme="dark"] .forward-record-avatar { color: #fff; }
+html[data-theme="dark"] .forward-record-action { color: #999; }
+html[data-theme="dark"] .forward-record-action:hover { color: #69b1ff;
+  background: #163a52; }
+html[data-theme="dark"] .forward-record-source { color: #e0e0e0;
+  background: #1e1e1e; }
+html[data-theme="dark"] .forward-record-back { color: #69b1ff; }
+html[data-theme="dark"] .forward-record-back:hover { background: #163a52; }
+html[data-theme="dark"] .forward-record-close { color: #999; }
+html[data-theme="dark"] .forward-record-close:hover { background: #2a2a2a;
+  color: #e6e6e6; }
+html[data-theme="dark"] .forward-record-nested { background: #1b2a36; }
+html[data-theme="dark"] .forward-record-item-nested { background: transparent;
+  border-color: transparent; }
 html[data-theme="dark"] .forward-record-order { background: #163a52;
   color: #69b1ff; }
 html[data-theme="dark"] .history-item {
@@ -241,9 +257,7 @@ html[data-theme="dark"] .history-content { color: #e0e0e0; }
 html[data-theme="dark"] .history-meta { color: #999; }
 html[data-theme="dark"] .msg-collapse-preview,
 html[data-theme="dark"] .pinned-collapse-preview,
-html[data-theme="dark"] .history-collapse-preview {
-  background: #2a2a2a; color: #aaa;
-}
+html[data-theme="dark"] .history-collapse-preview { color: #aaa; }
 html[data-theme="dark"] .msg-collapse-btn,
 html[data-theme="dark"] .pinned-collapse-btn,
 html[data-theme="dark"] .history-collapse-btn { color: #999; }
