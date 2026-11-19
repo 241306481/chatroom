@@ -129,6 +129,16 @@
             title="切换主题" aria-label="切换主题">🌙</button>
   </div>
 </header>
+{% if site_announcement %}
+<section class="site-announcement" aria-label="站点公告">
+  <span class="site-announcement-label">📢 站点公告</span>
+  <div class="site-announcement-body">
+    <div class="site-announcement-content announcement-content md-body"
+         data-raw="{{ site_announcement | e }}"></div>
+  </div>
+  <button type="button" class="site-announcement-toggle" aria-expanded="false">展开</button>
+</section>
+{% endif %}
 <main class="app-main">
 {% block content %}{% endblock %}
 </main>
@@ -170,6 +180,16 @@
                 : (el.dataset.raw || '');
             el.dataset.rendered = '1';
         });
+    (function () {
+        var notice = document.querySelector('.site-announcement');
+        var toggle = notice && notice.querySelector('.site-announcement-toggle');
+        if (!notice || !toggle) return;
+        toggle.addEventListener('click', function () {
+            var expanded = notice.classList.toggle('expanded');
+            toggle.textContent = expanded ? '收起' : '展开';
+            toggle.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+        });
+    })();
     (function () {
         var flash = {{ flash | jsdump | safe }};
         if (flash && window.showToast) {
@@ -245,6 +265,8 @@
 <script src="/static/js/editor/mention.js">
 </script>
 <script src="/static/js/editor/index.js">
+</script>
+<script src="/static/js/chat/forward-card.js">
 </script>
 <script src="/static/js/chat/render-message.js">
 </script>

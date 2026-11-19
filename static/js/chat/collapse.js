@@ -1,13 +1,8 @@
 (function () {
     const R = window.ChatRender = window.ChatRender || {};
-    const MAX_PREVIEW = 160;
 
-    function previewText(el) {
-        if (el && el.dataset && el.dataset.mode === 'source') return '源码已折叠';
-        const raw = (el && el.textContent) || (el && el.dataset && el.dataset.raw) || '';
-        const text = raw.replace(/\s+/g, ' ').trim();
-        if (!text) return '（无内容）';
-        return text.length > MAX_PREVIEW ? text.slice(0, MAX_PREVIEW) + '…' : text;
+    function previewText() {
+        return '消息已折叠';
     }
 
     function preserve(container, anchor, fn) {

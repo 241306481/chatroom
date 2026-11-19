@@ -490,6 +490,8 @@ window.toggleSource = function (btn) {
             ? window.renderContent(raw)
             : esc(raw).replace(/\n/g, '<br>');
         el.dataset.mode = 'render';
+        delete el.dataset.forwardRendered;
+        if (window.ChatForwardCard) window.ChatForwardCard.enhance(el);
         btn.textContent = '📄';
         btn.title = '查看源码';
     } else {

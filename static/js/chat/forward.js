@@ -50,16 +50,24 @@
         header.appendChild(title);
         const body = document.createElement('div');
         body.className = 'modal-body';
+        const back = document.createElement('button');
+        back.type = 'button';
+        back.className = 'forward-back';
+        back.textContent = '← 返回';
+        back.hidden = true;
         const search = document.createElement('input');
         search.type = 'text';
         search.className = 'modal-input forward-search';
-        search.placeholder = '搜索用户、域或讨论';
+        search.placeholder = '搜索';
+        const modeList = document.createElement('div');
+        modeList.className = 'forward-mode-list';
         const list = document.createElement('div');
         list.className = 'forward-list';
         const empty = document.createElement('p');
         empty.className = 'forward-empty';
-        empty.textContent = '没有可转发的用户或讨论';
+        body.appendChild(back);
         body.appendChild(search);
+        body.appendChild(modeList);
         body.appendChild(list);
         body.appendChild(empty);
         const footer = document.createElement('div');
@@ -75,9 +83,8 @@
         overlay.appendChild(box);
         document.body.appendChild(overlay);
         requestAnimationFrame(function () { overlay.classList.add('show'); });
-        let options = [];
-        (users || []).forEach(function (u) {
-            options.push({
+        const userOptions = (users || []).map(function (u) {
+            return {
                 kind: 'user',
                 userId: u.id,
                 display: '私信',
@@ -85,11 +92,12 @@
                 title: u.nickname || u.id,
                 online: !!u.online,
                 count: 0,
-            });
+            };
         });
+        const discussOptions = [];
         targets.forEach(function (group) {
             (group.discussions || []).forEach(function (d) {
-                options.push({
+                discussOptions.push({
                     kind: 'discuss',
                     domain: group.domain,
                     display: group.display || group.domain,
@@ -99,7 +107,74 @@
                 });
             });
         });
+        let step = 'mode';
+        let mode = '';
+        function optionsOf(kind) {
+            return kind === 'user' ? userOptions : discussOptions;
+        }
+        function renderModes() {
+            modeList.innerHTML = '';
+            const modes = [
+                {
+                    kind: 'discuss', icon: '💬', name: '转发到讨论',
+                    hint: '选择域中的讨论区',
+                    count: discussOptions.length,
+                },
+                {
+                    kind: 'user', icon: '✉️', name: '转发到用户',
+                    hint: '通过私信转发给用户',
+                    count: userOptions.length,
+                },
+            ];
+            modes.forEach(function (m) {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'forward-mode';
+                btn.disabled = !m.count;
+                const icon = document.createElement('span');
+                icon.className = 'forward-mode-icon';
+                icon.textContent = m.icon;
+                const main = document.createElement('span');
+                main.className = 'forward-mode-main';
+                const name = document.createElement('span');
+                name.className = 'forward-mode-name';
+                name.textContent = m.name;
+                const hint = document.createElement('span');
+                hint.className = 'forward-mode-hint';
+                hint.textContent = m.count ? m.hint : '暂无可用目标';
+                main.appendChild(name);
+                main.appendChild(hint);
+                btn.appendChild(icon);
+                btn.appendChild(main);
+                btn.addEventListener('click', function () {
+                    mode = m.kind;
+                    step = 'list';
+                    search.value = '';
+                    render();
+                    search.focus();
+                });
+                modeList.appendChild(btn);
+            });
+        }
         function render() {
+            const isMode = step === 'mode';
+            modeList.hidden = !isMode;
+            back.hidden = isMode;
+            search.hidden = isMode;
+            list.hidden = isMode;
+            empty.hidden = true;
+            if (isMode) {
+                renderModes();
+                return;
+            }
+            const options = optionsOf(mode);
+            search.placeholder = mode === 'user'
+                ? '搜索用户昵称' : '搜索域或讨论';
+            empty.textContent = mode === 'user'
+                ? '没有可转发的用户' : '没有可转发的讨论';
+            renderList(options);
+        }
+        function renderList(options) {
             const q = search.value.trim().toLowerCase();
             list.innerHTML = '';
             let shown = 0;
@@ -192,13 +267,18 @@
         }
         overlay._close = close;
         cancel.addEventListener('click', close);
+        back.addEventListener('click', function () {
+            step = 'mode';
+            search.value = '';
+            render();
+        });
         overlay.addEventListener('click', function (e) {
             if (e.target === overlay) close();
         });
         search.addEventListener('input', render);
         document.addEventListener('keydown', onKey);
         render();
-        search.focus();
+        cancel.focus();
     }
     function loadTargets(source) {
         fetch('/forward/targets', { headers: { 'Accept': 'application/json' } })

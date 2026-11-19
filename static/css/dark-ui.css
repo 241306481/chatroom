@@ -211,6 +211,28 @@ html[data-theme="dark"] .forward-target:focus-visible {
 }
 html[data-theme="dark"] .forward-target-name { color: #e6e6e6; }
 html[data-theme="dark"] .forward-target-meta { color: #999; }
+html[data-theme="dark"] .forward-mode { background: #2a2a2a;
+  border-color: #3a3a3a; }
+html[data-theme="dark"] .forward-mode:hover,
+html[data-theme="dark"] .forward-mode:focus-visible { background: #163a52;
+  border-color: #1f6f9f; }
+html[data-theme="dark"] .forward-mode-name { color: #e6e6e6; }
+html[data-theme="dark"] .forward-mode-hint { color: #999; }
+html[data-theme="dark"] .forward-card { background: #1b2a36;
+  border-color: #2a4a63; color: #e6e6e6; }
+html[data-theme="dark"] .forward-card:hover,
+html[data-theme="dark"] .forward-card:focus-visible { background: #163a52;
+  border-color: #1f6f9f; }
+html[data-theme="dark"] .forward-card-title { color: #e6e6e6; }
+html[data-theme="dark"] .forward-card-preview,
+html[data-theme="dark"] .forward-card-count { color: #999; }
+html[data-theme="dark"] .forward-card-count { border-left-color: #2a4a63; }
+html[data-theme="dark"] .forward-record-item { background: #252525;
+  border-color: #3a3a3a; }
+html[data-theme="dark"] .forward-record-content { color: #e0e0e0; }
+html[data-theme="dark"] .forward-record-origin { color: #999; }
+html[data-theme="dark"] .forward-record-order { background: #163a52;
+  color: #69b1ff; }
 html[data-theme="dark"] .history-item {
   background: #252525;
   border-color: #3a3a3a;

@@ -73,6 +73,7 @@
             if (el.dataset.rendered === '1') return;
             el.innerHTML = window.renderContent(el.dataset.raw || '');
             el.dataset.rendered = '1';
+            if (window.ChatForwardCard) window.ChatForwardCard.enhance(el);
         });
     }
     R.appendMessage = appendMessage;

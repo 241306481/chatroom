@@ -2,14 +2,6 @@
 {% block content %}
 <div class="layout-home">
   <div class="main-column">
-    {% if site_announcement %}
-      <section class="announcement-panel site-notice">
-        <h2>📢 站点公告</h2>
-        <div class="announcement-item system-ann">
-          <div class="announcement-content md-body" data-raw="{{ site_announcement | e }}"></div>
-        </div>
-      </section>
-    {% endif %}
     {% if announcement %}
       <section class="announcement-panel">
         <h2>📢 域公告</h2>

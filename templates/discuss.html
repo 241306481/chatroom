@@ -173,7 +173,8 @@
                   撤回了一条消息
                 </div>
               {% else %}
-                <div class="msg-content md-body" data-raw="{{ msg.content | e }}"></div>
+                <div class="msg-content md-body" data-raw="{{ msg.content | e }}"
+                     {% if msg.forwarded_from %}data-forward-ref="{{ msg.forwarded_from | jsdump | e }}"{% endif %}></div>
               {% endif %}
               {% if not msg.revoked %}
                 <div class="msg-reactions" id="reactions-{{ msg.id }}"

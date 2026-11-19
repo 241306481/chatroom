@@ -58,7 +58,37 @@
 html[data-theme="dark"] .user-dropdown .dropdown-button { color: #e0e0e0; }
 html[data-theme="dark"] .user-dropdown .dropdown-button:hover {
   background: #2a2a2a; color: #69b1ff; }
+.site-announcement { display: flex; align-items: flex-start; gap: 10px;
+  padding: 7px 20px; background: #fffbe6; border-bottom: 1px solid #ffe58f;
+  color: #613400; font-size: 13px; line-height: 1.55; }
+.site-announcement-label { flex-shrink: 0; font-weight: 600; color: #ad6800;
+  padding-top: 1px; }
+.site-announcement-body { flex: 1 1 auto; min-width: 0; max-height: 4.65em;
+  overflow: hidden; position: relative; transition: max-height 0.2s ease; }
+.site-announcement-body::after { content: ''; position: absolute; left: 0;
+  right: 0; bottom: 0; height: 1.4em; pointer-events: none;
+  background: linear-gradient(rgba(255,251,230,0), #fffbe6); }
+.site-announcement.expanded .site-announcement-body { max-height: 50vh;
+  overflow-y: auto; }
+.site-announcement.expanded .site-announcement-body::after { display: none; }
+.site-announcement-content { word-break: break-word; }
+.site-announcement-content > :first-child { margin-top: 0; }
+.site-announcement-content > :last-child { margin-bottom: 0; }
+.site-announcement-toggle { flex-shrink: 0; border: 1px solid #ffe58f;
+  background: #fff; color: #ad6800; border-radius: 4px; padding: 2px 8px;
+  font-size: 12px; line-height: 1.5; cursor: pointer; }
+.site-announcement-toggle:hover { background: #fff1b8; }
+html[data-theme="dark"] .site-announcement { background: #2b2113;
+  border-bottom-color: #5c4813; color: #f0d78c; }
+html[data-theme="dark"] .site-announcement-label { color: #e8c96a; }
+html[data-theme="dark"] .site-announcement-body::after {
+  background: linear-gradient(rgba(43,33,19,0), #2b2113); }
+html[data-theme="dark"] .site-announcement-toggle { background: #3a2d18;
+  border-color: #5c4813; color: #e8c96a; }
+html[data-theme="dark"] .site-announcement-toggle:hover { background: #4a3a1f; }
 @media (max-width: 720px) {
+  .site-announcement { padding: 6px 10px; gap: 6px; font-size: 12px; }
+  .site-announcement-body { max-height: 4.2em; }
   .topbar { padding: 0 10px; gap: 8px; }
   .topbar-left { min-width: 0; flex: 0 1 auto; }
   .logo { max-width: 80px; overflow: hidden; white-space: nowrap;

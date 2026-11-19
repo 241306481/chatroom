@@ -60,3 +60,41 @@
 .forward-target-meta { font-size: 12px; color: #999; }
 .forward-empty { margin: 8px 0; font-size: 13px; color: #999; text-align: center; }
 .forward-error { margin: 0 0 8px; font-size: 13px; color: #f5222d; }
+.forward-back { border: 0; background: none; color: #1890ff; font: inherit;
+  font-size: 13px; cursor: pointer; padding: 0 0 10px; }
+.forward-back:hover { text-decoration: underline; }
+.forward-mode-list { display: flex; flex-direction: column; gap: 8px; }
+.forward-mode { display: flex; align-items: center; gap: 12px; width: 100%;
+  padding: 14px 16px; border: 1px solid #e8e8e8; border-radius: 8px;
+  background: #fafafa; cursor: pointer; text-align: left; font: inherit; }
+.forward-mode:hover, .forward-mode:focus-visible { background: #e6f7ff;
+  border-color: #91d5ff; outline: none; }
+.forward-mode-icon { font-size: 22px; }
+.forward-mode-main { display: flex; flex-direction: column; gap: 2px; }
+.forward-mode-name { font-size: 14px; color: #333; font-weight: 600; }
+.forward-mode-hint { font-size: 12px; color: #999; }
+.forward-card { display: flex; align-items: center; gap: 10px; width: 100%;
+  max-width: 330px; padding: 10px 12px; border: 1px solid #d9e8f5;
+  border-radius: 8px; background: #f5faff; color: #333; cursor: pointer;
+  text-align: left; font: inherit; }
+.forward-card:hover, .forward-card:focus-visible { background: #e6f4ff;
+  border-color: #91caff; outline: none; }
+.forward-card-icon { flex-shrink: 0; font-size: 22px; }
+.forward-card-main { display: flex; flex-direction: column; gap: 3px;
+  min-width: 0; flex: 1 1 auto; }
+.forward-card-title { font-size: 14px; font-weight: 600; color: #333; }
+.forward-card-preview { font-size: 12px; color: #888;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.forward-card-count { flex-shrink: 0; font-size: 12px; color: #888;
+  border-left: 1px solid #d9e8f5; padding-left: 10px; }
+.forward-record-box { max-width: 620px; width: calc(100% - 32px); }
+.forward-record-body { max-height: min(62vh, 520px); overflow-y: auto;
+  display: flex; flex-direction: column; gap: 10px; }
+.forward-record-item { border: 1px solid #eee; border-radius: 8px;
+  padding: 10px 12px; background: #fafafa; }
+.forward-record-origin { display: flex; align-items: center; gap: 6px;
+  font-size: 12px; color: #999; margin-bottom: 6px; }
+.forward-record-order { display: inline-flex; align-items: center;
+  justify-content: center; width: 18px; height: 18px; border-radius: 50%;
+  background: #e6f4ff; color: #1677ff; font-size: 11px; }
+.forward-record-content { font-size: 14px; color: #333; word-break: break-word; }

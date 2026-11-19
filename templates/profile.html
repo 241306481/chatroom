@@ -86,6 +86,12 @@
       {% endif %}
     {% endif %}
     <a href="/messages?target={{ target.id }}" class="profile-dm-btn">✉ 发送私信</a>
+    {% if nav and nav.can_manage_users %}
+      <a href="/manage/users?uid={{ target.id }}" class="profile-dm-btn">🛡 用户管理</a>
+    {% endif %}
+    {% if nav and nav.is_system_admin %}
+      <a href="/manage" class="profile-dm-btn">⚙ 系统管理</a>
+    {% endif %}
     {% if not is_me %}
       {% if is_blocked %}
         <form method="POST" action="/user/{{ target.id }}/unblock" style="display:inline">

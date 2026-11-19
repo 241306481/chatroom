@@ -92,7 +92,8 @@
                   <button type="button" class="msg-mini-btn"
                           data-action="toggle-source" title="查看源码">📄</button>
                 </div>
-                <div class="dm-bubble md-body" data-raw="{{ m.content | e }}"></div>
+                <div class="dm-bubble md-body" data-raw="{{ m.content | e }}"
+                     {% if m.forwarded_from %}data-forward-ref="{{ m.forwarded_from | jsdump | e }}"{% endif %}></div>
               </div>
             </div>
           {% endfor %}
@@ -152,6 +153,7 @@
                 ? window.renderContent(el.dataset.raw || '')
                 : (el.dataset.raw || '');
             el.dataset.rendered = '1';
+            if (window.ChatForwardCard) window.ChatForwardCard.enhance(el);
         });
     }
     function clearActiveBadge() {

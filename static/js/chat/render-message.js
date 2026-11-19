@@ -70,9 +70,12 @@
         const reactionsDiv = !revoked
             ? `<div class="msg-reactions" id="reactions-${mid}" data-reactions="${escAttr(msg.reactions_json || '{}')}"></div>`
             : '';
+        const forwardAttr = !revoked && msg.forwarded_from
+            ? ` data-forward-ref="${escAttr(JSON.stringify(msg.forwarded_from))}"`
+            : '';
         const contentHtml = revoked
             ? `<div class="msg-content msg-revoked"><a class="revoked-nick" href="/user/${escAttr(msg.revoked_by)}">${esc(msg.revoked_by_nickname)}</a> 撤回了一条消息</div>`
-            : `<div class="msg-content md-body" data-raw="${escAttr(msg.content)}">${window.renderContent(msg.content)}</div>`;
+            : `<div class="msg-content md-body" data-raw="${escAttr(msg.content)}"${forwardAttr}>${window.renderContent(msg.content)}</div>`;
         div.innerHTML = `
             ${batchCheck}
             <div class="msg-avatar" style="background:${color}">${esc(nick)}</div>
@@ -99,6 +102,7 @@
                 ${reactionsDiv}
             </div>`;
         swapAvatar(div, msg, '.msg-avatar');
+        if (!revoked && window.ChatForwardCard) window.ChatForwardCard.enhance(div);
         return div;
     }
     function buildDMMessageEl(msg) {
@@ -108,6 +112,9 @@
         div.dataset.id = msg.id;
         const contentHtml = window.renderContent(msg.content);
         const rawAttr = escAttr(msg.content);
+        const forwardAttr = msg.forwarded_from
+            ? ' data-forward-ref="' + escAttr(JSON.stringify(msg.forwarded_from)) + '"'
+            : '';
         const nick = msg.nickname || msg.from_nickname || '?';
         const color = window.Avatar.safeColor(msg.avatar_color || msg.from_avatar_color);
         const firstChar = window.Avatar.avatarText(nick);
@@ -137,11 +144,12 @@
                 + '<button type="button" class="msg-mini-btn" '
                 + 'data-action="toggle-source" title="查看源码">📄</button>'
               + '</div>'
-              + '<div class="dm-bubble md-body" data-raw="' + rawAttr + '">'
+              + '<div class="dm-bubble md-body" data-raw="' + rawAttr + '"' + forwardAttr + '>'
                 + contentHtml
               + '</div>'
             + '</div>';
         swapAvatar(div, msg, '.dm-avatar');
+        if (window.ChatForwardCard) window.ChatForwardCard.enhance(div);
         return div;
     }
 function swapAvatar(div, msg, sel) {

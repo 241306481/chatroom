@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "context_edit.html" import context_edit %}
 {% block content %}
 <div class="page-container">
   <h1>⚙ 系统设置</h1>
@@ -7,9 +8,19 @@
     <label>站点名称
       <input type="text" name="site_name" value="{{ config.site_name or '聊天室' }}">
     </label>
-    <label>站点公告（首页顶部显示）
-      <textarea name="site_announcement" rows="3">{{ config.site_announcement or '' }}</textarea>
-    </label>
+    <label>站点公告（所有页面顶部显示）</label>
+    {% set editorOpts = {
+        id: 'siteAnnouncementInput',
+        name: 'site_announcement',
+        previewId: 'siteAnnouncementPreview',
+        previewCheckboxId: 'siteAnnouncementAutoPreview',
+        value: config.site_announcement or '',
+        placeholder: '输入站点公告，支持 Markdown 与 LaTeX',
+        rows: 6,
+        height: 240,
+        heightResize: 'bottom'
+    } %}
+    {{ context_edit(editorOpts) }}
     <hr style="margin:12px 0;border:none;border-top:1px solid #eee;">
     <label class="checkbox-row">
       <input type="checkbox" name="allow_register" {% if config.allow_register %}checked{% endif %}>
