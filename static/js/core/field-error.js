@@ -54,3 +54,6 @@ window.FieldError = (function () {
 document.addEventListener('DOMContentLoaded', function () {
     window.FieldError.bindAll(document);
 });
+document.addEventListener('app:content', function () {
+    window.FieldError.bindAll(document);
+});

@@ -652,6 +652,207 @@ function showFormError(message) {
     if (window.showAlert) window.showAlert(message);
     else window.alert(message);
 }
+const VIEW_STATE_KEY = 'chatroom:view-restore';
+const VIEW_STATE_TTL = 15000;
+const VIEW_SCROLL_TARGETS = [
+    '#messageList', '.dm-list', '.members-panel', '.pinned-panel',
+];
+function captureViewState() {
+    const items = [];
+    VIEW_SCROLL_TARGETS.forEach(function (selector) {
+        const el = document.querySelector(selector);
+        if (el) {
+            items.push({
+                selector: selector,
+                top: el.scrollTop,
+                left: el.scrollLeft,
+            });
+        }
+    });
+    return {
+        path: location.pathname + location.search,
+        at: Date.now(),
+        x: window.scrollX,
+        y: window.scrollY,
+        items: items,
+    };
+}
+function saveViewState() {
+    try {
+        sessionStorage.setItem(VIEW_STATE_KEY, JSON.stringify(captureViewState()));
+    } catch (e) {}
+}
+function clearViewState() {
+    try { sessionStorage.removeItem(VIEW_STATE_KEY); } catch (e) {}
+}
+function applyViewState(snap) {
+    window.scrollTo(snap.x || 0, snap.y || 0);
+    (snap.items || []).forEach(function (item) {
+        const el = document.querySelector(item.selector);
+        if (!el) return;
+        el.scrollTop = item.top;
+        el.scrollLeft = item.left;
+    });
+}
+function restoreViewState() {
+    let raw = null;
+    try { raw = sessionStorage.getItem(VIEW_STATE_KEY); } catch (e) { return; }
+    if (!raw) return;
+    clearViewState();
+    let snap;
+    try { snap = JSON.parse(raw); } catch (e) { return; }
+    if (!snap || snap.path !== location.pathname + location.search) return;
+    if (location.hash || Date.now() - snap.at > VIEW_STATE_TTL) return;
+    function schedule() {
+        requestAnimationFrame(function () { applyViewState(snap); });
+    }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', schedule, { once: true });
+    } else {
+        schedule();
+    }
+}
+restoreViewState();
+const SOFT_PATH_PATTERNS = [
+    /^\/manage(?:\/|$)/,
+    /^\/users$/,
+    /^\/domain\/[^/]+\/manage(?:\/|$)/,
+    /^\/domain\/[^/]+\/users$/,
+];
+function isSoftNavigation(url) {
+    let target;
+    try { target = new URL(url, location.href); } catch (e) { return false; }
+    if (target.origin !== location.origin || target.hash) return false;
+    if (target.pathname + target.search !== location.pathname + location.search) return false;
+    return SOFT_PATH_PATTERNS.some(function (re) { return re.test(target.pathname); });
+}
+function currentNonce() {
+    const script = document.querySelector('script[nonce]');
+    return script ? (script.nonce || script.getAttribute('nonce') || '') : '';
+}
+function runScripts(root) {
+    const nonce = currentNonce();
+    Array.from(root.querySelectorAll('script')).forEach(function (old) {
+        const script = document.createElement('script');
+        Array.from(old.attributes).forEach(function (attr) {
+            if (attr.name.toLowerCase() === 'nonce') return;
+            script.setAttribute(attr.name, attr.value);
+        });
+        if (nonce) script.nonce = nonce;
+        script.textContent = old.textContent;
+        old.replaceWith(script);
+    });
+}
+function softSwap(doc) {
+    const main = document.querySelector('main.app-main');
+    const nextMain = doc.querySelector('main.app-main');
+    if (!main || !nextMain) return false;
+    const snap = captureViewState();
+    const filter = document.querySelector('.list-filter-input');
+    const filterValue = filter ? filter.value : '';
+    main.innerHTML = nextMain.innerHTML;
+    runScripts(main);
+    if (doc.title) document.title = doc.title;
+    if (filterValue) {
+        const nextFilter = main.querySelector('.list-filter-input');
+        if (nextFilter) nextFilter.value = filterValue;
+    }
+    applyViewState(snap);
+    requestAnimationFrame(function () { applyViewState(snap); });
+    document.dispatchEvent(new CustomEvent('app:content'));
+    return true;
+}
+function softApplyHtml(html, fallbackUrl) {
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    if (!doc.querySelector('main.app-main')) {
+        saveViewState();
+        location.href = fallbackUrl;
+        return false;
+    }
+    const apply = function () { softSwap(doc); };
+    if (document.startViewTransition) document.startViewTransition(apply);
+    else apply();
+    return true;
+}
+function softNavigate(url, message) {
+    const target = new URL(url, location.href);
+    const key = target.pathname + target.search;
+    return fetch(target.href, {
+        credentials: 'same-origin',
+        headers: { Accept: 'text/html' },
+        cache: 'no-store',
+    }).then(function (res) {
+        const finalUrl = new URL(res.url || target.href);
+        if (finalUrl.pathname + finalUrl.search !== key) {
+            saveViewState();
+            location.href = finalUrl.href;
+            return null;
+        }
+        if (!res.ok) {
+            saveViewState();
+            location.href = target.href;
+            return null;
+        }
+        return res.text();
+    }).then(function (html) {
+        if (html == null) return;
+        if (softApplyHtml(html, target.href) && message && window.showToast) {
+            window.showToast(message);
+        }
+    }).catch(function () {
+        saveViewState();
+        location.href = target.href;
+    });
+}
+function softSubmitNative(form, submitter) {
+    if (form.dataset.softSubmitting === '1') return;
+    let hasFiles = false;
+    form.querySelectorAll('input[type="file"]').forEach(function (input) {
+        if (input.files && input.files.length) hasFiles = true;
+    });
+    if (hasFiles) {
+        HTMLFormElement.prototype.submit.call(form);
+        return;
+    }
+    const actionAttr = submitter && submitter.hasAttribute
+        && submitter.hasAttribute('formaction')
+        ? submitter.getAttribute('formaction')
+        : form.getAttribute('action');
+    const action = actionAttr ? new URL(actionAttr, location.href).href : location.href;
+    const body = new URLSearchParams(new FormData(form, submitter));
+    form.dataset.softSubmitting = '1';
+    form.querySelectorAll('button[type="submit"]').forEach(function (btn) {
+        btn.disabled = true;
+    });
+    fetch(action, {
+        method: 'POST',
+        body: body,
+        credentials: 'same-origin',
+        headers: { Accept: 'text/html' },
+    }).then(function (res) {
+        const finalUrl = new URL(res.url || action);
+        const samePage = finalUrl.pathname + finalUrl.search
+            === location.pathname + location.search;
+        if (!samePage) {
+            saveViewState();
+            location.href = finalUrl.href;
+            return null;
+        }
+        if (!res.ok) {
+            saveViewState();
+            location.reload();
+            return null;
+        }
+        return res.text();
+    }).then(function (html) {
+        if (html != null) softApplyHtml(html, action);
+    }).catch(function () {
+        showFormError('网络错误，请稍后重试');
+    }).then(function () {
+        delete form.dataset.softSubmitting;
+        unlockForm(form);
+    });
+}
 function saveDownload(res) {
     const cd = res.headers.get('Content-Disposition') || '';
     const match = /filename="([^"]+)"/.exec(cd);
@@ -679,6 +880,10 @@ function handleJsonResponse(res) {
             showFormError(data.error || '操作失败');
             return;
         }
+        if (data.redirect && isSoftNavigation(data.redirect)) {
+            return softNavigate(data.redirect, data.message);
+        }
+        if (data.redirect) saveViewState();
         location.href = data.redirect || location.href;
     });
 }
@@ -736,4 +941,21 @@ document.addEventListener('submit', function (e) {
         delete form.dataset.submitting;
         unlockForm(form);
     });
+});
+document.addEventListener('submit', function (e) {
+    if (e.defaultPrevented) return;
+    const form = e.target;
+    if (!form || !form.getAttribute) return;
+    if ((form.getAttribute('method') || '').toUpperCase() !== 'POST') return;
+    const target = form.getAttribute('target');
+    if (target && target !== '_self') return;
+    if (!form.hasAttribute('data-native') && !target) return;
+    const submitter = e.submitter;
+    if (submitter && submitter.dataset && submitter.dataset.batchAction === 'download') return;
+    if (isSoftNavigation(location.href)) {
+        e.preventDefault();
+        softSubmitNative(form, submitter);
+        return;
+    }
+    saveViewState();
 });

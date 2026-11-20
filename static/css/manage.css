@@ -50,6 +50,10 @@
 .user-inline-form { display: inline-flex; gap: 3px; align-items: center; margin: 0 2px; }
 .user-inline-form input[type="number"] { padding: 2px 4px; font-size: 12px;
   border: 1px solid #d9d9d9; border-radius: 4px; }
+.user-actions-col { width: 250px; }
+.user-actions-cell { white-space: nowrap; }
+.user-actions-cell .mini-btn,
+.user-actions-cell .user-inline-form { vertical-align: middle; white-space: nowrap; }
 .ban-form { display: inline-flex; gap: 4px; align-items: center; margin-left: 4px; }
 .ban-form .ban-reason { width: 80px; padding: 3px 6px; font-size: 12px;
   border: 1px solid #d9d9d9; border-radius: 4px; }

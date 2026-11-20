@@ -60,11 +60,13 @@
         const field = form.querySelector('[data-batch-ids]');
         if (field) field.value = ids.join(',');
     }, true);
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', function () {
-            document.querySelectorAll('[data-batch-scope]').forEach(updateCount);
-        });
-    } else {
+    function refresh() {
         document.querySelectorAll('[data-batch-scope]').forEach(updateCount);
     }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', refresh);
+    } else {
+        refresh();
+    }
+    document.addEventListener('app:content', refresh);
 })();

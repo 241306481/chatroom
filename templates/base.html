@@ -12,6 +12,9 @@
               && window.matchMedia('(prefers-color-scheme: dark)').matches
               ? 'dark' : 'light');
       document.documentElement.setAttribute('data-theme', t);
+      document.documentElement.style.colorScheme = t;
+      document.documentElement.style.backgroundColor =
+          t === 'dark' ? '#1a1a1a' : '#f5f6f8';
     } catch (e) {}
     window.addEventListener('error', function (e) {
       var img = e.target;
@@ -325,6 +328,9 @@
       var cur = document.documentElement.getAttribute('data-theme');
       var next = cur === 'dark' ? 'light' : 'dark';
       document.documentElement.setAttribute('data-theme', next);
+      document.documentElement.style.colorScheme = next;
+      document.documentElement.style.backgroundColor =
+          next === 'dark' ? '#1a1a1a' : '#f5f6f8';
       localStorage.setItem(KEY, next);
       updateButton();
     });

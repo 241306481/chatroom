@@ -25,4 +25,5 @@
     } else {
         init();
     }
+    document.addEventListener('app:content', init);
 })();

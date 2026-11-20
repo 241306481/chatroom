@@ -81,20 +81,19 @@
   </div>
   <h2 style="margin-top:32px;">会话绑定</h2>
   <p class="hint">
-    一个登录会话通常会在多个 IP、多个浏览器上使用（手机切 WiFi、同时用电脑和手机），
-    所以这里给的是「上限」而不是「唯一」。
-    超过上限就说明同一个 cookie 出现在太多地方，判定为外泄并强制退出。
+    同一账号可以同时在多个 IP 和多个浏览器上登录。下面是允许的上限，超过后系统会销毁该会话并强制退出。
   </p>
   <form method="POST" action="/manage/rate_limits" data-native class="form-stack">
     <input type="hidden" name="action" value="save_bind">
     <label class="checkbox-row">
       <input type="checkbox" name="bind_ua" value="1" {% if bind.bindUa %}checked{% endif %}>
-      校验 User-Agent（cookie 搬到别的浏览器会失效）
+      校验浏览器标识（User-Agent）
     </label>
-    <label>同一会话最多可在几个 IP 上使用
+    <p class="hint">开启后，cookie 被复制到其他浏览器时会失效；浏览器升级后标识变化也可能导致重新登录。</p>
+    <label>同一会话最多允许的 IP 数
       <input type="number" name="max_ips" value="{{ bind.maxIps }}" min="1" max="50">
     </label>
-    <label>同一会话最多可出现几个浏览器标识
+    <label>同一会话最多允许的浏览器标识数
       <input type="number" name="max_uas" value="{{ bind.maxUas }}" min="1" max="20">
     </label>
     <button type="submit">保存绑定设置</button>

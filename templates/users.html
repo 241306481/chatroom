@@ -20,7 +20,7 @@
             <th style="width:80px;">等级</th>
           {% endif %}
           <th>简介</th>
-          <th style="width:150px;">操作</th>
+          <th class="user-actions-col">操作</th>
         </tr>
       </thead>
       <tbody>
@@ -36,6 +36,7 @@
                          {% if not (u | avatarSrc) %}style="display:none"{% endif %}>
                 <span class="user-avatar" style="background: {{ u.avatar_color | avatarColor }}">{{ u.nickname | avatarText }}</span>
                 <span>{{ u.nickname }}</span>
+                {% if u.banned %}<span class="tag-banned">已封禁</span>{% endif %}
                 {% if u.is_superuser %}<span class="badge superuser">超级管理员</span>{% endif %}
                 {% if u.is_admin and not u.is_superuser %}<span class="badge admin">系统管理员</span>{% endif %}
               </a>
@@ -58,25 +59,47 @@
               <td><span class="user-level" data-exp="exp: {{ u.exp | default(0) }}">Lv.{{ u.level }}</span></td>
             {% endif %}
             <td style="color:#999;">{{ u.bio or '—' }}</td>
-            <td>
+            <td class="user-actions-cell">
               {% if current_user and current_user.id != u.id %}
                 <a href="/messages?target={{ u.id }}" class="mini-btn">私信</a>
               {% endif %}
               {% if is_domain_view and not u.is_owner %}
                 {% if not u.banned and can_mute %}
-                  <form method="POST" action="/domain/{{ domain_name }}/manage/user" style="display:inline" class="user-inline-form">
+                  <form method="POST" action="/domain/{{ domain_name }}/manage/user" class="user-inline-form">
                     <input type="hidden" name="action" value="mute">
                     <input type="hidden" name="user_id" value="{{ u.id }}">
-                    <div class="row"><input type="number" name="minutes" value="60" min="1" style="width:50px;" title="禁言时间（分钟）">分钟
-                    <button type="submit" class="mini-btn">禁言</button></div>
+                    <input type="hidden" name="next" value="/domain/{{ domain_name }}/users">
+                    <input type="number" name="minutes" value="60" min="1" style="width:50px;" title="禁言时间（分钟）">
+                    <span>分钟</span>
+                    <button type="submit" class="mini-btn">禁言</button>
                   </form>
                 {% endif %}
                 {% if can_kick and not is_system_domain %}
-                  <form method="POST" action="/domain/{{ domain_name }}/manage/user" style="display:inline" class="user-inline-form">
+                  <form method="POST" action="/domain/{{ domain_name }}/manage/user" class="user-inline-form">
                     <input type="hidden" name="action" value="{% if u.banned %}unban{% else %}kick{% endif %}">
                     <input type="hidden" name="user_id" value="{{ u.id }}">
+                    <input type="hidden" name="next" value="/domain/{{ domain_name }}/users">
                     <button type="submit" class="mini-btn {% if not u.banned %}danger{% endif %}"
                             {% if not u.banned %}data-confirm="确定踢出该成员？"{% endif %}>{% if u.banned %}解封{% else %}踢出{% endif %}</button>
+                  </form>
+                {% endif %}
+              {% endif %}
+              {% if not is_domain_view and can_ban and current_user and current_user.id != u.id
+                    and not u.is_system and not u.is_superuser and (can_ban_admin or not u.is_admin) %}
+                {% if u.banned %}
+                  <form method="POST" action="/manage/users/ban" class="user-inline-form">
+                    <input type="hidden" name="action" value="unban">
+                    <input type="hidden" name="user_id" value="{{ u.id }}">
+                    <input type="hidden" name="next" value="/users">
+                    <button type="submit" class="mini-btn">解封</button>
+                  </form>
+                {% else %}
+                  <form method="POST" action="/manage/users/ban" class="user-inline-form">
+                    <input type="hidden" name="action" value="ban">
+                    <input type="hidden" name="user_id" value="{{ u.id }}">
+                    <input type="hidden" name="next" value="/users">
+                    <button type="submit" class="mini-btn danger"
+                            data-confirm="确定永久封禁该用户？">封禁</button>
                   </form>
                 {% endif %}
               {% endif %}

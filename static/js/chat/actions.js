@@ -62,15 +62,29 @@
     window.muteMember = function (uid) {
         window.showPrompt('禁言时长（分钟）', '60', { title: '禁言成员' }).then(function (mins) {
             if (mins === null) return;
-            const form = document.createElement('form');
-            form.method = 'POST';
-            form.setAttribute('action',
-                location.pathname.replace(/\/discuss\/.*$/, '/manage/user'));
-            form.innerHTML = `<input name="action" value="mute">
-                <input name="user_id" value="${uid}">
-                <input name="minutes" value="${parseInt(mins, 10) || 60}">`;
-            document.body.appendChild(form);
-            form.requestSubmit();
+            const minutes = Math.max(1, Math.min(43200, parseInt(mins, 10) || 60));
+            const body = new URLSearchParams({
+                action: 'mute',
+                user_id: uid,
+                minutes: String(minutes),
+                no_flash: '1',
+            });
+            fetch(location.pathname.replace(/\/discuss\/.*$/, '/manage/user'), {
+                method: 'POST',
+                body: body,
+                credentials: 'same-origin',
+                headers: { Accept: 'application/json' },
+            }).then(function (res) {
+                return res.json().then(function (data) {
+                    if (!res.ok || !data.ok) throw new Error(data.error || '禁言失败');
+                    if (window.ChatRender && window.ChatRender.showToast) {
+                        window.ChatRender.showToast('已禁言 ' + minutes + ' 分钟');
+                    }
+                });
+            }).catch(function (err) {
+                const message = err && err.message ? err.message : '网络错误，请稍后重试';
+                if (window.showAlert) window.showAlert(message);
+            });
         });
     };
 })();
