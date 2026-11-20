@@ -59,32 +59,42 @@
         }
     };
     window.unpinMessage = window.pinMessage;
+    function memberAction(uid, fields, successMessage) {
+        const body = new URLSearchParams(Object.assign({
+            user_id: uid,
+            no_flash: '1',
+        }, fields));
+        fetch(location.pathname.replace(/\/discuss\/.*$/, '/manage/user'), {
+            method: 'POST',
+            body: body,
+            credentials: 'same-origin',
+            headers: { Accept: 'application/json' },
+        }).then(function (res) {
+            return res.json().then(function (data) {
+                if (!res.ok || !data.ok) throw new Error(data.error || '操作失败');
+                if (window.ChatRender && window.ChatRender.showToast) {
+                    window.ChatRender.showToast(successMessage);
+                }
+            });
+        }).catch(function (err) {
+            const message = err && err.message ? err.message : '网络错误，请稍后重试';
+            if (window.showAlert) window.showAlert(message);
+        });
+    }
     window.muteMember = function (uid) {
         window.showPrompt('禁言时长（分钟）', '60', { title: '禁言成员' }).then(function (mins) {
             if (mins === null) return;
             const minutes = Math.max(1, Math.min(43200, parseInt(mins, 10) || 60));
-            const body = new URLSearchParams({
+            memberAction(uid, {
                 action: 'mute',
-                user_id: uid,
                 minutes: String(minutes),
-                no_flash: '1',
-            });
-            fetch(location.pathname.replace(/\/discuss\/.*$/, '/manage/user'), {
-                method: 'POST',
-                body: body,
-                credentials: 'same-origin',
-                headers: { Accept: 'application/json' },
-            }).then(function (res) {
-                return res.json().then(function (data) {
-                    if (!res.ok || !data.ok) throw new Error(data.error || '禁言失败');
-                    if (window.ChatRender && window.ChatRender.showToast) {
-                        window.ChatRender.showToast('已禁言 ' + minutes + ' 分钟');
-                    }
-                });
-            }).catch(function (err) {
-                const message = err && err.message ? err.message : '网络错误，请稍后重试';
-                if (window.showAlert) window.showAlert(message);
-            });
+            }, '已禁言 ' + minutes + ' 分钟');
+        });
+    };
+    window.unmuteMember = function (uid) {
+        window.showConfirm('确定解除该成员的禁言？').then(function (ok) {
+            if (!ok) return;
+            memberAction(uid, { action: 'unmute' }, '已解除禁言');
         });
     };
 })();

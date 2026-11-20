@@ -625,6 +625,9 @@ document.addEventListener('click', function (e) {
     case 'mute-member':
         if (window.muteMember) window.muteMember(el.dataset.uid);
         break;
+    case 'unmute-member':
+        if (window.unmuteMember) window.unmuteMember(el.dataset.uid);
+        break;
     case 'new-dm-target':
         if (window.newDMTarget) window.newDMTarget();
         break;

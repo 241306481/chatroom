@@ -36,17 +36,21 @@
             actions = document.createElement('div');
             actions.className = 'member-actions';
             actions.setAttribute('data-member-actions', '');
-            const btn = document.createElement('button');
-            btn.type = 'button';
-            btn.dataset.action = 'mute-member';
-            btn.title = '禁言';
-            btn.setAttribute('aria-label', '禁言');
-            btn.textContent = '🔇';
-            actions.appendChild(btn);
             row.appendChild(actions);
         }
-        const btn = actions.querySelector('[data-action="mute-member"]');
-        if (btn) btn.dataset.uid = String(user.id);
+        let btn = actions.querySelector('[data-action="mute-member"], [data-action="unmute-member"]');
+        if (!btn) {
+            btn = document.createElement('button');
+            btn.type = 'button';
+            actions.appendChild(btn);
+        }
+        const muted = !!user.is_muted;
+        const label = muted ? '解禁' : '禁言';
+        btn.dataset.action = muted ? 'unmute-member' : 'mute-member';
+        btn.dataset.uid = String(user.id);
+        btn.title = label;
+        btn.setAttribute('aria-label', label);
+        btn.textContent = muted ? '🔓' : '🔇';
     }
     function updateRow(row, user) {
         const uid = String(user.id);
