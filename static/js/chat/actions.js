@@ -64,7 +64,8 @@
             if (mins === null) return;
             const form = document.createElement('form');
             form.method = 'POST';
-            form.action = location.pathname.replace(/\/discuss\/.*$/, '/manage/user');
+            form.setAttribute('action',
+                location.pathname.replace(/\/discuss\/.*$/, '/manage/user'));
             form.innerHTML = `<input name="action" value="mute">
                 <input name="user_id" value="${uid}">
                 <input name="minutes" value="${parseInt(mins, 10) || 60}">`;

@@ -553,7 +553,8 @@
     });
     window.submitDMPolicy = function (form) {
         const data = new URLSearchParams(new FormData(form)).toString();
-        fetch(form.action, {
+        const action = form.getAttribute('action');
+        fetch(action ? new URL(action, location.href).href : location.href, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded',

@@ -695,7 +695,7 @@ document.addEventListener('submit', function (e) {
     if (!form || !form.getAttribute || e.defaultPrevented) return;
     if ((form.getAttribute('method') || '').toUpperCase() !== 'POST') return;
     if (form.hasAttribute('data-native')) return;
-    if (form.target) return;
+    if (form.getAttribute('target')) return;
     if (form.dataset.submitting === '1') {
         e.preventDefault();
         return;
@@ -703,7 +703,12 @@ document.addEventListener('submit', function (e) {
     const submitter = e.submitter;
     const overrideAction = submitter && submitter.hasAttribute
         && submitter.hasAttribute('formaction');
-    const action = (overrideAction ? submitter.formAction : form.action) || location.href;
+    const actionAttr = overrideAction
+        ? submitter.getAttribute('formaction')
+        : form.getAttribute('action');
+    const action = actionAttr
+        ? new URL(actionAttr, location.href).href
+        : location.href;
     const isDownload = !!submitter && submitter.dataset.batchAction === 'download';
     let hasFiles = false;
     form.querySelectorAll('input[type="file"]').forEach(function (input) {

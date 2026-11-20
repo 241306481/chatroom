@@ -239,6 +239,10 @@ html[data-theme="dark"] .forward-record-action:hover { color: #69b1ff;
   background: #163a52; }
 html[data-theme="dark"] .forward-record-source { color: #e0e0e0;
   background: #1e1e1e; }
+html[data-theme="dark"] .forward-record-source .source-copy-btn {
+  background: #2a2a2a; color: #c8c8c8; border-color: #444; }
+html[data-theme="dark"] .forward-record-source .source-copy-btn:hover {
+  opacity: 1; background: #234f78; color: #cfe8ff; border-color: #3d7fb3; }
 html[data-theme="dark"] .forward-record-back { color: #69b1ff; }
 html[data-theme="dark"] .forward-record-back:hover { background: #163a52; }
 html[data-theme="dark"] .forward-record-close { color: #999; }
