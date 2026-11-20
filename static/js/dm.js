@@ -75,8 +75,6 @@
         const anchor = lastDmId || newestDmId();
         const base = '/messages/' + encodeURIComponent(target) + '/history';
         const added = [];
-        let before = '';
-        let pages = 0;
         function finish() {
             if (!added.length) return;
             let newest = '';
@@ -109,47 +107,28 @@
                 showDmBanner(incoming.length, el);
             }
         }
-        function loadPage() {
-            const q = '?limit=100' + (before
-                ? '&before=' + encodeURIComponent(before) : '');
-            fetch(base + q, { headers: { 'Accept': 'application/json' } })
-                .then(r => r.json()).then(function (res) {
-                    if (!res || !res.ok || !Array.isArray(res.messages)) {
-                        finish();
-                        return;
-                    }
-                    const msgs = res.messages;
-                    let found = !anchor;
-                    msgs.forEach(function (m) {
-                        if (!m || !m.id) return;
-                        if (hasDmMessage(m.id)) {
-                            if (m.id === anchor) found = true;
-                            const el = document.querySelector(
-                                '.dm-msg[data-id="' + CSS.escape(String(m.id)) + '"]');
-                            const bubble = el && el.querySelector('.dm-bubble');
-                            if (bubble
-                                && String(bubble.dataset.raw || '') !== String(m.content || '')) {
-                                applyDMEdit({
-                                    message_id: m.id,
-                                    content: m.content,
-                                    edited_at: m.edited_at,
-                                });
-                            }
-                            return;
-                        }
-                        if (appendDM(m, !!m.is_me)) added.push(m);
+        window.ChatHistoryLoader.load({
+            base: base,
+            anchor: anchor,
+            hasMessage: hasDmMessage,
+            onExisting: function (m) {
+                const el = document.querySelector(
+                    '.dm-msg[data-id="' + CSS.escape(String(m.id)) + '"]');
+                const bubble = el && el.querySelector('.dm-bubble');
+                if (bubble
+                    && String(bubble.dataset.raw || '') !== String(m.content || '')) {
+                    applyDMEdit({
+                        message_id: m.id,
+                        content: m.content,
+                        edited_at: m.edited_at,
                     });
-                    before = res.next_before
-                        || (msgs[0] && msgs[0].id) || '';
-                    pages++;
-                    if (!found && res.has_more && before && pages < 10) {
-                        loadPage();
-                        return;
-                    }
-                    finish();
-                }).catch(() => {});
-        }
-        loadPage();
+                }
+            },
+            onNew: function (m) {
+                if (appendDM(m, !!m.is_me)) added.push(m);
+            },
+            done: finish,
+        });
     }
     function isDmAtBottom() {
         const l = document.getElementById('dmList');
@@ -669,9 +648,14 @@ function appendDM(msg, isMe) {
     function renderHistory() {
         document.querySelectorAll('.dm-bubble[data-raw]').forEach(function (el) {
             if (el.dataset.rendered === '1') return;
-            el.innerHTML = window.renderContent(el.dataset.raw || '');
+            el.innerHTML = window.renderContent
+                ? window.renderContent(el.dataset.raw || '')
+                : (el.dataset.raw || '');
             el.dataset.rendered = '1';
+            if (window.ChatForwardCard) window.ChatForwardCard.enhance(el);
         });
+        const list = document.getElementById('dmList');
+        if (list) list.scrollTop = 0;
     }
     function clearActiveBadge() {
         var active = document.querySelector('.dm-conv.active');

@@ -145,34 +145,4 @@
 </script>
 </div>
 </div>
-<script nonce="{{ csp_nonce }}">(function () {
-    function renderHistory() {
-        document.querySelectorAll('.dm-bubble[data-raw]').forEach(function (el) {
-            if (el.dataset.rendered === '1') return;
-            el.innerHTML = window.renderContent
-                ? window.renderContent(el.dataset.raw || '')
-                : (el.dataset.raw || '');
-            el.dataset.rendered = '1';
-            if (window.ChatForwardCard) window.ChatForwardCard.enhance(el);
-        });
-    }
-    function clearActiveBadge() {
-        var active = document.querySelector('.dm-conv.active');
-        if (!active) return;
-        var badge = active.querySelector('.badge-unread');
-        if (badge) badge.remove();
-    }
-    function init() {
-        renderHistory();
-        clearActiveBadge();
-        var l = document.getElementById('dmList');
-        if (l) l.scrollTop = 0;
-    }
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', init);
-    } else {
-        init();
-    }
-})();
-</script>
 {% endblock %}

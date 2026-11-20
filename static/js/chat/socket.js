@@ -29,8 +29,6 @@
         const added = [];
         const seen = new Set();
         let oldestAt = '';
-        let before = '';
-        let pages = 0;
         function finish() {
             if (oldestAt && lastMessageId === anchor) {
                 let anchorGone = false;
@@ -76,75 +74,56 @@
                 window.__chatSearchReapply();
             }
         }
-        function loadPage() {
-            const q = '?limit=100' + (before
-                ? '&before=' + encodeURIComponent(before) : '');
-            fetch(base + q, { headers: { 'Accept': 'application/json' } })
-                .then(function (r) { return r.json(); })
-                .then(function (res) {
-                    if (!res || !res.ok || !Array.isArray(res.messages)) {
-                        finish();
-                        return;
-                    }
-                    const msgs = res.messages;
-                    let found = !anchor;
-                    msgs.forEach(function (m) {
-                        if (!m || !m.id) return;
-                        seen.add(m.id);
-                        const at = String(m.created_at || '');
-                        if (at && (!oldestAt || at < oldestAt)) oldestAt = at;
-                        if (hasMessage(m.id)) {
-                            if (m.id === anchor) found = true;
-                            const el = document.querySelector(
-                                '.message[data-id="' + CSS.escape(String(m.id)) + '"]');
-                            if (m.revoked && el && !el.classList.contains('revoked-msg')) {
-                                R.applyRevoke({
-                                    message_id: m.id,
-                                    revoked_by: m.revoked_by,
-                                    revoked_by_nickname: m.revoked_by_nickname,
-                                    was_pinned: el.classList.contains('pinned'),
-                                });
-                            } else if (!m.revoked && el) {
-                                const bubble = el.querySelector('.msg-content');
-                                if (bubble
-                                    && String(bubble.dataset.raw || '') !== String(m.content || '')) {
-                                    R.applyEdit(m.id, m.content, m.edited_at);
-                                }
-                                const pinned = !!m.pinned;
-                                if (R.updatePinned
-                                    && pinned !== el.classList.contains('pinned')) {
-                                    R.updatePinned(m.id, pinned, pinned ? m : null);
-                                }
-                                const reactions = el.querySelector(
-                                    '.msg-reactions[data-reactions]');
-                                const json = String(m.reactions_json || '{}');
-                                if (reactions && R.preserveEditView && R.initReactionsIn
-                                    && reactions.dataset.reactions !== json) {
-                                    R.preserveEditView(function () {
-                                        reactions.dataset.reactions = json;
-                                        reactions.innerHTML = '';
-                                        delete reactions.dataset.rendered;
-                                        R.initReactionsIn(reactions);
-                                    });
-                                }
-                            }
-                            return;
-                        }
-                        R.appendMessage(m);
-                        added.push(m);
+        window.ChatHistoryLoader.load({
+            base: base,
+            anchor: anchor,
+            hasMessage: hasMessage,
+            onSeen: function (m) {
+                seen.add(m.id);
+                const at = String(m.created_at || '');
+                if (at && (!oldestAt || at < oldestAt)) oldestAt = at;
+            },
+            onExisting: function (m) {
+                const el = document.querySelector(
+                    '.message[data-id="' + CSS.escape(String(m.id)) + '"]');
+                if (m.revoked && el && !el.classList.contains('revoked-msg')) {
+                    R.applyRevoke({
+                        message_id: m.id,
+                        revoked_by: m.revoked_by,
+                        revoked_by_nickname: m.revoked_by_nickname,
+                        was_pinned: el.classList.contains('pinned'),
                     });
-                    before = res.next_before
-                        || (msgs[0] && msgs[0].id) || '';
-                    pages++;
-                    if (!found && res.has_more && before && pages < 10) {
-                        loadPage();
-                        return;
+                } else if (!m.revoked && el) {
+                    const bubble = el.querySelector('.msg-content');
+                    if (bubble
+                        && String(bubble.dataset.raw || '') !== String(m.content || '')) {
+                        R.applyEdit(m.id, m.content, m.edited_at);
                     }
-                    finish();
-                })
-                .catch(function () {});
-        }
-        loadPage();
+                    const pinned = !!m.pinned;
+                    if (R.updatePinned
+                        && pinned !== el.classList.contains('pinned')) {
+                        R.updatePinned(m.id, pinned, pinned ? m : null);
+                    }
+                    const reactions = el.querySelector(
+                        '.msg-reactions[data-reactions]');
+                    const json = String(m.reactions_json || '{}');
+                    if (reactions && R.preserveEditView && R.initReactionsIn
+                        && reactions.dataset.reactions !== json) {
+                        R.preserveEditView(function () {
+                            reactions.dataset.reactions = json;
+                            reactions.innerHTML = '';
+                            delete reactions.dataset.rendered;
+                            R.initReactionsIn(reactions);
+                        });
+                    }
+                }
+            },
+            onNew: function (m) {
+                R.appendMessage(m);
+                added.push(m);
+            },
+            done: finish,
+        });
     }
     window.ChatWS = {
         send(payload) {
