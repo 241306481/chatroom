@@ -60,20 +60,20 @@
         ta.addEventListener('paste', e => {
             const data = e.clipboardData;
             if (!data) return;
-            const isImage = file => file && (/^image\//i.test(file.type)
-                || /\.(png|jpe?g|gif|webp|bmp|avif)$/i.test(file.name || ''));
-            let files = Array.from(data.items || [])
-                .filter(item => item.kind === 'file')
-                .map(item => {
-                    try { return item.getAsFile(); } catch (err) { return null; }
-                })
-                .filter(isImage);
-            if (!files.length) files = Array.from(data.files || []).filter(isImage);
+            let files = Array.from(data.files || []).filter(Boolean);
+            if (!files.length) {
+                files = Array.from(data.items || [])
+                    .filter(item => item.kind === 'file')
+                    .map(item => {
+                        try { return item.getAsFile(); } catch (err) { return null; }
+                    })
+                    .filter(Boolean);
+            }
             if (!files.length) return;
             e.preventDefault();
             if (!window.EditorUpload) return;
             window.EditorUpload.pasteFiles(files, ta, previewApi.refresh, {
-                kind: 'image', visibility: root.dataset.imageVisibility,
+                visibility: root.dataset.imageVisibility,
             });
         });
         let dragDepth = 0;
@@ -154,4 +154,5 @@
     } else {
         autoInit();
     }
+    document.addEventListener('app:content', autoInit);
 })();

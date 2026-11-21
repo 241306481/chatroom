@@ -146,14 +146,16 @@
         const avatar = window.Avatar ? window.Avatar.build(user, 'forward-record-avatar') : null;
         const name = document.createElement('span');
         name.textContent = info.sender;
+        const avatarCol = document.createElement('span');
+        avatarCol.className = 'forward-record-avatar-col';
+        if (avatar) avatarCol.appendChild(avatar);
+        line.appendChild(avatarCol);
         if (uid) {
             const link = document.createElement('a');
-            link.href = '/user/' + encodeURIComponent(uid);
-            if (avatar) link.appendChild(avatar);
+            link.href = window.userProfileUrl(uid);
             link.appendChild(name);
             line.appendChild(link);
         } else {
-            if (avatar) line.appendChild(avatar);
             line.appendChild(name);
         }
         return line;
@@ -224,7 +226,9 @@
         appendBody(body, item, level);
         const preview = document.createElement('div');
         preview.className = 'forward-record-collapse-preview';
-        preview.textContent = '消息已折叠';
+        preview.textContent = '消息已折叠，点击展开';
+        preview.setAttribute('role', 'button');
+        preview.setAttribute('tabindex', '0');
         const tools = document.createElement('span');
         tools.className = 'forward-record-actions';
         const sourceBtn = actionButton('📄', '查看源码');
@@ -258,21 +262,29 @@
             sourceBtn.title = sourceMode ? '查看渲染' : '查看源码';
             sourceBtn.setAttribute('aria-label', sourceBtn.title);
         });
-        const collapseBtn = actionButton('收起', '折叠消息');
-        collapseBtn.addEventListener('click', function (e) {
-            e.preventDefault();
-            e.stopPropagation();
+        const collapseBtn = actionButton('折叠', '折叠消息');
+        collapseBtn.classList.add('forward-collapse-avatar-btn');
+        function toggleCollapse(e) {
+            if (e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            const scroller = row.closest('.forward-record-body');
+            const before = row.getBoundingClientRect().top;
             const collapsed = !row.classList.contains('forward-record-item-collapsed');
             row.classList.toggle('forward-record-item-collapsed', collapsed);
-            collapseBtn.textContent = collapsed ? '展开' : '收起';
-            collapseBtn.title = collapsed ? '展开消息' : '折叠消息';
-            collapseBtn.setAttribute('aria-label', collapseBtn.title);
-        });
+            const delta = row.getBoundingClientRect().top - before;
+            if (scroller && delta) scroller.scrollTop += delta;
+        }
+        collapseBtn.addEventListener('click', toggleCollapse);
+        preview.addEventListener('click', toggleCollapse);
         tools.appendChild(sourceBtn);
-        tools.appendChild(collapseBtn);
         const sender = meta.querySelector('.forward-record-sender');
         if (sender) {
             sender.appendChild(tools);
+            const avatarCol = sender.querySelector('.forward-record-avatar-col');
+            if (avatarCol) avatarCol.appendChild(collapseBtn);
+            else sender.appendChild(collapseBtn);
         } else {
             if (!meta.parentNode) row.appendChild(meta);
             meta.appendChild(tools);

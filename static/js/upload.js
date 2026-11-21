@@ -41,6 +41,38 @@ window.initUpload = function (opts) {
         uploadSequential(accepted, 0);
         this.value = '';
     });
+    var page = document.querySelector('.file-page');
+    if (page) {
+        var dragDepth = 0;
+        page.addEventListener('dragenter', function (e) {
+            if (!e.dataTransfer || !Array.from(e.dataTransfer.types || []).includes('Files')) return;
+            e.preventDefault();
+            dragDepth += 1;
+            page.classList.add('file-drag-over');
+        });
+        page.addEventListener('dragover', function (e) {
+            if (!e.dataTransfer || !Array.from(e.dataTransfer.types || []).includes('Files')) return;
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'copy';
+        });
+        page.addEventListener('dragleave', function () {
+            dragDepth = Math.max(0, dragDepth - 1);
+            if (!dragDepth) page.classList.remove('file-drag-over');
+        });
+        page.addEventListener('drop', function (e) {
+            if (!e.dataTransfer || !e.dataTransfer.files || !e.dataTransfer.files.length) return;
+            e.preventDefault();
+            dragDepth = 0;
+            page.classList.remove('file-drag-over');
+            try {
+                input.files = e.dataTransfer.files;
+            } catch (err) {
+                if (window.showAlert) window.showAlert('当前浏览器不支持拖拽上传');
+                return;
+            }
+            input.dispatchEvent(new Event('change', { bubbles: true }));
+        });
+    }
     var failedCount = 0;
     function finishAll(files) {
         var okCount = files.length - failedCount;

@@ -42,8 +42,12 @@
       <button type="submit">保存限流配置</button>
     </div>
   </form>
-  <h2 style="margin-top:32px;">实时计数</h2>
-  <p class="hint">只显示当前窗口内还有效的记录，按次数从多到少。共 {{ sessionCount }} 个在线会话{% if can_view_sessions %} · <a href="/manage/sessions">管理在线会话</a>{% endif %}。</p>
+  <h2 style="margin-top:32px;">实时计数
+    <span class="hint" data-rate-limit-ws style="font-size:12px;font-weight:400;">连接中…</span>
+  </h2>
+  <p class="hint">只显示当前窗口内还有效的记录，按次数从多到少。共
+    <span data-rate-limit-session-count>{{ sessionCount }}</span> 个在线会话{% if can_view_sessions %} · <a href="/manage/sessions">管理在线会话</a>{% endif %}�?/p>
+  <div data-rate-limit-live>
   {% for a in actions %}
     {% if a.live and a.live.length %}
       <div style="margin-top:14px;">
@@ -52,9 +56,9 @@
           <thead>
             <tr>
               <th style="width:90px;">维度</th>
-              <th>键</th>
+              <th>�?/th>
               <th style="width:80px;">次数</th>
-              <th style="width:90px;">剩余秒</th>
+              <th style="width:90px;">剩余�?/th>
             </tr>
           </thead>
           <tbody>
@@ -72,6 +76,8 @@
     {% endif %}
   {% endfor %}
   {% if not actions %}<p class="empty">暂无配置</p>{% endif %}
+  </div>
+  <script src="/static/js/manage-rate-limits.js"></script>
   <div style="margin-top:20px;display:flex;gap:10px;">
     <form method="POST" action="/manage/rate_limits" data-native>
       <input type="hidden" name="action" value="reset">

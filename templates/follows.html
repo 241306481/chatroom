@@ -1,8 +1,9 @@
 {% extends "base.html" %}
 {% block content %}
+{% set profile_prefix = domain_prefix | default('') %}
 <div class="page-container">
   <h1>
-    <a href="/user/{{ target.id }}" class="user-link" style="display:inline-flex;">
+    <a href="{{ profile_prefix }}/user/{{ target.id }}" class="user-link" style="display:inline-flex;">
       <img class="user-avatar avatar-img" src="{{ target | avatarSrc }}"
                alt="" loading="lazy"
                {% if not (target | avatarSrc) %}style="display:none"{% endif %}>
@@ -30,7 +31,7 @@
               <span class="status-dot {% if u.online %}green{% else %}red{% endif %}"></span>
             </td>
             <td>
-              <a href="/user/{{ u.id }}" class="user-link">
+              <a href="{{ profile_prefix }}/user/{{ u.id }}" class="user-link">
                 <img class="user-avatar avatar-img" src="{{ u | avatarSrc }}"
                          alt="" loading="lazy"
                          {% if not (u | avatarSrc) %}style="display:none"{% endif %}>
@@ -44,11 +45,11 @@
               {% if current_user and current_user.id and current_user.id != u.id %}
                 <a href="/messages?target={{ u.id }}" class="mini-btn">私信</a>
                 {% if u.is_following %}
-                  <form method="POST" action="/user/{{ u.id }}/unfollow" style="display:inline">
+                  <form method="POST" action="{{ profile_prefix }}/user/{{ u.id }}/unfollow" style="display:inline">
                     <button type="submit" class="mini-btn">已关注</button>
                   </form>
                 {% else %}
-                  <form method="POST" action="/user/{{ u.id }}/follow" style="display:inline">
+                  <form method="POST" action="{{ profile_prefix }}/user/{{ u.id }}/follow" style="display:inline">
                     <button type="submit" class="mini-btn">关注</button>
                   </form>
                 {% endif %}
@@ -61,6 +62,6 @@
   {% else %}
     <p class="empty">{% if mode == 'following' %}还没有关注任何人{% else %}还没有粉丝{% endif %}</p>
   {% endif %}
-  <p style="margin-top:24px;"><a href="/user/{{ target.id }}">← 返回个人主页</a></p>
+  <p style="margin-top:24px;"><a href="{{ profile_prefix }}/user/{{ target.id }}">← 返回个人主页</a></p>
 </div>
 {% endblock %}

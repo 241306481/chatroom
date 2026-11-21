@@ -74,7 +74,7 @@
             ? ` data-forward-ref="${escAttr(JSON.stringify(msg.forwarded_from))}"`
             : '';
         const contentHtml = revoked
-            ? `<div class="msg-content msg-revoked"><a class="revoked-nick" href="/user/${escAttr(msg.revoked_by)}">${esc(msg.revoked_by_nickname)}</a> 撤回了一条消息</div>`
+            ? `<div class="msg-content msg-revoked"><a class="revoked-nick" href="${escAttr(window.userProfileUrl(msg.revoked_by))}">${esc(msg.revoked_by_nickname)}</a> 撤回了一条消息</div>`
             : `<div class="msg-content md-body" data-raw="${escAttr(msg.content)}"${forwardAttr}>${window.renderContent(msg.content)}</div>`;
         div.innerHTML = `
             ${batchCheck}

@@ -55,7 +55,7 @@
       {% if users and users.length %}
         {% for u in users %}
           {% if loop.index <= 15 %}
-            <a href="/user/{{ u.id }}" class="user-item {% if not u.online %}offline{% endif %}"
+            <a href="{% if domain_name %}/domain/{{ domain_name }}{% endif %}/user/{{ u.id }}" class="user-item {% if not u.online %}offline{% endif %}"
                data-uid="{{ u.id }}"
                style="text-decoration:none;color:inherit;">
               <span class="status-dot {% if u.online %}green{% else %}red{% endif %}"></span>

@@ -113,6 +113,13 @@
   font-size: 12px; color: #555; font-weight: 600; }
 .forward-record-sender a { display: inline-flex; align-items: center;
   gap: 6px; color: #1677ff; text-decoration: none; }
+.forward-record-avatar-col { display: inline-flex; flex-direction: column;
+  align-items: center; gap: 2px; flex-shrink: 0; }
+.forward-collapse-avatar-btn { font-size: 10px; padding: 0 3px;
+  border: 1px solid #e5e5e5; border-radius: 3px; background: #fff; }
+.forward-record-item-collapsed .forward-collapse-avatar-btn { display: none; }
+.forward-record-collapse-preview { cursor: pointer; }
+.forward-record-collapse-preview:hover { color: #1677ff; }
 .forward-record-avatar { width: 20px; height: 20px; border-radius: 50%;
   display: inline-block; flex-shrink: 0; object-fit: cover; font-size: 10px;
   line-height: 20px; text-align: center; color: #fff; }

@@ -6,10 +6,15 @@
         const inner = list.querySelector('.message-list-inner') || list;
         const editBox = inner.querySelector('.msg-edit-box');
         const editTop = editBox ? editBox.getBoundingClientRect().top : 0;
+        const atBottom = !R.isAtBottom || R.isAtBottom();
+        const anchor = !atBottom && R.captureScrollAnchor
+            ? R.captureScrollAnchor(list) : null;
         const empty = inner.querySelector('.empty');
         if (empty) empty.remove();
         inner.insertBefore(R.buildMessageEl(msg), inner.firstElementChild);
-        if (editBox) {
+        if (anchor && R.restoreScrollAnchor) {
+            R.restoreScrollAnchor(list, anchor);
+        } else if (editBox) {
             const delta = editBox.getBoundingClientRect().top - editTop;
             if (delta) list.scrollTop += delta;
         }
@@ -24,9 +29,14 @@
         if (inner.querySelector('.message[data-id="' + (msg.id || '') + '"]')) return;
         const editBox = inner.querySelector('.msg-edit-box');
         const editTop = editBox ? editBox.getBoundingClientRect().top : 0;
+        const atBottom = !R.isAtBottom || R.isAtBottom();
+        const anchor = !atBottom && R.captureScrollAnchor
+            ? R.captureScrollAnchor(list) : null;
         const div = R.buildMessageEl(msg);
         inner.appendChild(div);
-        if (editBox) {
+        if (anchor && R.restoreScrollAnchor) {
+            R.restoreScrollAnchor(list, anchor);
+        } else if (editBox) {
             const delta = editBox.getBoundingClientRect().top - editTop;
             if (delta) list.scrollTop += delta;
         }

@@ -78,7 +78,7 @@
         if (name) {
             const nickname = user.nickname || '?';
             if (name.textContent !== nickname) name.textContent = nickname;
-            name.setAttribute('href', '/user/' + encodeURIComponent(uid));
+            name.setAttribute('href', window.userProfileUrl(uid));
         }
         const level = row.querySelector('.member-level');
         if (level) {

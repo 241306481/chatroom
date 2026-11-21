@@ -39,7 +39,20 @@ function configureServer(server) {
     server.headersTimeout = 20 * 1000;
     server.keepAliveTimeout = 5 * 1000;
     server.maxHeadersCount = 100;
+    const QUIET_CLIENT_ERRORS = new Set([
+        'ECONNRESET', 'HPE_INVALID_EOF_STATE', 'HPE_CLOSED_CONNECTION',
+        'ERR_STREAM_PREMATURE_CLOSE',
+    ]);
     server.on('clientError', (err, socket) => {
+        const code = err && err.code ? String(err.code) : '';
+        if (QUIET_CLIENT_ERRORS.has(code)) {
+            if (socket && !socket.destroyed) socket.destroy();
+            return;
+        }
+        try {
+            require('./lib/logger').warn('Client Error: ' + (code || 'unknown')
+                + ' ' + (err && err.message ? err.message : ''));
+        } catch (e) {}
         if (!socket || socket.destroyed || !socket.writable) return;
         socket.end('HTTP/1.1 400 Bad Request\r\nConnection: close\r\n'
             + 'Content-Length: 0\r\n\r\n');

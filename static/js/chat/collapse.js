@@ -2,7 +2,7 @@
     const R = window.ChatRender = window.ChatRender || {};
 
     function previewText() {
-        return '消息已折叠';
+        return '消息已折叠，点击展开';
     }
 
     const STORE_PREFIX = 'chatroom:collapsed:';
@@ -68,6 +68,11 @@
             preview.className = cls;
             content.parentNode.insertBefore(preview, content.nextSibling);
         }
+        if (cls === 'msg-collapse-preview') {
+            preview.dataset.action = 'toggle-message-collapse';
+            preview.setAttribute('role', 'button');
+            preview.setAttribute('tabindex', '0');
+        }
         preview.textContent = previewText(content);
         return preview;
     }
@@ -86,8 +91,24 @@
         root.classList.toggle('msg-collapsed', collapsed);
         if (collapsed) ensurePreview(root, parts.content, 'msg-collapse-preview');
         if (!btn) return;
-        btn.textContent = collapsed ? '展开' : '收起';
-        btn.title = collapsed ? '展开消息' : '折叠消息';
+        btn.textContent = '折叠';
+        btn.title = '折叠消息';
+    }
+
+    function avatarHost(root, parts) {
+        if (parts.dm) return root.querySelector('.dm-avatar-wrap');
+        const avatar = Array.from(root.children).find(function (el) {
+            return el.classList && el.classList.contains('msg-avatar');
+        });
+        if (!avatar || !avatar.parentNode) return null;
+        let col = avatar.parentNode;
+        if (!col.classList.contains('msg-avatar-col')) {
+            col = document.createElement('div');
+            col.className = 'msg-avatar-col';
+            avatar.parentNode.insertBefore(col, avatar);
+            col.appendChild(avatar);
+        }
+        return col;
     }
 
     function enhanceMessage(root) {
@@ -96,16 +117,14 @@
         if (root.querySelector('.msg-edit-box')) return;
         const parts = messageParts(root);
         if (!parts.header || !parts.content || !parts.container) return;
-        if (parts.header.querySelector('.msg-collapse-btn')) return;
-        const btn = makeButton('msg-collapse-btn', 'toggle-message-collapse', '折叠消息');
-        const actions = parts.header.querySelector('.msg-actions-left')
-            || parts.header.querySelector('.msg-actions');
-        if (actions) {
-            const source = actions.querySelector('[data-action="toggle-source"]');
-            if (source) actions.insertBefore(btn, source.nextSibling);
-            else actions.appendChild(btn);
-        } else {
-            parts.header.appendChild(btn);
+        const host = avatarHost(root, parts);
+        if (!host) return;
+        let btn = host.querySelector('.msg-collapse-btn');
+        if (!btn) {
+            btn = makeButton('msg-collapse-btn msg-collapse-avatar-btn',
+                'toggle-message-collapse', '折叠消息');
+            btn.textContent = '折叠';
+            host.appendChild(btn);
         }
         if (isCollapsed(root)) applyCollapsed(root, parts, btn, true);
     }

@@ -76,7 +76,11 @@
       <a href="/manage" class="nav-manage">系统管理</a>
     {% endif %}
     {% if nav and nav.is_logged_in %}
-      <a href="/mydomain">我的域</a>
+      {% if domain_name %}
+        <a href="/domain/{{ domain_name }}/mydomain">我的域</a>
+      {% else %}
+        <a href="/mydomain">我的域</a>
+      {% endif %}
     {% endif %}
   </nav>
   <div class="topbar-actions">
@@ -107,7 +111,11 @@
           </div>
           <div class="dropdown-divider"></div>
           <a href="/messages">📧 私信{% if nav.unread_count and nav.unread_count > 0 %}<span class="badge-unread">{{ nav.unread_count }}</span>{% endif %}</a>
-          <a href="/user/{{ current_user.id }}">👤 个人资料</a>
+          {% if domain_name %}
+            <a href="/domain/{{ domain_name }}/user/{{ current_user.id }}">👤 个人资料</a>
+          {% else %}
+            <a href="/user/{{ current_user.id }}">👤 个人资料</a>
+          {% endif %}
           <a href="/settings/security">🔒 安全设置</a>
           <button type="button" class="dropdown-button" id="desktopNotifyBtn">🔔 桌面通知</button>
           <a href="/myfile">📁 我的文件</a>

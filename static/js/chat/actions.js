@@ -28,22 +28,39 @@
     };
     window.sendMessage = function () {
         const input = document.getElementById('msgInput');
-        if (!input) return;
-        const content = input.value.trim();
-        if (!content) return;
+        if (!input || input.dataset.sending === '1') return;
         if (!window.ChatWS || !window.ChatWS.isOpen()) {
             window.ChatRender.showToast('未就绪');
             return;
         }
-        const payload = { type: 'message', content };
-        const replyTo = window.ChatReply && window.ChatReply.state.id;
-        if (replyTo) payload.reply_to = replyTo;
-        pendingSends.push({ content, replyTo: replyTo || '', at: Date.now() });
-        if (pendingSends.length > 20) pendingSends.shift();
-        window.ChatWS.send(payload);
-        input.value = '';
-        input.dispatchEvent(new Event('input', { bubbles: true }));
-        window.clearReplyTo();
+        const hasPending = window.EditorUpload && window.EditorUpload.hasPending
+            && window.EditorUpload.hasPending(input);
+        if (!input.value.trim() && !hasPending) return;
+        input.dataset.sending = '1';
+        const ready = hasPending
+            ? window.EditorUpload.flushPending(input, null)
+            : Promise.resolve('');
+        ready.then(function (extra) {
+            delete input.dataset.sending;
+            if (extra === null) return;
+            let content = input.value.trim();
+            if (extra) content = content ? content + '\n\n' + extra : extra;
+            if (!content) return;
+            const payload = { type: 'message', content };
+            const replyTo = window.ChatReply && window.ChatReply.state.id;
+            if (replyTo) payload.reply_to = replyTo;
+            pendingSends.push({ content, replyTo: replyTo || '', at: Date.now() });
+            if (pendingSends.length > 20) pendingSends.shift();
+            window.ChatWS.send(payload);
+            input.value = '';
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+            window.clearReplyTo();
+        }).catch(function () {
+            delete input.dataset.sending;
+            if (window.ChatRender && window.ChatRender.showToast) {
+                window.ChatRender.showToast('发送失败');
+            }
+        });
     };
     window.deleteMessage = function (id) {
         window.showConfirm('删除这条消息？').then(function (ok) {

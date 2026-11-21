@@ -394,13 +394,29 @@
     window.sendDM = function () {
         const ta = document.getElementById('dmInput');
         const target = document.body.dataset.dmTarget;
-        if (!ta || !target) return;
-        const content = ta.value.trim();
-        if (!content || !socket || socket.readyState !== WebSocket.OPEN) return;
-        _pendingDM = { target: String(target), content, at: Date.now() };
-        socket.send(JSON.stringify({ type: 'dm_send', target, content }));
-        ta.value = '';
-        ta.dispatchEvent(new Event('input', { bubbles: true }));
+        if (!ta || !target || ta.dataset.sending === '1') return;
+        if (!socket || socket.readyState !== WebSocket.OPEN) return;
+        const hasPending = window.EditorUpload && window.EditorUpload.hasPending
+            && window.EditorUpload.hasPending(ta);
+        if (!ta.value.trim() && !hasPending) return;
+        ta.dataset.sending = '1';
+        const ready = hasPending
+            ? window.EditorUpload.flushPending(ta, null)
+            : Promise.resolve('');
+        ready.then(function (extra) {
+            delete ta.dataset.sending;
+            if (extra === null) return;
+            let content = ta.value.trim();
+            if (extra) content = content ? content + '\n\n' + extra : extra;
+            if (!content) return;
+            _pendingDM = { target: String(target), content, at: Date.now() };
+            socket.send(JSON.stringify({ type: 'dm_send', target, content }));
+            ta.value = '';
+            ta.dispatchEvent(new Event('input', { bubbles: true }));
+        }).catch(function () {
+            delete ta.dataset.sending;
+            if (window.showToast) window.showToast('发送失败');
+        });
     };
     window.editDMMessage = function (id, btn) {
         const root = btn && btn.closest ? btn.closest('.dm-msg') : null;
@@ -555,12 +571,17 @@ function appendDM(msg, isMe) {
         const wasAtBottom = Math.abs(list.scrollTop) <= 60;
         const editBox = inner.querySelector('.msg-edit-box');
         const editTop = editBox ? editBox.getBoundingClientRect().top : 0;
+        const anchor = !wasAtBottom && window.ChatRender
+            && window.ChatRender.captureScrollAnchor
+            ? window.ChatRender.captureScrollAnchor(list) : null;
         const div = window.ChatRender && window.ChatRender.buildDMMessageEl
             ? window.ChatRender.buildDMMessageEl(Object.assign({}, msg, { is_me: !!isMe }))
             : null;
         if (!div) return null;
         inner.insertBefore(div, inner.firstElementChild);
-        if (editBox) {
+        if (anchor && window.ChatRender.restoreScrollAnchor) {
+            window.ChatRender.restoreScrollAnchor(list, anchor);
+        } else if (editBox) {
             const delta = editBox.getBoundingClientRect().top - editTop;
             if (delta) list.scrollTop += delta;
         } else if (wasAtBottom) {

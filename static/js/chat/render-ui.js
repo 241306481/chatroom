@@ -148,6 +148,23 @@
         const l = document.getElementById('messageList');
         if (l) l.scrollTop = 0;
     }
+    function captureScrollAnchor(scroller) {
+        if (!scroller) return null;
+        const box = scroller.getBoundingClientRect();
+        const items = scroller.querySelectorAll('[data-id]');
+        for (const el of items) {
+            const rect = el.getBoundingClientRect();
+            if (rect.bottom > box.top && rect.top < box.bottom) {
+                return { el: el, top: rect.top };
+            }
+        }
+        return null;
+    }
+    function restoreScrollAnchor(scroller, anchor) {
+        if (!scroller || !anchor || !anchor.el || !anchor.el.isConnected) return;
+        const delta = anchor.el.getBoundingClientRect().top - anchor.top;
+        if (delta) scroller.scrollTop += delta;
+    }
     function showToast(m) {
         const t = document.createElement('div');
         t.className = 'toast';
@@ -162,5 +179,7 @@
     R.removeDiscussionFromSidebar = removeDiscussionFromSidebar;
     R.updateDiscussionInSidebar = updateDiscussionInSidebar;
     R.scrollBottom = scrollBottom;
+    R.captureScrollAnchor = captureScrollAnchor;
+    R.restoreScrollAnchor = restoreScrollAnchor;
     R.showToast = showToast;
 })();

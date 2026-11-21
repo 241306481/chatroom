@@ -211,7 +211,7 @@ const {
         const bans = storage.loadDomain('opend').bans || {};
         assert.strictEqual(bans[ghost], undefined);
     });
-    await check('域资料文本超长会被截断', async () => {
+    await check('域资料显示名限制长度，公告不截断', async () => {
         const r = await post('/domain/opend/manage/edit', {
             display_name: 'D'.repeat(150),
             announcement: 'A'.repeat(2500),
@@ -219,7 +219,7 @@ const {
         assert.strictEqual(r.status, 200, r.body);
         const d = storage.loadDomain('opend');
         assert.strictEqual(d.display_name.length, 100, '显示名未截断');
-        assert.strictEqual(d.announcement.length, 2000, '公告未截断');
+        assert.strictEqual(d.announcement.length, 2500, '公告被截断');
     });
     await check('未知加入申请操作不会误删申请', async () => {
         const join = await post('/domain/opend/join',

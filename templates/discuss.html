@@ -173,7 +173,7 @@
               {% endif %}
               {% if msg.revoked %}
                 <div class="msg-content msg-revoked">
-                  <a class="revoked-nick" href="/user/{{ msg.revoked_by }}">{{ msg.revoked_by_nickname }}</a>
+                  <a class="revoked-nick" href="{% if domain_name %}/domain/{{ domain_name }}{% endif %}/user/{{ msg.revoked_by }}">{{ msg.revoked_by_nickname }}</a>
                   撤回了一条消息
                 </div>
               {% else %}

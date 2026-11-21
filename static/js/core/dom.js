@@ -1,4 +1,9 @@
 window.MY_UID = window.__CURRENT_UID__ || '';
+window.userProfileUrl = function (uid) {
+    const domain = window.__DOMAIN__ || '';
+    return (domain ? '/domain/' + encodeURIComponent(domain) : '')
+        + '/user/' + encodeURIComponent(uid);
+};
 window.esc = function (s) {
     return String(s == null ? '' : s)
         .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -240,7 +245,10 @@ function enhanceFileCards(root) {
     root.querySelectorAll('.md-file-leaf').forEach(el => {
         const url = el.dataset.fileUrl || '';
         if (!safeFileUrl(url)) { el.remove(); return; }
-        el.replaceWith(makeFileCard(fileNameFromUrl(url), url, el.dataset.fileOpen === '1', 'pdf'));
+        const kind = el.dataset.fileKind
+            || fileKind(el.dataset.fileType, url) || '';
+        const label = el.dataset.fileLabel || fileNameFromUrl(url);
+        el.replaceWith(makeFileCard(label, url, el.dataset.fileOpen === '1', kind));
     });
     root.querySelectorAll('img').forEach(img => {
         img.setAttribute('loading', 'lazy');
@@ -414,7 +422,7 @@ window.renderContent = function (text) {
             if (!info) { item.comment.remove(); return; }
             const a = document.createElement('a');
             a.className = 'mention-link' + (info.silent ? ' mention-silent' : '');
-            a.href = '/user/' + info.uid;
+            a.href = window.userProfileUrl(info.uid);
             const nick = (window.__MENTION_NAMES__ && window.__MENTION_NAMES__[info.uid])
                 || ('user-' + info.uid);
             a.textContent = '@' + nick;

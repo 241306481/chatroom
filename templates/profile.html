@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% from "context_edit.html" import context_edit %}
 {% block content %}
+{% set profile_prefix = domain_prefix | default('') %}
 <div class="page-container">
   <div class="profile-header">
     <img class="profile-avatar avatar-img" src="{{ target | avatarSrc }}"
@@ -11,10 +12,10 @@
       <h1>{{ target.nickname }}</h1>
       <div class="uid">UID: {{ target.id }}</div>
       <div class="profile-stats">
-        <a href="/user/{{ target.id }}/followers">
+        <a href="{{ profile_prefix }}/user/{{ target.id }}/followers">
           <strong>{{ followers_count | default(0) }}</strong>粉丝
         </a>
-        <a href="/user/{{ target.id }}/following">
+        <a href="{{ profile_prefix }}/user/{{ target.id }}/following">
           <strong>{{ following_count | default(0) }}</strong>关注
         </a>
         {% if is_mutual %}<span class="badge-mutual">互相关注</span>{% endif %}
@@ -29,7 +30,7 @@
   </div>
   {% if is_me %}
     <div class="profile-edit" id="profileEdit" hidden>
-      <form method="POST" action="/user/{{ target.id }}" class="form-stack form-wide"
+      <form method="POST" action="{{ profile_prefix }}/user/{{ target.id }}" class="form-stack form-wide"
             id="profileForm" enctype="multipart/form-data">
         <label>昵称<input type="text" name="nickname" value="{{ target.nickname }}" required
           pattern="[^0-9\s].*" maxlength="32"
@@ -45,7 +46,7 @@
             <input type="hidden" name="avatar_remove" id="avatarRemove" value="0">
             <div class="avatar-row">
               <button type="button" class="btn-avatar-upload" id="avatarPickBtn">
-                {{ '更改图片' if target.avatar_ext else '上传图片' }}
+                {{ '修改头像' if target.avatar_ext else '上传头像' }}
               </button>
               <span class="avatar-hint" id="avatarPicked" hidden></span>
               <button type="button" class="btn-avatar-clear" id="avatarRemoveBtn" hidden>删除</button>
@@ -76,11 +77,11 @@
   <div class="profile-actions-row">
     {% if not is_me %}
       {% if is_following %}
-        <form method="POST" action="/user/{{ target.id }}/unfollow" style="display:inline">
+        <form method="POST" action="{{ profile_prefix }}/user/{{ target.id }}/unfollow" style="display:inline">
           <button type="submit" class="btn-following" title="点击取消关注">✓ 已关注</button>
         </form>
       {% else %}
-        <form method="POST" action="/user/{{ target.id }}/follow" style="display:inline">
+        <form method="POST" action="{{ profile_prefix }}/user/{{ target.id }}/follow" style="display:inline">
           <button type="submit" class="btn-follow">+ 关注</button>
         </form>
       {% endif %}
@@ -94,11 +95,11 @@
     {% endif %}
     {% if not is_me %}
       {% if is_blocked %}
-        <form method="POST" action="/user/{{ target.id }}/unblock" style="display:inline">
+        <form method="POST" action="{{ profile_prefix }}/user/{{ target.id }}/unblock" style="display:inline">
           <button type="submit" class="btn-cancel">取消拉黑</button>
         </form>
       {% else %}
-        <form method="POST" action="/user/{{ target.id }}/block" style="display:inline">
+        <form method="POST" action="{{ profile_prefix }}/user/{{ target.id }}/block" style="display:inline">
           <button type="submit" class="btn-cancel"
                   data-confirm="拉黑后对方无法给你发私信。确定拉黑 {{ target.nickname }}？">
             🚫 拉黑

@@ -1,5 +1,5 @@
 (function () {
-    const REACTION_EMOJIS = ['👍', '👎', '❤️', '🎉', '😂', '😮', '😢', '🔥', '👀', '✅'];
+    const REACTION_EMOJIS = ['👍', '👎', '❤️', '🎉', '😂', '😮', '😢', '🔥', '👀', '✅', '🤔', '😄', '😀', '🤤', '😅'];
     window.sendReaction = function (id, emoji) {
         if (window.ChatWS && window.ChatWS.send) {
             window.ChatWS.send({ type: 'reaction', message_id: id, emoji });

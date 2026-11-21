@@ -34,7 +34,8 @@
 .message-list-inner { width: 100%;
   display: flex; flex-direction: column-reverse;
   margin-bottom: auto; }
-.message { display: flex; gap: 10px; margin-bottom: 16px; }
+.message { display: flex; gap: 10px; margin-bottom: 16px;
+  position: relative; }
 .message {
   content-visibility: auto;
   contain-intrinsic-size: auto 100px;
@@ -42,9 +43,19 @@
 .message.pinned { background: #fffbe6; border-radius: 6px; padding: 8px;
   border-left: 3px solid #faad14; }
 .message.system-msg .msg-nick { color: #1890ff; font-weight: 600; }
+.msg-avatar-col { width: 36px; flex-shrink: 0; display: flex;
+  flex-direction: column; align-items: center; gap: 4px; }
 .msg-avatar { width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
   display: flex; align-items: center; justify-content: center;
   color: #fff; font-weight: 600; }
+.msg-collapse-avatar-btn { width: 36px; padding: 2px 0; font-size: 11px;
+  line-height: 1.35; border: 1px solid #e0e0e0; border-radius: 4px;
+  background: #fff; color: #888; cursor: pointer; }
+.msg-collapse-avatar-btn:hover { border-color: #1890ff; color: #1890ff;
+  background: #e6f7ff; }
+.message.msg-collapsed .msg-collapse-avatar-btn { display: none; }
+.msg-collapse-preview[data-action] { cursor: pointer; }
+.msg-collapse-preview[data-action]:hover { color: #1890ff; }
 .msg-body { flex: 1; min-width: 0; }
 .msg-header { display: flex; gap: 8px; font-size: 12px; color: #888;
   margin-bottom: 4px; align-items: center; }
@@ -91,10 +102,11 @@
   font-size: 12px; }
 .message-batch-bar button:hover { border-color: #1890ff; color: #1890ff; }
 .message-batch-bar button.danger { color: #ff4d4f; }
-.msg-check { display: none; width: 15px; height: 15px; margin-top: 11px;
-  cursor: pointer; flex-shrink: 0; }
-.msg-batch-mode .msg-check { display: inline-block; }
-.message.selected { background: #e6f7ff; border-radius: 6px; padding: 8px; }
+.msg-check { display: none; position: absolute; left: -5px; top: 1px;
+  z-index: 3; width: 15px; height: 15px; margin: 0; cursor: pointer; }
+.msg-batch-mode .msg-check { display: block; }
+.message.selected { background: #e6f7ff; border-radius: 6px;
+  box-shadow: 0 0 0 4px #e6f7ff; }
 .msg-actions { opacity: 0.35; transition: opacity 0.15s;
   display: flex; gap: 4px; }
 .msg-actions-left { margin-right: auto; }

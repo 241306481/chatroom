@@ -410,18 +410,19 @@
             content.removeAttribute('data-raw');
             content.removeAttribute('data-mode');
             content.removeAttribute('style');
-            content.innerHTML = '<a class="revoked-nick" href="/user/'
-                + escAttr(data.revoked_by) + '">'
+            content.innerHTML = '<a class="revoked-nick" href="'
+                + escAttr(window.userProfileUrl(data.revoked_by)) + '">'
                 + esc(data.revoked_by_nickname) + '</a> 撤回了一条消息';
         }
-        const actions = el.querySelector('.msg-actions');
-        if (actions) {
+        el.querySelectorAll('.msg-actions').forEach(function (actions) {
             actions.querySelectorAll('button').forEach(b => {
                 const t = (b.getAttribute('title') || '');
                 if (t === '删除') return;
                 b.remove();
             });
-        }
+        });
+        const collapseBtn = el.querySelector('.msg-collapse-avatar-btn');
+        if (collapseBtn) collapseBtn.remove();
         const re = el.querySelector('.msg-reactions');
         if (re) re.remove();
         R.updateReplyQuotes(data.message_id, true);

@@ -98,6 +98,7 @@
 .file-sidebar-item:hover .file-sidebar-download { opacity: 1; }
 .file-sidebar-download:hover { color: #1890ff; }
 .file-sidebar .empty { font-size: 12px; }
+.file-page.file-drag-over { outline: 2px dashed #1890ff; outline-offset: -4px; }
 @media (max-width: 720px) {
   .file-page { padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px)); }
   .batch-toolbar { padding: 8px; gap: 6px; }

@@ -39,7 +39,7 @@
         const uid = String(user.id);
         const online = !!user.online;
         const row = document.createElement('a');
-        row.href = '/user/' + encodeURIComponent(uid);
+        row.href = window.userProfileUrl(uid);
         row.className = 'user-item' + (online ? '' : ' offline');
         row.dataset.uid = uid;
         row.style.textDecoration = 'none';

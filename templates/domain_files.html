@@ -86,7 +86,7 @@
               {% endif %}
             </td>
             <td>{{ f.size_str }}</td>
-            <td>{% if f.uploader %}<a href="/user/{{ f.uploader }}">{{ f.uploader_name }}</a>{% else %}{{ f.uploader_name }}{% endif %}</td>
+            <td>{% if f.uploader %}<a href="/domain/{{ domain_name }}/user/{{ f.uploader }}">{{ f.uploader_name }}</a>{% else %}{{ f.uploader_name }}{% endif %}</td>
             <td>{{ f.created_at }}</td>
             <td>
               <a href="/domain/{{ domain_name }}/files/{{ f.id }}"

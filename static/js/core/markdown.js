@@ -2,7 +2,8 @@
     const esc = s => String(s == null ? '' : s)
         .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     const OPEN_RE = /^ {0,3}(:{3,})([A-Za-z][\w-]*)(?:\[([^\]]*)\])?(?:\{([^}]*)\})?\s*$/;
-    const LEAF_RE = /^ {0,3}::(cute-table|pdf)(?:\[([^\]]*)\])?(?:\{([^}]*)\})?\s*$/;
+    const CUTE_TABLE_RE = /^ {0,3}::cute-table(?:\[([^\]]*)\])?(?:\{([^}]*)\})?\s*$/;
+    const FILE_LEAF_RE = /^ {0,3}::(pdf|file)(?:\[([^\]]*)\])?(?:\(([^)]*)\))?(?:\{([^}]*)\})?\s*$/;
     const FENCE_RE = /^ {0,3}(`{3,}|~{3,})/;
     const TABLE_START_RE = /\|/;
     const TABLE_ALIGN_RE = /^\s*\|?\s*:?-{3,}/;
@@ -164,12 +165,17 @@
         const html = parseMarkdown(tableSrc);
         return '<div class="' + cls + '">' + addBoldColumn(html, boldColumn) + '</div>';
     }
-    function renderPdfLeaf(url, attrs) {
+    function renderFileLeaf(url, attrs, type, forcedKind) {
         const href = String(url == null ? '' : url).trim();
         if (!href) return null;
         const open = /(?:^|\s)open(?:\s|$)/i.test(attrs || '');
+        const kind = String(forcedKind || '').trim().toLowerCase();
+        const fileType = String(type || '').trim();
         return '<span class="md-file-leaf" data-file-url="' + attr(href)
-            + '" data-file-open="' + (open ? '1' : '0') + '"></span>';
+            + '" data-file-open="' + (open ? '1' : '0') + '"'
+            + (kind ? ' data-file-kind="' + attr(kind) + '"' : '')
+            + (fileType ? ' data-file-type="' + attr(fileType) + '"' : '')
+            + '></span>';
     }
     function renderContainer(name, label, attrs, inner, blocks, token) {
         const body = fragment(inner, blocks, token);
@@ -226,17 +232,23 @@
                 out.push(line);
                 continue;
             }
-            const leaf = LEAF_RE.exec(line);
+            const leaf = FILE_LEAF_RE.exec(line);
             if (leaf) {
-                if (leaf[1] === 'pdf') {
-                    const html = renderPdfLeaf(leaf[2], leaf[3]);
-                    if (html) {
-                        out.push(addBlock(blocks, token, html));
-                        continue;
-                    }
-                    out.push(line);
+                const named = leaf[1] === 'file';
+                const hasParen = leaf[3] != null;
+                const type = named && hasParen ? leaf[2] : '';
+                const url = hasParen ? leaf[3] : leaf[2];
+                const html = renderFileLeaf(url, leaf[4], type,
+                    leaf[1] === 'pdf' ? 'pdf' : '');
+                if (html) {
+                    out.push(addBlock(blocks, token, html));
                     continue;
                 }
+                out.push(line);
+                continue;
+            }
+            const table = CUTE_TABLE_RE.exec(line);
+            if (table) {
                 let start = i + 1;
                 while (start < lines.length && lines[start].trim() === '') start++;
                 if (start + 1 < lines.length && TABLE_START_RE.test(lines[start])
@@ -244,7 +256,7 @@
                     let end = start;
                     while (end < lines.length && lines[end].trim() !== ''
                         && lines[end].indexOf('|') >= 0) end++;
-                    const html = renderCuteTable(leaf[3],
+                    const html = renderCuteTable(table[1],
                         lines.slice(start, end).join('\n'));
                     if (html) {
                         out.push(addBlock(blocks, token, html));
