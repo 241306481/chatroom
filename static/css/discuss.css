@@ -249,14 +249,34 @@ html[data-theme="dark"] .loading-older { color: #666; }
 .reaction-btn .reaction-emoji { font-size: 14px; line-height: 1; }
 .reaction-picker { position: absolute; z-index: 10000; background: #fff;
   border: 1px solid #e0e0e0; border-radius: 8px;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.12); padding: 6px;
-  display: grid; grid-template-columns: repeat(4, 32px);
-  gap: 2px; width: max-content; }
-.reaction-picker button { background: none; border: none; cursor: pointer;
-  font-size: 20px; width: 32px; height: 32px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12); padding: 8px;
+  display: flex; flex-direction: column; gap: 6px;
+  width: 306px; max-width: calc(100vw - 16px); max-height: 70vh; }
+.reaction-tabs { display: flex; gap: 2px; overflow-x: auto;
+  padding-bottom: 2px; scrollbar-width: thin; }
+.reaction-tab { background: none; border: none; cursor: pointer;
+  color: #666; font-size: 12px; line-height: 1; padding: 4px 8px;
+  border-radius: 6px; white-space: nowrap; }
+.reaction-tab:hover { background: #f0f7ff; color: #1890ff; }
+.reaction-tab.active { background: #e6f7ff; color: #1890ff; }
+.reaction-grid { display: grid; grid-template-columns: repeat(8, 33px);
+  gap: 2px; max-height: 176px; overflow-y: auto;
+  overscroll-behavior: contain; padding-right: 2px; }
+.reaction-emoji-btn { background: none; border: none; cursor: pointer;
+  font-size: 20px; width: 33px; height: 33px;
   display: flex; align-items: center; justify-content: center;
   border-radius: 4px; line-height: 1; padding: 0; }
-.reaction-picker button:hover { background: #f0f7ff; }
+.reaction-emoji-btn:hover { background: #f0f7ff; }
+.reaction-pager { display: flex; align-items: center; justify-content: center;
+  gap: 10px; font-size: 12px; color: #666; }
+.reaction-pager[hidden] { display: none; }
+.reaction-page-btn { background: none; border: 1px solid #e0e0e0;
+  cursor: pointer; color: #666; font-size: 14px; line-height: 1;
+  width: 26px; height: 24px; padding: 0; border-radius: 4px; }
+.reaction-page-btn:hover:not(:disabled) { background: #f0f7ff;
+  border-color: #1890ff; color: #1890ff; }
+.reaction-page-btn:disabled { opacity: 0.4; cursor: default; }
+.reaction-page-info { min-width: 48px; text-align: center; }
 .new-msg-banner { position: absolute; left: 50%; transform: translateX(-50%);
   z-index: 50; background: #1890ff; color: #fff;
   border: none; border-radius: 20px; padding: 8px 16px;
