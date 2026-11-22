@@ -36,6 +36,45 @@
 .md-editor-table-shape-col.active { background: #bae7ff; border-color: #1890ff; }
 .md-editor-table-shape-info { text-align: center; font-size: 12px; color: #888; padding: 4px 0 2px; }
 .md-editor-content { position: relative; }
+.md-pending-files,
+.md-pending-preview { display: flex; align-items: stretch; gap: 8px;
+  padding: 8px 10px; overflow-x: auto; overflow-y: hidden;
+  background: #fafafa; border-bottom: 1px solid #eee; flex: 0 0 auto; }
+.md-pending-preview { background: #fff; padding: 8px 12px; }
+.md-pending-preview .md-pending-item { max-width: 280px; }
+.md-pending-preview .md-pending-thumb,
+.md-pending-preview .md-pending-icon { width: 64px; height: 64px; }
+.md-pending-files[hidden],
+.md-pending-preview[hidden] { display: none; }
+.md-pending-files::before,
+.md-pending-preview::before { content: '待发送附件 ' attr(data-count);
+  flex: 0 0 auto; align-self: center; font-size: 12px; color: #888;
+  white-space: nowrap; }
+.md-editor.md-editor-has-preview > .md-pending-files { display: none; }
+.md-pending-item { flex: 0 0 auto; display: flex; align-items: center;
+  gap: 8px; min-width: 0; max-width: 240px; padding: 5px 6px 5px 5px;
+  background: #fff; border: 1px solid #e6e6e6; border-radius: 6px;
+  position: relative; }
+.md-pending-item[data-status="failed"] { border-color: #ffa39e;
+  background: #fff1f0; }
+.md-pending-thumb { width: 44px; height: 44px; border-radius: 4px;
+  object-fit: cover; flex: 0 0 auto; background: #f0f0f0; }
+.md-pending-icon { width: 44px; height: 44px; border-radius: 4px;
+  flex: 0 0 auto; display: inline-flex; align-items: center;
+  justify-content: center; background: #e6f7ff; color: #1890ff;
+  font-size: 11px; font-weight: 600; text-transform: uppercase; }
+.md-pending-info { display: flex; flex-direction: column; min-width: 0;
+  gap: 2px; padding-right: 16px; }
+.md-pending-name { font-size: 12px; color: #333; overflow: hidden;
+  text-overflow: ellipsis; white-space: nowrap; }
+.md-pending-meta { font-size: 11px; color: #999; white-space: nowrap; }
+.md-pending-remove { position: absolute; top: 2px; right: 2px;
+  width: 18px; height: 18px; padding: 0; border: none; border-radius: 50%;
+  background: rgba(0, 0, 0, 0.45); color: #fff; font-size: 13px;
+  line-height: 1; cursor: pointer; display: inline-flex; align-items: center;
+  justify-content: center; }
+.md-pending-remove:hover { background: rgba(0, 0, 0, 0.7); }
+.md-pending-remove:disabled { opacity: 0.35; cursor: default; }
 .md-editor-content-wrapper { display: flex; height: var(--md-editor-height); position: relative; }
 .md-editor-content-wrapper.md-editor-preview-hidden [data-pane="preview"],
 .md-editor-content-wrapper.md-editor-preview-hidden [data-resize] { display: none; }
@@ -74,6 +113,7 @@
 .md-editor .md-editor-preview pre { background: #f4f4f4; }
 .md-editor-preview:empty::before { content: '预览区（输入后显示渲染结果）';
   color: #ccc; font-style: italic; }
+.md-editor.md-editor-has-pending .md-editor-preview:empty::before { display: none; }
 .md-editor-resize-operate { width: 5px; background: #f0f0f0;
   cursor: col-resize; position: relative; flex-shrink: 0;
   transition: background 0.15s; }
@@ -139,7 +179,7 @@
 .inline-upload-progress-bar i { display: block; width: 0; height: 100%;
   background: #1890ff; transition: width 0.15s ease; }
 .md-editor.md-drag-over { outline: 2px dashed #1890ff; outline-offset: -4px; }
-.md-editor.md-drag-over::after { content: "松开以上传文件"; position: absolute;
+.md-editor.md-drag-over::after { content: "松开以添加附件"; position: absolute;
   inset: 0; display: flex; align-items: center; justify-content: center;
   background: rgba(24,144,255,0.08); color: #1890ff; font-size: 14px;
   pointer-events: none; z-index: 5; }

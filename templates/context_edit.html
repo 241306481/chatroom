@@ -147,7 +147,7 @@
               <li class="md-editor-menu-item" role="menuitem" tabindex="0"
                   data-action="image-link">添加链接</li>
               <li class="md-editor-menu-item" role="menuitem" tabindex="0"
-                  data-action="image-upload">上传图片</li>
+                  data-action="image-upload">选择图片</li>
             </ul>
           </div>
         </div>
@@ -257,6 +257,7 @@
       </div>
     </div>
   </div>
+  <div class="md-pending-files" data-pending-files hidden aria-label="待发送附件"></div>
   {% if _heightResize == 'top' %}
     <div class="md-editor-height-resize md-editor-height-resize-top"
          data-height-resize data-height-resize-pos="top"
@@ -275,6 +276,7 @@
       </div>
       <div class="md-editor-resize-operate" data-resize></div>
       <div class="md-editor-pane" data-pane="preview">
+        <div class="md-pending-preview" data-pending-preview hidden aria-label="待发送附件"></div>
         <div class="md-editor-preview md-body" id="{{ _previewId }}"></div>
       </div>
     </div>

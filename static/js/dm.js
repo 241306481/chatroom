@@ -133,7 +133,7 @@
     function isDmAtBottom() {
         const l = document.getElementById('dmList');
         if (!l) return true;
-        return Math.abs(l.scrollTop) <= 60;
+        return Math.abs(l.scrollTop) <= 4;
     }
     function markCurrentDmRead(force) {
         if (!onMessagesPage || document.visibilityState !== 'visible') return;
@@ -568,7 +568,9 @@ function appendDM(msg, isMe) {
         const existing = msg && msg.id ? inner.querySelector(
             '.dm-msg[data-id="' + CSS.escape(String(msg.id)) + '"]') : null;
         if (existing) return existing;
-        const wasAtBottom = Math.abs(list.scrollTop) <= 60;
+        const wasAtBottom = isDmAtBottom();
+        const scrollTop = list.scrollTop;
+        const scrollHeight = list.scrollHeight;
         const editBox = inner.querySelector('.msg-edit-box');
         const editTop = editBox ? editBox.getBoundingClientRect().top : 0;
         const anchor = !wasAtBottom && window.ChatRender
@@ -586,6 +588,9 @@ function appendDM(msg, isMe) {
             if (delta) list.scrollTop += delta;
         } else if (wasAtBottom) {
             list.scrollTop = 0;
+        } else {
+            const grew = list.scrollHeight - scrollHeight;
+            if (grew) list.scrollTop = scrollTop - grew;
         }
         return div;
     }

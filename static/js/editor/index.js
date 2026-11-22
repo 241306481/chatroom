@@ -114,6 +114,7 @@
             function setMode(mode) {
                 if (['source', 'split', 'preview'].indexOf(mode) < 0) mode = 'split';
                 root.dataset.editorMode = mode;
+                root.classList.toggle('md-editor-has-preview', mode !== 'source');
                 wrapper.classList.toggle('md-editor-preview-hidden', mode === 'source');
                 wrapper.classList.toggle('md-editor-edit-hidden', mode === 'preview');
                 modeBtns.forEach(btn =>

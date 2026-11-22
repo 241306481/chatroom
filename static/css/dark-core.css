@@ -124,6 +124,24 @@ html[data-theme="dark"] .md-editor-line-numbers {
 html[data-theme="dark"] .md-editor-preview {
   background: #1f1f1f; color: #e0e0e0;
 }
+html[data-theme="dark"] .md-pending-files,
+html[data-theme="dark"] .md-pending-preview {
+  background: #242424; border-bottom-color: #3a3a3a;
+}
+html[data-theme="dark"] .md-pending-preview { background: #1f1f1f; }
+html[data-theme="dark"] .md-pending-item {
+  background: #2a2a2a; border-color: #3a3a3a;
+}
+html[data-theme="dark"] .md-pending-item[data-status="failed"] {
+  background: #3a1f1f; border-color: #7a3535;
+}
+html[data-theme="dark"] .md-pending-name { color: #e0e0e0; }
+html[data-theme="dark"] .md-pending-meta,
+html[data-theme="dark"] .md-pending-files::before,
+html[data-theme="dark"] .md-pending-preview::before { color: #999; }
+html[data-theme="dark"] .md-pending-icon {
+  background: #1e3a5f; color: #4da3ff;
+}
 html[data-theme="dark"] .md-editor .md-editor-preview pre {
   background: #282c34;
 }
