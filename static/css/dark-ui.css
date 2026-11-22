@@ -237,6 +237,14 @@ html[data-theme="dark"] .forward-record-avatar { color: #fff; }
 html[data-theme="dark"] .forward-record-action { color: #999; }
 html[data-theme="dark"] .forward-record-action:hover { color: #69b1ff;
   background: #163a52; }
+html[data-theme="dark"] .forward-record-action.forward-collapse-avatar-btn {
+  background: transparent; color: transparent; }
+html[data-theme="dark"] .forward-record-action.forward-collapse-avatar-btn::before {
+  background-color: #777; }
+html[data-theme="dark"] .forward-record-action.forward-collapse-avatar-btn:hover {
+  background: #163a52; }
+html[data-theme="dark"] .forward-record-action.forward-collapse-avatar-btn:hover::before {
+  background-color: #69b1ff; }
 html[data-theme="dark"] .forward-record-source { color: #e0e0e0;
   background: #1e1e1e; }
 html[data-theme="dark"] .forward-record-source .source-copy-btn {
@@ -269,6 +277,18 @@ html[data-theme="dark"] .msg-collapse-btn:hover,
 html[data-theme="dark"] .pinned-collapse-btn:hover,
 html[data-theme="dark"] .history-collapse-btn:hover {
   color: #4da3ff; background: #1e3a5f;
+}
+html[data-theme="dark"] .msg-collapse-btn.msg-collapse-avatar-btn {
+  background: transparent; color: transparent;
+}
+html[data-theme="dark"] .msg-collapse-btn.msg-collapse-avatar-btn::before {
+  background-color: #777;
+}
+html[data-theme="dark"] .msg-collapse-btn.msg-collapse-avatar-btn:hover {
+  background: #1e3a5f;
+}
+html[data-theme="dark"] .msg-collapse-btn.msg-collapse-avatar-btn:hover::before {
+  background-color: #4da3ff;
 }
 html[data-theme="dark"] .jump-unread-btn {
   background: #163a52; color: #4da3ff; border-color: #1f6f9f;

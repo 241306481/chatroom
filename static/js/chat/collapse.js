@@ -26,17 +26,30 @@
     function messageId(root) {
         return String((root && root.dataset && root.dataset.id) || '').trim();
     }
-    function isCollapsed(root) {
-        const id = messageId(root);
-        return !!id && readStore()[id] === true;
+    function isCollapsedId(id) {
+        const key = String(id || '').trim();
+        return !!key && readStore()[key] === true;
     }
-    function rememberCollapsed(root, collapsed) {
-        const id = messageId(root);
-        if (!id) return;
+    function rememberCollapsedId(id, collapsed) {
+        const key = String(id || '').trim();
+        if (!key) return;
         const data = readStore();
-        if (collapsed) data[id] = true;
-        else delete data[id];
+        if (collapsed) data[key] = true;
+        else delete data[key];
         try { localStorage.setItem(storeKey(), JSON.stringify(data)); } catch (e) {}
+    }
+    function isCollapsed(root) {
+        return isCollapsedId(messageId(root));
+    }
+    function setMessageCollapsed(id, collapsed) {
+        const key = String(id || '').trim();
+        if (!key) return;
+        rememberCollapsedId(key, collapsed);
+        try {
+            document.dispatchEvent(new CustomEvent('chat:message-collapse', {
+                detail: { id: key, collapsed: !!collapsed },
+            }));
+        } catch (e) {}
     }
 
     function preserve(container, anchor, fn) {
@@ -57,6 +70,7 @@
         btn.className = cls;
         btn.textContent = '收起';
         btn.title = title;
+        btn.setAttribute('aria-label', title);
         if (action) btn.dataset.action = action;
         return btn;
     }
@@ -149,7 +163,7 @@
         preserve(parts.container, parts.header || root, function () {
             applyCollapsed(root, parts, btn, collapsed);
         });
-        rememberCollapsed(root, collapsed);
+        setMessageCollapsed(messageId(root), collapsed);
     }
 
     function pinnedParts(root) {
@@ -240,12 +254,30 @@
         }).observe(container, { childList: true, subtree: true });
     }
 
+    document.addEventListener('chat:message-collapse', function (ev) {
+        const detail = (ev && ev.detail) || {};
+        const id = String(detail.id || '').trim();
+        if (!id) return;
+        const collapsed = !!detail.collapsed;
+        document.querySelectorAll('.message[data-id], .dm-msg[data-id]')
+            .forEach(function (root) {
+                if (root.dataset.id !== id) return;
+                if (root.querySelector('.msg-edit-box')) return;
+                const parts = messageParts(root);
+                if (!parts.content) return;
+                applyCollapsed(root, parts,
+                    root.querySelector('.msg-collapse-btn'), collapsed);
+            });
+    });
+
     window.toggleMessageCollapse = toggleMessage;
     window.togglePinnedCollapse = togglePinned;
     window.CollapseUI = {
         attachHistoryItem: attachHistoryItem,
         refreshMessage: refreshMessage,
         refreshPinned: refreshPinned,
+        isMessageCollapsed: isCollapsedId,
+        setMessageCollapsed: setMessageCollapsed,
         enhanceMessages: function (container) {
             enhanceAll(container || document, '.message, .dm-msg', enhanceMessage);
         }

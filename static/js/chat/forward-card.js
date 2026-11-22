@@ -219,6 +219,12 @@
         const row = document.createElement('div');
         row.className = 'forward-record-item'
             + (nested ? ' forward-record-item-nested' : '');
+        const itemId = String((item && item.id) || '').trim();
+        if (itemId) row.dataset.id = itemId;
+        if (itemId && window.CollapseUI
+            && window.CollapseUI.isMessageCollapsed(itemId)) {
+            row.classList.add('forward-record-item-collapsed');
+        }
         const meta = metaRow(item, nested ? null : index);
         if (meta.childNodes.length) row.appendChild(meta);
         const body = document.createElement('div');
@@ -275,6 +281,9 @@
             row.classList.toggle('forward-record-item-collapsed', collapsed);
             const delta = row.getBoundingClientRect().top - before;
             if (scroller && delta) scroller.scrollTop += delta;
+            if (itemId && window.CollapseUI) {
+                window.CollapseUI.setMessageCollapsed(itemId, collapsed);
+            }
         }
         collapseBtn.addEventListener('click', toggleCollapse);
         preview.addEventListener('click', toggleCollapse);
@@ -287,6 +296,7 @@
             else sender.appendChild(collapseBtn);
         } else {
             if (!meta.parentNode) row.appendChild(meta);
+            meta.appendChild(collapseBtn);
             meta.appendChild(tools);
         }
         row.appendChild(body);
@@ -372,6 +382,19 @@
             });
             body.scrollTop = 0;
         }
+        function onCollapseSync(ev) {
+            const detail = (ev && ev.detail) || {};
+            const id = String(detail.id || '').trim();
+            if (!id) return;
+            const collapsed = !!detail.collapsed;
+            body.querySelectorAll('.forward-record-item[data-id]')
+                .forEach(function (row) {
+                    if (row.dataset.id !== id) return;
+                    row.classList.toggle(
+                        'forward-record-item-collapsed', collapsed);
+                });
+        }
+        document.addEventListener('chat:message-collapse', onCollapseSync);
         function push(next) {
             if (!normalize(next).length) return;
             stack.push(next);
@@ -399,6 +422,7 @@
         }
         function close() {
             document.removeEventListener('keydown', onKey);
+            document.removeEventListener('chat:message-collapse', onCollapseSync);
             closeOverlay(overlay);
         }
         backBtn.addEventListener('click', pop);

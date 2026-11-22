@@ -3,7 +3,7 @@
     function isAtBottom() {
         const l = document.getElementById('messageList');
         if (!l) return true;
-        return Math.abs(l.scrollTop) <= 60;
+        return Math.abs(l.scrollTop) <= 4;
     }
     let _newMsgCount = 0;
     let _banner = null;
@@ -151,7 +151,7 @@
     function captureScrollAnchor(scroller) {
         if (!scroller) return null;
         const box = scroller.getBoundingClientRect();
-        const items = scroller.querySelectorAll('[data-id]');
+        const items = scroller.querySelectorAll('.message[data-id], .dm-msg[data-id]');
         for (const el of items) {
             const rect = el.getBoundingClientRect();
             if (rect.bottom > box.top && rect.top < box.bottom) {

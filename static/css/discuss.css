@@ -48,11 +48,17 @@
 .msg-avatar { width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
   display: flex; align-items: center; justify-content: center;
   color: #fff; font-weight: 600; }
-.msg-collapse-avatar-btn { width: 36px; padding: 2px 0; font-size: 11px;
-  line-height: 1.35; border: 1px solid #e0e0e0; border-radius: 4px;
-  background: #fff; color: #888; cursor: pointer; }
-.msg-collapse-avatar-btn:hover { border-color: #1890ff; color: #1890ff;
-  background: #e6f7ff; }
+.msg-collapse-btn.msg-collapse-avatar-btn { width: 36px; flex: 1 1 auto;
+  min-height: 22px; padding: 6px 0; font-size: 0; line-height: 1;
+  border: 0; border-radius: 6px; background: transparent;
+  color: transparent; cursor: pointer; display: flex; align-items: center;
+  justify-content: center; position: relative; }
+.msg-collapse-btn.msg-collapse-avatar-btn::before {
+  content: ''; width: 16px; height: 22px; background-color: #d6d6d6;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='22' viewBox='0 0 16 22'%3E%3Cpath d='M2.5 8.5 8 3l5.5 5.5M2.5 14.5 8 9l5.5 5.5M2.5 20.5 8 15l5.5 5.5' fill='none' stroke='%23000' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='22' viewBox='0 0 16 22'%3E%3Cpath d='M2.5 8.5 8 3l5.5 5.5M2.5 14.5 8 9l5.5 5.5M2.5 20.5 8 15l5.5 5.5' fill='none' stroke='%23000' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/contain no-repeat; }
+.msg-collapse-btn.msg-collapse-avatar-btn:hover { background: #f0f7ff; }
+.msg-collapse-btn.msg-collapse-avatar-btn:hover::before { background-color: #1890ff; }
 .message.msg-collapsed .msg-collapse-avatar-btn { display: none; }
 .msg-collapse-preview[data-action] { cursor: pointer; }
 .msg-collapse-preview[data-action]:hover { color: #1890ff; }
@@ -255,7 +261,7 @@ html[data-theme="dark"] .loading-older { color: #666; }
 .reaction-tabs { display: flex; gap: 2px; overflow-x: auto;
   padding-bottom: 2px; scrollbar-width: thin; }
 .reaction-tab { background: none; border: none; cursor: pointer;
-  color: #666; font-size: 12px; line-height: 1; padding: 4px 8px;
+  color: #666; font-size: 12px; line-height: 1; padding: 4px 6px;
   border-radius: 6px; white-space: nowrap; }
 .reaction-tab:hover { background: #f0f7ff; color: #1890ff; }
 .reaction-tab.active { background: #e6f7ff; color: #1890ff; }

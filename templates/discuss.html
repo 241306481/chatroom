@@ -87,7 +87,8 @@
       {% if messages and messages.length %}
         {% for msg in messages | reverse %}
           <div class="message {% if msg.pinned %}pinned{% endif %} {% if msg.is_system %}system-msg{% endif %} {% if msg.revoked %}revoked-msg{% endif %}"
-               data-id="{{ msg.id }}" {% if msg.reply_to %}data-reply-to="{{ msg.reply_to }}"{% endif %} id="msg-{{ msg.id }}">
+               data-id="{{ msg.id }}" data-user-id="{{ msg.user_id }}"
+               {% if msg.reply_to %}data-reply-to="{{ msg.reply_to }}"{% endif %} id="msg-{{ msg.id }}">
             {% if can_pin or can_delete_any or can_delete_own or can_send %}
               <input type="checkbox" class="msg-check" data-msg-check
                      value="{{ msg.id }}" aria-label="选择消息">

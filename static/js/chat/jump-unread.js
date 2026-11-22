@@ -17,6 +17,10 @@
         const els = messageEls();
         return els.length ? els[0].dataset.id : '';
     }
+    function isOwn(el) {
+        const me = String(window.MY_UID || '');
+        return !!me && String(el.dataset.userId || '') === me;
+    }
     function findUnread() {
         const last = readLast();
         if (!last) return null;
@@ -24,12 +28,25 @@
         if (!els.length) return null;
         const idx = els.findIndex(el => el.dataset.id === last);
         if (idx === 0) return null;
-        if (idx > 0) return els[idx - 1];
-        return els[els.length - 1];
+        if (idx > 0) {
+            for (let i = idx - 1; i >= 0; i--) {
+                if (!isOwn(els[i])) return els[i];
+            }
+            return null;
+        }
+        for (let i = els.length - 1; i >= 0; i--) {
+            if (!isOwn(els[i])) return els[i];
+        }
+        return null;
     }
     function unreadCount(firstUnread) {
-        const idx = messageEls().indexOf(firstUnread);
-        return idx >= 0 ? idx + 1 : 0;
+        const els = messageEls();
+        const idx = els.indexOf(firstUnread);
+        return idx >= 0
+            ? els.slice(0, idx + 1).filter(function (el) {
+                return !isOwn(el);
+            }).length
+            : 0;
     }
     const initialUnread = findUnread();
     let trackedUnread = initialUnread;

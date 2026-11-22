@@ -7,6 +7,8 @@
         const editBox = inner.querySelector('.msg-edit-box');
         const editTop = editBox ? editBox.getBoundingClientRect().top : 0;
         const atBottom = !R.isAtBottom || R.isAtBottom();
+        const scrollTop = list.scrollTop;
+        const scrollHeight = list.scrollHeight;
         const anchor = !atBottom && R.captureScrollAnchor
             ? R.captureScrollAnchor(list) : null;
         const empty = inner.querySelector('.empty');
@@ -17,6 +19,9 @@
         } else if (editBox) {
             const delta = editBox.getBoundingClientRect().top - editTop;
             if (delta) list.scrollTop += delta;
+        } else if (!atBottom) {
+            const grew = list.scrollHeight - scrollHeight;
+            if (grew) list.scrollTop = scrollTop - grew;
         }
         if (window.MessageBatch && window.MessageBatch.refresh) {
             window.MessageBatch.refresh();

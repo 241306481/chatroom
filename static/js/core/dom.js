@@ -502,11 +502,13 @@ window.toggleSource = function (btn) {
         if (window.ChatForwardCard) window.ChatForwardCard.enhance(el);
         btn.textContent = '📄';
         btn.title = '查看源码';
+        btn.setAttribute('aria-label', btn.title);
     } else {
         el.textContent = raw;
         el.dataset.mode = 'source';
-        btn.textContent = '👁';
+        btn.textContent = '👁️';
         btn.title = '查看渲染';
+        btn.setAttribute('aria-label', btn.title);
         let copyEl = el.querySelector('.source-copy-btn');
         if (!copyEl) {
             copyEl = document.createElement('button');

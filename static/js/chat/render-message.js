@@ -16,6 +16,7 @@
         if (msg.is_system) div.classList.add('system-msg');
         if (msg.revoked) div.classList.add('revoked-msg');
         div.dataset.id = msg.id;
+        div.dataset.userId = msg.user_id == null ? '' : String(msg.user_id);
         if (msg.id) div.id = 'msg-' + msg.id;
         if (msg.reply_to) div.dataset.replyTo = msg.reply_to;
         const canPin = window.__CAN_PIN__ === true;
