@@ -1,6 +1,7 @@
 (function () {
     function draftEnabled() {
-        return /^\/messages(?:$|\/|\?)/.test(location.pathname + location.search)
+        return /^\/(?:domain\/[^/]+\/)?messages(?:$|\/|\?)/.test(
+            location.pathname + location.search)
             || /\/discuss\//.test(location.pathname);
     }
     function draftKey(ta) {

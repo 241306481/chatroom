@@ -1,8 +1,10 @@
 window.MY_UID = window.__CURRENT_UID__ || '';
 window.userProfileUrl = function (uid) {
     const domain = window.__DOMAIN__ || '';
-    return (domain ? '/domain/' + encodeURIComponent(domain) : '')
-        + '/user/' + encodeURIComponent(uid);
+    const prefix = typeof window.__DOMAIN_PREFIX__ === 'string'
+        ? window.__DOMAIN_PREFIX__
+        : (domain ? '/domain/' + encodeURIComponent(domain) : '');
+    return prefix + '/user/' + encodeURIComponent(uid);
 };
 window.esc = function (s) {
     return String(s == null ? '' : s)
@@ -21,6 +23,7 @@ const BLOCKED_TAGS = ['script', 'iframe', 'object', 'embed', 'link', 'meta', 'st
     'noscript', 'template'];
 const BLOCKED_SELECTOR = BLOCKED_TAGS.join(',');
 const INLINE_PARENTS = 'p, li, td, th, summary, h1, h2, h3, h4, h5, h6';
+const INLINE_HTML_START_RE = /^<(?:a|abbr|audio|b|bdi|bdo|br|cite|code|data|del|dfn|em|i|img|input|ins|kbd|label|mark|meter|output|picture|progress|q|rp|rt|ruby|s|samp|small|source|span|strong|sub|sup|time|track|u|var|video|wbr)\b/i;
 function normalizeUrlForSchemeCheck(value) {
     return String(value == null ? '' : value)
         .replace(/[\u0000-\u0020\u00a0\u2028\u2029\ufeff]/g, '');
@@ -385,6 +388,17 @@ document.addEventListener('click', function (e) {
     const code = box.querySelector('code');
     window.copyToClipboard(code ? code.textContent : box.textContent, btn);
 });
+function unwrapInlineHtmlParagraph(container, source) {
+    const first = container.firstElementChild;
+    if (!first || first !== container.lastElementChild) return;
+    if (first.tagName !== 'P') return;
+    const raw = String(source == null ? '' : source).trim();
+    if (!INLINE_HTML_START_RE.test(raw)) return;
+    if (/\n\s*\n/.test(raw)) return;
+    const parent = first.parentNode;
+    while (first.firstChild) parent.insertBefore(first.firstChild, first);
+    parent.removeChild(first);
+}
 window.renderContent = function (text) {
     if (text == null) return '';
     text = String(text);
@@ -408,6 +422,7 @@ window.renderContent = function (text) {
     const tpl = document.createElement('template');
     tpl.innerHTML = html;
     const container = tpl.content;
+    unwrapInlineHtmlParagraph(container, processed);
     if (window.LuoguMarkdown) window.LuoguMarkdown.mergeTables(container);
     (function restoreMentions(root) {
         const walker = document.createTreeWalker(root, NodeFilter.SHOW_COMMENT, null);

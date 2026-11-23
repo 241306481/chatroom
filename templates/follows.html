@@ -43,7 +43,7 @@
             <td style="color:#999;">{{ u.bio or '—' }}</td>
             <td>
               {% if current_user and current_user.id and current_user.id != u.id %}
-                <a href="/messages?target={{ u.id }}" class="mini-btn">私信</a>
+                <a href="{{ domain_prefix }}/messages?target={{ u.id }}" class="mini-btn">私信</a>
                 {% if u.is_following %}
                   <form method="POST" action="{{ profile_prefix }}/user/{{ u.id }}/unfollow" style="display:inline">
                     <button type="submit" class="mini-btn">已关注</button>

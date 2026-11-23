@@ -36,7 +36,7 @@
     window.showDesktopNotification = function (opts) {
         if (!supported() || window.Notification.permission !== 'granted') return null;
         opts = opts || {};
-        if (!opts.force && !document.hidden) return null;
+        if (!opts.force && !document.hidden && document.hasFocus()) return null;
         const options = {
             body: String(opts.content || ''),
             tag: opts.tag || 'chatroom',

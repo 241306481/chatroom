@@ -14,11 +14,11 @@
   <nav class="sidebar-discussions">
     <h3>讨论</h3>
     {% if can_create_discuss %}
-      <a href="/domain/{{ domain_name }}/discuss" class="new-discuss-btn">+ 新建讨论</a>
+      <a href="{{ domain_prefix }}/discuss" class="new-discuss-btn">+ 新建讨论</a>
     {% endif %}
     {% if discussions and discussions.length %}
       {% for disc in discussions %}
-        <a href="/domain/{{ domain_name }}/discuss/{{ disc.id }}"
+        <a href="{{ domain_prefix }}/discuss/{{ disc.id }}"
            class="disc-item {% if disc.active %}active{% endif %}">
           {% if disc.pinned %}<span class="pinned-badge">置顶</span>{% endif %}
           <span class="disc-item-id">#{{ disc.id }}</span>
@@ -51,7 +51,7 @@
         <button type="button" class="msg-batch-toggle" id="batchToggleBtn">选择</button>
       {% endif %}
       {% if can_manage_discuss %}
-        <a href="/domain/{{ domain_name }}/manage/discussions" class="manage-link">管理</a>
+        <a href="{{ domain_prefix }}/manage/discussions" class="manage-link">管理</a>
       {% endif %}
       {% if can_delete_current_disc and discuss_name != 'general' %}
         <button type="button" class="delete-disc-btn" id="deleteDiscBtn"
@@ -174,7 +174,7 @@
               {% endif %}
               {% if msg.revoked %}
                 <div class="msg-content msg-revoked">
-                  <a class="revoked-nick" href="{% if domain_name %}/domain/{{ domain_name }}{% endif %}/user/{{ msg.revoked_by }}">{{ msg.revoked_by_nickname }}</a>
+                  <a class="revoked-nick" href="{% if domain_name %}{{ domain_prefix }}{% endif %}/user/{{ msg.revoked_by }}">{{ msg.revoked_by_nickname }}</a>
                   撤回了一条消息
                 </div>
               {% else %}
@@ -212,14 +212,14 @@
           {% if muted_until %}
             你已被禁言至 {{ muted_until }}
           {% elif not is_member %}
-            你还未加入此域，<a href="/domain/{{ domain_name }}/join">点此加入</a>
+            你还未加入此域，<a href="{{ domain_prefix }}/join">点此加入</a>
           {% else %}
             你没有发送消息的权限
           {% endif %}
         </div>
       {% else %}
         <div class="input-disabled">
-          请先 <a href="/login?return_to={{ ('/domain/' + domain_name + '/discuss/' + discuss_name) | urlencode }}">登录</a>
+          请先 <a href="/login?return_to={{ (domain_prefix + '/discuss/' + discuss_name) | urlencode }}">登录</a>
         </div>
       {% endif %}
   </main>
@@ -252,7 +252,7 @@
       {% endif %}
     </section>
     {{ file_sidebar(discuss_files, '📎 讨论文件',
-        '/domain/' + (domain_name | urlencode) + '/discuss/' + (discuss_name | urlencode) + '/files',
+        domain_prefix + '/discuss/' + (discuss_name | urlencode) + '/files',
         'discuss-file-sidebar') }}
     <section class="members-panel">
       <h3>
@@ -279,17 +279,19 @@
     {% endfor %}
   };
 window.deleteCurrentDiscussion = function () {
-    const dn = window.__DOMAIN__;
     const disc = window.__DISCUSS__;
     window.showConfirm('确定删除当前讨论？所有消息将丢失', { danger: true })
       .then(function (ok) {
         if (!ok) return;
-        return fetch('/domain/' + encodeURIComponent(dn) + '/discuss/'
-            + encodeURIComponent(disc) + '/delete', { method: 'POST' })
+        const path = '/discuss/' + encodeURIComponent(disc) + '/delete';
+        return fetch(window.domainUrl ? window.domainUrl(path) : path,
+            { method: 'POST' })
           .then(r => r.json())
           .then(res => {
             if (res.ok) {
-              location.href = '/domain/' + encodeURIComponent(dn) + '/discuss';
+              location.href = window.domainUrl
+                  ? window.domainUrl('/discuss')
+                  : '/domain/' + encodeURIComponent(dn) + '/discuss';
             } else {
               window.showAlert(res.error || '删除失败');
             }

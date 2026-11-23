@@ -1,16 +1,18 @@
 (function () {
+    function scoped(path) {
+        return window.domainUrl ? window.domainUrl(path) : path;
+    }
     function getUploadUrl(visibility) {
         const dn = window.__DOMAIN__;
         const disc = window.__DISCUSS__;
         const peer = document.body.dataset.dmTarget || '';
         if (disc) {
-            return '/domain/' + encodeURIComponent(dn) + '/discuss/'
-                + encodeURIComponent(disc) + '/files/upload';
+            return scoped('/discuss/' + encodeURIComponent(disc) + '/files/upload');
         }
         if (peer) {
             return '/messages/' + encodeURIComponent(peer) + '/files/upload';
         }
-        if (dn) return '/domain/' + encodeURIComponent(dn) + '/files/upload';
+        if (dn) return scoped('/files/upload');
         return '/myfile/upload'
             + (visibility === 'public' ? '?visibility=public' : '');
     }
@@ -21,9 +23,8 @@
         const uid = window.MY_UID || window.__CURRENT_UID__ || '';
         const origin = location.origin;
         if (disc) {
-            return origin + '/domain/' + encodeURIComponent(dn)
-                + '/discuss/' + encodeURIComponent(disc)
-                + '/file/' + encodeURIComponent(fileId);
+            return origin + scoped('/discuss/' + encodeURIComponent(disc)
+                + '/file/' + encodeURIComponent(fileId));
         }
         if (peer) {
             const lower = String(Math.min(Number(uid), Number(peer)) || uid);
@@ -33,7 +34,7 @@
                 + encodeURIComponent(higher) + '/'
                 + encodeURIComponent(fileId);
         }
-        if (dn) return origin + '/domain/' + encodeURIComponent(dn) + '/files/' + fileId;
+        if (dn) return origin + scoped('/files/' + fileId);
         return origin + '/myfile/' + encodeURIComponent(uid) + '/' + fileId;
     }
     function getThumbUrl(url) {

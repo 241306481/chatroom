@@ -1,6 +1,7 @@
 'use strict';
 const http = require('http');
 const https = require('https');
+const net = require('net');
 const crypto = require('crypto');
 const fs = require('fs');
 const os = require('os');
@@ -59,21 +60,54 @@ function configureServer(server) {
     });
     return server;
 }
+function redirectToHttps(req, res) {
+    const host = String(req.headers.host || (HOST + ':' + PORT));
+    const location = 'https://' + host + (req.url || '/');
+    res.writeHead(307, {
+        Location: location,
+        'Cache-Control': 'no-store',
+        'Content-Length': 0,
+    });
+    res.end();
+}
+function protocolMux(tlsServer, plainServer) {
+    const server = net.createServer(socket => {
+        socket.on('error', () => {});
+        socket.setTimeout(15000, () => socket.destroy());
+        socket.once('data', chunk => {
+            if (!chunk || !chunk.length) {
+                socket.destroy();
+                return;
+            }
+            socket.pause();
+            socket.unshift(chunk);
+            socket.setTimeout(0);
+            const first = chunk[0];
+            const isTls = first === 0x16 || first === 0x80;
+            (isTls ? tlsServer : plainServer).emit('connection', socket);
+            process.nextTick(() => socket.resume());
+        });
+    });
+    return server;
+}
 function createServer() {
     const cert = path.join(__dirname, 'cert.pem');
     const key = path.join(__dirname, 'key.pem');
     if (!fs.existsSync(cert) || !fs.existsSync(key)) {
-        return { server: configureServer(http.createServer(routes.handleRequest)), hasCert: false };
+        const server = configureServer(http.createServer(routes.handleRequest));
+        return { server, wsServer: server, hasCert: false };
     }
-    const server = https.createServer({
+    const httpsServer = configureServer(https.createServer({
         key: fs.readFileSync(key),
         cert: fs.readFileSync(cert),
         minVersion: 'TLSv1.2',
         honorCipherOrder: true,
         secureOptions: crypto.constants.SSL_OP_NO_RENEGOTIATION
             | crypto.constants.SSL_OP_NO_COMPRESSION,
-    }, routes.handleRequest);
-    return { server: configureServer(server), hasCert: true };
+    }, routes.handleRequest));
+    const httpServer = configureServer(http.createServer(redirectToHttps));
+    const server = protocolMux(httpsServer, httpServer);
+    return { server, wsServer: httpsServer, hasCert: true };
 }
 function getLanIp() {
     const interfaces = os.networkInterfaces();
@@ -97,6 +131,8 @@ function printBanner(hasCert) {
     if (!hasCert) {
         console.log('  Note    : cert.pem/key.pem 未找到，仅启用 HTTP/WS。');
         console.log('            运行 "npm run cert" 可生成自签名证书以启用 HTTPS/WSS。');
+    } else {
+        console.log('  HTTP    : 同一端口自动 307 跳转到 HTTPS');
     }
     console.log(RULE + '\n');
 }
@@ -114,10 +150,10 @@ async function main() {
     storage.ensureSystemDomain();
     storage.ensureSystemUser();
     await runStartupCheck();
-    const { server, hasCert } = createServer();
+    const { server, wsServer, hasCert } = createServer();
     require('./lib/ws-protocol').setWsProtocol(hasCert ? 'wss' : 'ws');
     backup.init();
-    registerShutdown(server, websocket.setup(server), {
+    registerShutdown(server, websocket.setup(wsServer), {
         beforeExit: () => { backup.stop(); return backup.runNow('关机'); },
     });
     server.on('error', handleServerError);

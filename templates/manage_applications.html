@@ -4,7 +4,7 @@
   <h1>加入申请 · {{ display_name }}</h1>
   {% if applications and applications.length %}
     <div class="batch-toolbar">
-      <form method="POST" action="/domain/{{ domain_name }}/manage/applications"
+      <form method="POST" action="{{ domain_prefix }}/manage/applications"
             class="batch-form" data-batch-form>
         <input type="hidden" name="ids" data-batch-ids>
         <input type="hidden" name="action" data-batch-action-field>
@@ -29,7 +29,7 @@
             <td class="user-table-message">{{ a.message }}</td>
             <td>{{ a.created_at }}</td>
             <td>
-              <form method="POST" action="/domain/{{ domain_name }}/manage/applications" style="display:inline">
+              <form method="POST" action="{{ domain_prefix }}/manage/applications" style="display:inline">
                 <input type="hidden" name="uid" value="{{ a.uid }}">
                 <button type="submit" name="action" value="approve">通过</button>
                 <button type="submit" name="action" value="reject"
@@ -43,6 +43,6 @@
   {% else %}
     <p class="empty">暂无待审批的申请</p>
   {% endif %}
-  <p style="margin-top:24px;"><a href="/domain/{{ domain_name }}/manage">← 返回域管理</a></p>
+  <p style="margin-top:24px;"><a href="{{ domain_prefix }}/manage">← 返回域管理</a></p>
 </div>
 {% endblock %}

@@ -18,7 +18,8 @@
         if (e.altKey && !e.ctrlKey && !e.metaKey) {
             if (e.key === 'm' || e.key === 'M') {
                 e.preventDefault();
-                location.href = '/messages';
+                location.href = window.domainUrl
+                    ? window.domainUrl('/messages') : '/messages';
                 return;
             }
             if (e.key === 'f' || e.key === 'F') {

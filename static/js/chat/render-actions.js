@@ -278,10 +278,13 @@
                 + encodeURIComponent(id) + '/history';
         }
         const m = location.pathname.match(/^\/domain\/([^/]+)\/discuss\/([^/]+)/);
-        if (!m) return '';
-        return '/domain/' + encodeURIComponent(decodeURIComponent(m[1]))
-            + '/discuss/' + encodeURIComponent(decodeURIComponent(m[2]))
+        const dn = m ? decodeURIComponent(m[1]) : (window.__DOMAIN__ || '');
+        const disc = m ? decodeURIComponent(m[2]) : (window.__DISCUSS__ || '');
+        if (!dn || !disc) return '';
+        const path = '/discuss/' + encodeURIComponent(disc)
             + '/messages/' + encodeURIComponent(id) + '/history';
+        if (window.domainUrl) return window.domainUrl(path);
+        return '/domain/' + encodeURIComponent(dn) + path;
     }
     function openHistory(versions) {
         const old = document.querySelector('.history-overlay');

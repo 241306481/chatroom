@@ -27,6 +27,11 @@
     function domainName() {
         return window.__DOMAIN__ || (document.body && document.body.dataset.domain) || '';
     }
+    function discussionHref(id) {
+        const path = '/discuss/' + encodeURIComponent(id);
+        if (window.domainUrl) return window.domainUrl(path);
+        return '/domain/' + encodeURIComponent(domainName()) + path;
+    }
     function compareDiscussions(a, b) {
         if (!!a.pinned !== !!b.pinned) return a.pinned ? -1 : 1;
         const aId = String(a.id);
@@ -90,7 +95,9 @@
                 more.style.borderTop = 'none';
                 more.style.color = '#1890ff';
                 const link = document.createElement('a');
-                link.href = '/domain/' + encodeURIComponent(domainName()) + '/users';
+                link.href = window.domainUrl
+                    ? window.domainUrl('/users')
+                    : '/domain/' + encodeURIComponent(domainName()) + '/users';
                 link.style.color = '#1890ff';
                 link.style.textDecoration = 'none';
                 link.textContent = '还有 ' + (total - 15) + ' 位成员 →';
@@ -132,10 +139,8 @@
         return homeItems;
     }
     function homeDiscussionCard(item) {
-        const dn = domainName();
         const card = document.createElement('a');
-        card.href = '/domain/' + encodeURIComponent(dn)
-            + '/discuss/' + encodeURIComponent(item.id);
+        card.href = discussionHref(item.id);
         card.className = 'discussion-card';
         card.dataset.discId = item.id;
         card.dataset.discTitle = item.title || '';
@@ -165,7 +170,9 @@
             items.slice(0, 5).forEach(item => fragment.appendChild(homeDiscussionCard(item)));
         }
         const more = document.createElement('a');
-        more.href = '/domain/' + encodeURIComponent(domainName()) + '/discuss';
+        more.href = window.domainUrl
+            ? window.domainUrl('/discuss')
+            : '/domain/' + encodeURIComponent(domainName()) + '/discuss';
         more.className = 'discussion-more';
         more.textContent = total > 5
             ? '还有 ' + (total - 5) + ' 个讨论… 查看全部' : '';
@@ -227,7 +234,6 @@
         return renderHomeDiscussions(items);
     }
     function discussRow(item) {
-        const dn = domainName();
         const wrap = document.createElement('div');
         wrap.className = 'discuss-row-wrap';
         wrap.dataset.discId = item.id;
@@ -235,8 +241,7 @@
         wrap.dataset.discCount = String(item.count || 0);
         wrap.dataset.discPinned = item.pinned ? '1' : '0';
         const link = document.createElement('a');
-        link.href = '/domain/' + encodeURIComponent(dn)
-            + '/discuss/' + encodeURIComponent(item.id);
+        link.href = discussionHref(item.id);
         link.className = 'discuss-row';
         const left = document.createElement('div');
         left.className = 'discuss-row-left';
@@ -272,16 +277,12 @@
         return wrap;
     }
     function updateDiscussRow(wrap, item) {
-        const dn = domainName();
         wrap.dataset.discId = item.id;
         wrap.dataset.discTitle = item.title || '';
         wrap.dataset.discCount = String(item.count || 0);
         wrap.dataset.discPinned = item.pinned ? '1' : '0';
         const link = wrap.querySelector('.discuss-row');
-        if (link) {
-            link.href = '/domain/' + encodeURIComponent(dn)
-                + '/discuss/' + encodeURIComponent(item.id);
-        }
+        if (link) link.href = discussionHref(item.id);
         let badge = wrap.querySelector('.pinned-badge');
         if (item.pinned && !badge) {
             badge = span('pinned-badge', '置顶');

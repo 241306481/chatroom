@@ -3,7 +3,7 @@
 <div class="page-container">
   <h1>加入设置 · {{ display_name }}</h1>
   <p class="hint">控制其他用户如何加入此域</p>
-  <form method="POST" action="/domain/{{ domain_name }}/manage/join" class="form-stack">
+  <form method="POST" action="{{ domain_prefix }}/manage/join" class="form-stack">
     <label class="radio-row">
       <input type="radio" name="join_policy" value="open" {% if join_policy == 'open' %}checked{% endif %}>
       <div>
@@ -27,6 +27,6 @@
     </label>
     <button type="submit" style="margin-top:12px;">保存</button>
   </form>
-  <p style="margin-top:24px;"><a href="/domain/{{ domain_name }}/manage">← 返回域管理</a></p>
+  <p style="margin-top:24px;"><a href="{{ domain_prefix }}/manage">← 返回域管理</a></p>
 </div>
 {% endblock %}

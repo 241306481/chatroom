@@ -24,7 +24,7 @@
   </div>
   {% if files and files.length %}
     <div class="batch-toolbar">
-      <form method="POST" action="/myfile/batch" class="batch-form" data-batch-form>
+      <form method="POST" action="{{ domain_prefix }}/myfile/batch" class="batch-form" data-batch-form>
         <input type="hidden" name="ids" data-batch-ids>
         <input type="hidden" name="action" data-batch-action-field>
         <input type="hidden" name="visibility">
@@ -44,7 +44,7 @@
                 data-batch-visibility="public">设为公开</button>
         <button type="submit" data-batch-action="visibility"
                 data-batch-visibility="private">设为隐藏</button>
-        <button type="submit" formaction="/myfile/batch/download"
+        <button type="submit" formaction="{{ domain_prefix }}/myfile/batch/download"
                 data-batch-action="download">批量下载</button>
         <button type="submit" data-batch-action="delete" class="danger"
                 data-confirm="确定删除选中的文件？">批量删除</button>
@@ -76,23 +76,23 @@
               <span class="file-name-editable"
                     data-file-id="{{ f.id }}"
                     data-value="{{ f.filename }}"
-                    data-rename-url="/myfile/{{ f.id }}/rename"
+                    data-rename-url="{{ domain_prefix }}/myfile/{{ f.id }}/rename"
                     data-action="inline-edit-filename">{{ f.filename }}</span>
             </td>
             <td>{{ f.size_str }}</td>
             <td>{{ f.created_at }}</td>
             <td>
-              <a href="/myfile/{{ current_user.id }}/{{ f.id }}"
+              <a href="{{ domain_prefix }}/myfile/{{ current_user.id }}/{{ f.id }}"
                  target="_blank" rel="noopener" class="file-action-btn">查看</a>
-              <a href="/myfile/{{ f.id }}/download" class="file-action-btn">下载</a>
+              <a href="{{ domain_prefix }}/myfile/{{ f.id }}/download" class="file-action-btn">下载</a>
               <button type="button" class="file-action-btn"
                       data-file-id="{{ f.id }}"
                       data-visibility="{{ f.visibility or 'private' }}"
                       data-action="toggle-file-visibility"
-                      data-action-url="/myfile/{{ f.id }}/visibility">
+                      data-action-url="{{ domain_prefix }}/myfile/{{ f.id }}/visibility">
                 {% if f.visibility == 'public' %}🔓 公开{% else %}🔒 隐藏{% endif %}
               </button>
-              <form method="POST" action="/myfile/{{ f.id }}/delete" style="display:inline">
+              <form method="POST" action="{{ domain_prefix }}/myfile/{{ f.id }}/delete" style="display:inline">
                 <button type="submit" class="file-action-btn danger"
                         data-confirm="确定删除此文件？">删除</button>
               </form>
@@ -112,7 +112,7 @@
 <script nonce="{{ csp_nonce }}">  window.addEventListener('DOMContentLoaded', function () {
     initUpload({
       inputId: 'fileInput',
-      uploadUrl: '/myfile/upload',
+      uploadUrl: '{{ domain_prefix }}/myfile/upload',
       maxMb: {{ max_file_size_mb | default(50) }}
     });
   });

@@ -95,7 +95,9 @@
         if (empty) empty.remove();
         const DOMAIN = window.__DOMAIN__ || '';
         const a = document.createElement('a');
-        a.href = '/domain/' + encodeURIComponent(DOMAIN) + '/discuss/' + id;
+        const path = '/discuss/' + id;
+        a.href = window.domainUrl ? window.domainUrl(path)
+            : '/domain/' + encodeURIComponent(DOMAIN) + path;
         a.className = 'disc-item';
         a.innerHTML = (pinned ? '<span class="pinned-badge">置顶</span>' : '')
             + '<span class="disc-item-id">#' + esc(id) + '</span>'

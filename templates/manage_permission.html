@@ -3,7 +3,7 @@
 <div class="page-container" style="max-width:1400px;">
   <h1>权限管理 · {{ domain_name }}</h1>
   <p class="hint">勾选各角色的权限，点击底部的「保存所有」按钮一次性提交</p>
-  <form method="POST" action="/domain/{{ domain_name }}/manage/permission"
+  <form method="POST" action="{{ domain_prefix }}/manage/permission"
         id="permForm" data-submit-action="syncPermForm">
     <table class="perm-matrix">
       <thead>
@@ -54,7 +54,7 @@
       <button type="submit" style="padding:10px 32px;background:#1890ff;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:15px;">
         💾 保存所有
       </button>
-      <a href="/domain/{{ domain_name }}/manage" style="margin-left:16px;">取消</a>
+      <a href="{{ domain_prefix }}/manage" style="margin-left:16px;">取消</a>
     </div>
   </form>
   <div style="margin-top:12px;font-size:12px;color:#888;">

@@ -81,7 +81,11 @@
             user_id: uid,
             no_flash: '1',
         }, fields));
-        fetch(location.pathname.replace(/\/discuss\/.*$/, '/manage/user'), {
+        const dn = window.__DOMAIN__ || '';
+        const manageUrl = dn
+            ? '/domain/' + encodeURIComponent(dn) + '/manage/user'
+            : '/manage/user';
+        fetch(manageUrl, {
             method: 'POST',
             body: body,
             credentials: 'same-origin',

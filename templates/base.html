@@ -51,36 +51,24 @@
     {% if domain_name and domain_name != "system" %}
       <span class="domain-badge">/ {{ display_name or domain_name }}</span>
       {% if nav and nav.is_logged_in and not nav.is_member and nav.join_policy != 'closed' %}
-        <a href="/domain/{{ domain_name }}/join" class="join-btn">+ 加入域</a>
+        <a href="{{ domain_prefix }}/join" class="join-btn">+ 加入域</a>
       {% endif %}
     {% endif %}
   </div>
   <nav class="topbar-nav">
-    {% if domain_name %}
-      {% set prefix = "/domain/" + domain_name %}
-    {% else %}
-      {% set prefix = "/domain/system" %}
-    {% endif %}
+    {% set prefix = domain_prefix | default('') %}
     <a href="{{ prefix }}/home">首页</a>
     <a href="{{ prefix }}/discuss">讨论</a>
     <a href="{{ prefix }}/files">文件</a>
-    {% if domain_name %}
-      <a href="/domain/{{ domain_name }}/users">成员</a>
-    {% else %}
-      <a href="/users">用户列表</a>
-    {% endif %}
-    {% if nav and nav.is_logged_in and domain_name and nav.can_manage_current %}
-      <a href="/domain/{{ domain_name }}/manage" class="nav-manage">管理域</a>
+    <a href="{{ prefix }}/users">成员</a>
+    {% if nav and nav.is_logged_in and domain_prefix and nav.can_manage_current %}
+      <a href="{{ domain_prefix }}/manage" class="nav-manage">管理域</a>
     {% endif %}
     {% if nav and nav.can_manage_system %}
       <a href="/manage" class="nav-manage">系统管理</a>
     {% endif %}
     {% if nav and nav.is_logged_in %}
-      {% if domain_name %}
-        <a href="/domain/{{ domain_name }}/mydomain">我的域</a>
-      {% else %}
-        <a href="/mydomain">我的域</a>
-      {% endif %}
+      <a href="{{ prefix }}/mydomain">我的域</a>
     {% endif %}
   </nav>
   <div class="topbar-actions">
@@ -110,15 +98,11 @@
             </div>
           </div>
           <div class="dropdown-divider"></div>
-          <a href="/messages">📧 私信{% if nav.unread_count and nav.unread_count > 0 %}<span class="badge-unread">{{ nav.unread_count }}</span>{% endif %}</a>
-          {% if domain_name %}
-            <a href="/domain/{{ domain_name }}/user/{{ current_user.id }}">👤 个人资料</a>
-          {% else %}
-            <a href="/user/{{ current_user.id }}">👤 个人资料</a>
-          {% endif %}
-          <a href="/settings/security">🔒 安全设置</a>
+          <a href="{{ prefix }}/messages" data-nav="messages">📧 私信{% if nav.unread_count and nav.unread_count > 0 %}<span class="badge-unread">{{ nav.unread_count }}</span>{% endif %}</a>
+          <a href="{{ prefix }}/user/{{ current_user.id }}">👤 个人资料</a>
+          <a href="{{ prefix }}/settings/security">🔒 安全设置</a>
           <button type="button" class="dropdown-button" id="desktopNotifyBtn">🔔 桌面通知</button>
-          <a href="/myfile">📁 我的文件</a>
+          <a href="{{ prefix }}/myfile">📁 我的文件</a>
           <div class="dropdown-divider"></div>
           <form method="POST" action="/logout" class="logout-form">
             <button type="submit" class="logout-link">↪ 退出登录</button>
@@ -127,9 +111,9 @@
       </div>
     {% else %}
       {% if discuss_name %}
-        {% set login_return = '/domain/' + domain_name + '/discuss/' + discuss_name %}
+        {% set login_return = domain_prefix + '/discuss/' + discuss_name %}
       {% elif domain_name %}
-        {% set login_return = '/domain/' + domain_name + '/home' %}
+        {% set login_return = domain_prefix + '/home' %}
       {% else %}
         {% set login_return = '' %}
       {% endif %}
@@ -148,6 +132,13 @@
 <div id="notificationContainer"></div>
 <script nonce="{{ csp_nonce }}">  window.__WS_PROTOCOL__ = {{ (ws_protocol or 'ws') | jsdump }};
   window.__DOMAIN__ = {{ (domain_name or '') | jsdump }};
+  window.__DOMAIN_PREFIX__ = {{ (domain_prefix or '') | jsdump }};
+  window.domainUrl = function (path) {
+    const p = String(path || '');
+    if (!p || p.charAt(0) !== '/' || !window.__DOMAIN_PREFIX__) return p;
+    if (p.indexOf('/domain/') === 0) return p;
+    return window.__DOMAIN_PREFIX__ + p;
+  };
   window.__DISCUSS__ = {{ (discuss_name or '') | jsdump }};
   window.__CURRENT_UID__ = {{ (current_user.id if current_user and current_user.id else '') | jsdump }};
   window.__UNREAD_COUNT__ = {{ (nav.unread_count if nav and nav.unread_count else 0) | jsdump }};

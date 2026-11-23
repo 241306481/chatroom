@@ -17,7 +17,7 @@
         {% for u in users %}
           <tr>
             <td>{{ u.id }}</td>
-            <td><a href="/user/{{ u.id }}">{{ u.nickname }}</a></td>
+            <td><a href="{{ domain_prefix }}/user/{{ u.id }}">{{ u.nickname }}</a></td>
             <td>
               {% for r in u.ips %}
                 <div style="font-size:12px;margin-bottom:6px;">

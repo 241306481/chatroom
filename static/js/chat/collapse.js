@@ -59,9 +59,15 @@
         }
         const before = anchor.getBoundingClientRect().top;
         fn();
-        const after = anchor.getBoundingClientRect().top;
-        const delta = after - before;
-        if (delta) container.scrollTop += delta;
+        const fix = function () {
+            if (!anchor.isConnected) return;
+            const after = anchor.getBoundingClientRect().top;
+            const delta = after - before;
+            if (delta) container.scrollTop += delta;
+        };
+        fix();
+        requestAnimationFrame(fix);
+        setTimeout(fix, 80);
     }
 
     function makeButton(cls, action, title) {

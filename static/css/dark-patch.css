@@ -27,6 +27,12 @@ html[data-theme="dark"] .profile-edit-btn {
 }
 html[data-theme="dark"] .profile-avatar { background: inherit; }
 html[data-theme="dark"] .profile-info h1 { color: #e0e0e0; }
+html[data-theme="dark"] .profile-status-badge.ban {
+  background: #3a1f1f; color: #ff7875; border-color: #5c2b2b;
+}
+html[data-theme="dark"] .profile-status-badge.mute {
+  background: #2a2410; color: #d4a72c; border-color: #5c4a12;
+}
 html[data-theme="dark"] .profile-info .uid { color: #888; }
 html[data-theme="dark"] .dm-policy-hint {
   background: #2a2a2a; color: #b0b0b0;

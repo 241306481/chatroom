@@ -240,7 +240,8 @@
                         R.scrollBottom();
                     }
                     if (window.MY_UID && data.message.user_id !== window.MY_UID
-                        && document.hidden && window.showDesktopNotification) {
+                        && (document.hidden || !document.hasFocus())
+                        && window.showDesktopNotification) {
                         const nick = data.message.nickname || '新消息';
                         window.showDesktopNotification({
                             title: nick,
@@ -316,8 +317,10 @@
                     break;
                 case 'discussion_updated': {
                     if (data.old_id && data.old_id === window.__DISCUSS__) {
-                        location.href = '/domain/' + encodeURIComponent(window.__DOMAIN__ || '')
-                            + '/discuss/' + encodeURIComponent(data.id);
+                        const path = '/discuss/' + encodeURIComponent(data.id);
+                        location.href = window.domainUrl
+                            ? window.domainUrl(path)
+                            : '/domain/' + encodeURIComponent(window.__DOMAIN__ || '') + path;
                         break;
                     }
                     R.updateDiscussionInSidebar(data.id, data.title, data.old_id, data.pinned);
@@ -336,8 +339,10 @@
                     if (data.id === window.__DISCUSS__) {
                         R.showToast('当前讨论已被删除');
                         setTimeout(function () {
-                            location.href = '/domain/' + encodeURIComponent(window.__DOMAIN__ || '')
-                                + '/discuss';
+                            const path = '/discuss';
+                            location.href = window.domainUrl
+                                ? window.domainUrl(path)
+                                : '/domain/' + encodeURIComponent(window.__DOMAIN__ || '') + path;
                         }, 1200);
                     }
                     break;

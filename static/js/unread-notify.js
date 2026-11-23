@@ -2,7 +2,7 @@
     const count = parseInt(window.__UNREAD_COUNT__ || '0', 10);
     if (!count || count <= 0) return;
     const path = location.pathname;
-    if (path.startsWith('/messages')) return;
+    if (/^\/(?:domain\/[^/]+\/)?messages(?:\/|$)/.test(path)) return;
     if (path.startsWith('/login') || path.startsWith('/register')) return;
     function fire() {
         if (typeof window.showNotification !== 'function') {
@@ -17,7 +17,8 @@
             tag: 'dm-unread',
             duration: 8000,
             onClick: function () {
-                location.href = '/messages';
+                location.href = window.domainUrl
+                    ? window.domainUrl('/messages') : '/messages';
             },
         });
     }

@@ -101,8 +101,10 @@ window.inlineEditId = function (el) {
             }).then(r => r.json()).then(res => {
                 if (!res.ok) { cb(false, res.error || '重命名失败'); return; }
                 if (res.unchanged) { cb(true); return; }
-                location.href = '/domain/' + encodeURIComponent(domain)
-                    + '/discuss/' + encodeURIComponent(res.new_id);
+                const path = '/discuss/' + encodeURIComponent(res.new_id);
+                location.href = window.domainUrl
+                    ? window.domainUrl(path)
+                    : '/domain/' + encodeURIComponent(domain) + path;
             }).catch(err => cb(false, '网络错误：' + err.message));
         },
     });

@@ -2,6 +2,16 @@
     function decodePart(v) {
         try { return decodeURIComponent(v); } catch (e) { return v; }
     }
+    function currentDiscuss() {
+        const m = location.pathname.match(/^\/domain\/([^/]+)\/discuss\/([^/]+)/);
+        if (m) {
+            return { domain: decodePart(m[1]), discuss: decodePart(m[2]) };
+        }
+        if (/^\/discuss\//.test(location.pathname) && window.__DOMAIN__) {
+            return { domain: window.__DOMAIN__, discuss: window.__DISCUSS__ || '' };
+        }
+        return null;
+    }
     function sourceOf(btn) {
         const dm = btn.closest ? btn.closest('.dm-msg') : null;
         if (dm) {
@@ -13,13 +23,13 @@
         }
         const message = btn.closest ? btn.closest('.message') : null;
         if (!message) return null;
-        const m = location.pathname.match(/^\/domain\/([^/]+)\/discuss\/([^/]+)/);
-        if (!m) return null;
+        const current = currentDiscuss();
+        if (!current) return null;
         return {
             type: 'discuss',
             id: btn.dataset.id,
-            domain: decodePart(m[1]),
-            discuss: decodePart(m[2]),
+            domain: current.domain,
+            discuss: current.discuss,
         };
     }
     function closeOverlay(overlay) {
@@ -308,8 +318,8 @@
             if (window.showToast) window.showToast('请先选择消息');
             return;
         }
-        const m = location.pathname.match(/^\/domain\/([^/]+)\/discuss\/([^/]+)/);
-        if (!m) {
+        const current = currentDiscuss();
+        if (!current) {
             if (window.showToast) window.showToast('当前页面不支持转发');
             return;
         }
@@ -319,8 +329,8 @@
             ids: list,
             batch: true,
             mode: mode === 'merge' ? 'merge' : 'split',
-            domain: decodePart(m[1]),
-            discuss: decodePart(m[2]),
+            domain: current.domain,
+            discuss: current.discuss,
         });
     };
 })();

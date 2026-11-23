@@ -35,7 +35,7 @@
             <td>{{ u.id }}</td>
             <td>
               {% if can_manage and not u.is_owner %}
-                <form method="POST" action="/domain/{{ domain_name }}/manage/user" style="display:inline">
+                <form method="POST" action="{{ domain_prefix }}/manage/user" style="display:inline">
                   <input type="hidden" name="action" value="grant">
                   <input type="hidden" name="user_id" value="{{ u.id }}">
                   <select name="role" data-auto-submit>
@@ -53,13 +53,13 @@
             <td>
               {% if can_mute and not u.is_owner %}
                 {% if u.muted_until %}
-                  <form method="POST" action="/domain/{{ domain_name }}/manage/user" style="display:inline">
+                  <form method="POST" action="{{ domain_prefix }}/manage/user" style="display:inline">
                     <input type="hidden" name="action" value="unmute">
                     <input type="hidden" name="user_id" value="{{ u.id }}">
                     <button type="submit">解除禁言</button>
                   </form>
                 {% else %}
-                  <form method="POST" action="/domain/{{ domain_name }}/manage/user" style="display:inline">
+                  <form method="POST" action="{{ domain_prefix }}/manage/user" style="display:inline">
                     <input type="hidden" name="action" value="mute">
                     <input type="hidden" name="user_id" value="{{ u.id }}">
                     <label style="display:inline-flex;align-items:center;gap:4px;">
@@ -72,19 +72,19 @@
               {% endif %}
               {% if can_kick and not u.is_owner and not is_system_domain %}
                 {% if u.banned %}
-                  <form method="POST" action="/domain/{{ domain_name }}/manage/user" style="display:inline">
+                  <form method="POST" action="{{ domain_prefix }}/manage/user" style="display:inline">
                     <input type="hidden" name="action" value="unban">
                     <input type="hidden" name="user_id" value="{{ u.id }}">
                     <button type="submit" class="file-action-btn">解封</button>
                   </form>
                 {% else %}
-                  <form method="POST" action="/domain/{{ domain_name }}/manage/user" style="display:inline">
+                  <form method="POST" action="{{ domain_prefix }}/manage/user" style="display:inline">
                     <input type="hidden" name="action" value="kick">
                     <input type="hidden" name="user_id" value="{{ u.id }}">
                     <button type="submit" class="file-action-btn danger"
                             data-confirm="确定踢出该成员？">踢出</button>
                   </form>
-                  <form method="POST" action="/domain/{{ domain_name }}/manage/user" class="ban-form">
+                  <form method="POST" action="{{ domain_prefix }}/manage/user" class="ban-form">
                     <input type="hidden" name="action" value="ban">
                     <input type="hidden" name="user_id" value="{{ u.id }}">
                     <input type="text" name="reason" placeholder="原因" class="ban-reason">
@@ -103,7 +103,7 @@
   {% else %}
     <p class="empty">暂无成员</p>
   {% endif %}
-  <p style="margin-top:24px;"><a href="/domain/{{ domain_name }}/manage">← 返回域管理</a></p>
+  <p style="margin-top:24px;"><a href="{{ domain_prefix }}/manage">← 返回域管理</a></p>
 </div>
 <script nonce="{{ csp_nonce }}">  (function () {
     function init() {

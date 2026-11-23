@@ -57,20 +57,23 @@
         const r = btn.getBoundingClientRect();
         const pw = picker.offsetWidth;
         const ph = picker.offsetHeight;
-        let left = r.left + window.scrollX + r.width / 2 - pw / 2;
-        const minLeft = window.scrollX + 8;
-        const maxLeft = window.scrollX + document.documentElement.clientWidth - pw - 8;
+        const vw = document.documentElement.clientWidth;
+        const vh = window.innerHeight;
+        let left = r.left + r.width / 2 - pw / 2;
+        const minLeft = 8;
+        const maxLeft = vw - pw - 8;
         if (left < minLeft) left = minLeft;
         if (left > maxLeft) left = maxLeft;
-        const spaceBelow = window.innerHeight - r.bottom;
+        const spaceBelow = vh - r.bottom;
         const spaceAbove = r.top;
         let top;
         if (spaceBelow >= ph + 12 || spaceBelow >= spaceAbove) {
-            top = r.bottom + window.scrollY + 4;
+            top = r.bottom + 4;
         } else {
-            top = r.top + window.scrollY - ph - 4;
+            top = r.top - ph - 4;
         }
-        if (top < window.scrollY + 8) top = window.scrollY + 8;
+        if (top + ph > vh - 8) top = vh - ph - 8;
+        if (top < 8) top = 8;
         picker.style.left = left + 'px';
         picker.style.top = top + 'px';
     }
@@ -102,6 +105,7 @@
             if (closeTimer) { clearTimeout(closeTimer); closeTimer = null; }
             document.removeEventListener('keydown', onKeydown);
             window.removeEventListener('resize', onResize);
+            window.removeEventListener('scroll', onScroll);
             if (picker.parentNode) picker.remove();
         };
         const onKeydown = function (ev) {
@@ -112,6 +116,9 @@
         };
         const onResize = function () {
             positionPicker(picker, btn);
+        };
+        const onScroll = function () {
+            teardown();
         };
         const openPickers = document.querySelectorAll('.reaction-picker');
         for (const el of openPickers) {
@@ -157,6 +164,10 @@
                     groupIndex = index;
                     page = 0;
                     render();
+                    const active = tabs.children[groupIndex];
+                    if (active && typeof active.focus === 'function') {
+                        active.focus({ preventScroll: true });
+                    }
                 });
                 tabs.appendChild(tab);
             });
@@ -203,6 +214,7 @@
         render();
         requestAnimationFrame(function () { positionPicker(picker, btn); });
         window.addEventListener('resize', onResize);
+        window.addEventListener('scroll', onScroll, { passive: true });
         document.addEventListener('keydown', onKeydown);
         closeTimer = setTimeout(function () {
             closeTimer = null;

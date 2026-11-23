@@ -25,7 +25,7 @@
     }
     function setUnreadTotal(value) {
         const total = Math.max(0, parseInt(value, 10) || 0);
-        document.querySelectorAll('a[href="/messages"]').forEach(function (a) {
+        document.querySelectorAll('a[data-nav="messages"], a[href$="/messages"]').forEach(function (a) {
             let badge = a.querySelector('.badge-unread');
             if (!total) {
                 if (badge) badge.remove();
@@ -208,7 +208,9 @@
             avatarExt: msg.from_avatar_ext || '',
             tag: 'dm-' + target,
             onClick: function () {
-                location.href = '/messages?target=' + encodeURIComponent(target);
+                location.href = window.domainUrl
+                    ? window.domainUrl('/messages?target=' + encodeURIComponent(target))
+                    : '/messages?target=' + encodeURIComponent(target);
             },
         });
     }
@@ -227,7 +229,9 @@
         };
         row = document.createElement('a');
         row.className = 'dm-conv';
-        row.href = '/messages?target=' + encodeURIComponent(target);
+        row.href = window.domainUrl
+            ? window.domainUrl('/messages?target=' + encodeURIComponent(target))
+            : '/messages?target=' + encodeURIComponent(target);
         row.dataset.uid = String(target);
         if (window.Avatar) {
             row.appendChild(window.Avatar.build(user, 'avatar-circle'));
@@ -485,7 +489,9 @@
         items.forEach(u => {
             const a = document.createElement('a');
             a.className = 'dm-search-item';
-            a.href = '/messages?target=' + encodeURIComponent(u.id);
+            a.href = window.domainUrl
+                ? window.domainUrl('/messages?target=' + encodeURIComponent(u.id))
+                : '/messages?target=' + encodeURIComponent(u.id);
             const av = window.Avatar
                 ? window.Avatar.build(u, 'avatar-circle')
                 : (function () {
@@ -580,6 +586,8 @@ function appendDM(msg, isMe) {
             ? window.ChatRender.buildDMMessageEl(Object.assign({}, msg, { is_me: !!isMe }))
             : null;
         if (!div) return null;
+        const emptyHint = inner.querySelector('.dm-empty-hint');
+        if (emptyHint) emptyHint.remove();
         inner.insertBefore(div, inner.firstElementChild);
         if (anchor && window.ChatRender.restoreScrollAnchor) {
             window.ChatRender.restoreScrollAnchor(list, anchor);

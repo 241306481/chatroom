@@ -8,7 +8,7 @@
     {% set cur = current_user.dm_policy or 'everyone' %}
     <details class="dm-settings">
       <summary>⚙ 私信设置</summary>
-      <form method="POST" action="/settings/security/dm_policy" class="dm-settings-form"
+      <form method="POST" action="{{ domain_prefix }}/settings/security/dm_policy" class="dm-settings-form"
             data-submit-action="submitDMPolicy">
         <label><input type="radio" name="dm_policy" value="everyone" {% if cur == 'everyone' %}checked{% endif %}> 所有人（拉黑的用户除外）</label>
         <label><input type="radio" name="dm_policy" value="mutual" {% if cur == 'mutual' %}checked{% endif %}> 互相关注的人与管理员</label>
@@ -25,7 +25,7 @@
     </div>
     {% if conversations and conversations.length %}
       {% for c in conversations %}
-        <a href="/messages?target={{ c.other }}"
+        <a href="{{ domain_prefix }}/messages?target={{ c.other }}"
            class="dm-conv {% if c.other == target %}active{% endif %}"
            data-uid="{{ c.other }}">
           <img class="avatar-circle avatar-img" src="{{ c | avatarSrc }}"
@@ -43,7 +43,7 @@
   <section class="dm-main">
     {% if target and target_user and target_user.id %}
       <div class="dm-main-header">
-        <a href="/user/{{ target_user.id }}" class="dm-user-link">
+        <a href="{{ domain_prefix }}/user/{{ target_user.id }}" class="dm-user-link">
           <img class="avatar-circle avatar-img" src="{{ target_user | avatarSrc }}"
                    alt="" loading="lazy"
                    {% if not (target_user | avatarSrc) %}style="display:none"{% endif %}>

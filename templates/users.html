@@ -30,7 +30,7 @@
               <span class="status-dot {% if u.online %}green{% else %}red{% endif %}"></span>
             </td>
             <td>
-              <a href="{% if domain_name %}/domain/{{ domain_name }}{% endif %}/user/{{ u.id }}" class="user-link">
+              <a href="{{ domain_prefix }}/user/{{ u.id }}" class="user-link">
                 <img class="user-avatar avatar-img" src="{{ u | avatarSrc }}"
                          alt="" loading="lazy"
                          {% if not (u | avatarSrc) %}style="display:none"{% endif %}>
@@ -61,24 +61,24 @@
             <td style="color:#999;">{{ u.bio or '—' }}</td>
             <td class="user-actions-cell">
               {% if current_user and current_user.id != u.id %}
-                <a href="/messages?target={{ u.id }}" class="mini-btn">私信</a>
+                <a href="{{ domain_prefix }}/messages?target={{ u.id }}" class="mini-btn">私信</a>
               {% endif %}
               {% if is_domain_view and not u.is_owner %}
                 {% if not u.banned and can_mute %}
-                  <form method="POST" action="/domain/{{ domain_name }}/manage/user" class="user-inline-form">
+                  <form method="POST" action="{{ domain_prefix }}/manage/user" class="user-inline-form">
                     <input type="hidden" name="action" value="mute">
                     <input type="hidden" name="user_id" value="{{ u.id }}">
-                    <input type="hidden" name="next" value="/domain/{{ domain_name }}/users">
+                    <input type="hidden" name="next" value="{{ domain_prefix }}/users">
                     <input type="number" name="minutes" value="60" min="1" style="width:50px;" title="禁言时间（分钟）">
                     <span>分钟</span>
                     <button type="submit" class="mini-btn">禁言</button>
                   </form>
                 {% endif %}
                 {% if can_kick and not is_system_domain %}
-                  <form method="POST" action="/domain/{{ domain_name }}/manage/user" class="user-inline-form">
+                  <form method="POST" action="{{ domain_prefix }}/manage/user" class="user-inline-form">
                     <input type="hidden" name="action" value="{% if u.banned %}unban{% else %}kick{% endif %}">
                     <input type="hidden" name="user_id" value="{{ u.id }}">
-                    <input type="hidden" name="next" value="/domain/{{ domain_name }}/users">
+                    <input type="hidden" name="next" value="{{ domain_prefix }}/users">
                     <button type="submit" class="mini-btn {% if not u.banned %}danger{% endif %}"
                             {% if not u.banned %}data-confirm="确定踢出该成员？"{% endif %}>{% if u.banned %}解封{% else %}踢出{% endif %}</button>
                   </form>

@@ -8,62 +8,62 @@
       <p class="empty">你没有这个域的任何管理权限。</p>
     {% endif %}
     {% if can_edit %}
-    <a href="/domain/{{ domain_name }}/manage/edit" class="manage-entry">
+    <a href="{{ domain_prefix }}/manage/edit" class="manage-entry">
       <h3>编辑域设置</h3>
       <p>修改显示名、公告等</p>
     </a>
     {% endif %}
     {% if can_discussions %}
-    <a href="/domain/{{ domain_name }}/manage/discussions" class="manage-entry">
+    <a href="{{ domain_prefix }}/manage/discussions" class="manage-entry">
       <h3>讨论管理</h3>
       <p>新建、删除讨论</p>
     </a>
     {% endif %}
     {% if can_role %}
-    <a href="/domain/{{ domain_name }}/manage/role" class="manage-entry">
+    <a href="{{ domain_prefix }}/manage/role" class="manage-entry">
       <h3>角色管理</h3>
       <p>创建自定义角色</p>
     </a>
     {% endif %}
     {% if can_permission %}
-    <a href="/domain/{{ domain_name }}/manage/permission" class="manage-entry">
+    <a href="{{ domain_prefix }}/manage/permission" class="manage-entry">
       <h3>权限管理</h3>
       <p>勾选各角色的权限</p>
     </a>
     {% endif %}
     {% if can_manage_users %}
-    <a href="/domain/{{ domain_name }}/manage/user" class="manage-entry">
+    <a href="{{ domain_prefix }}/manage/user" class="manage-entry">
       <h3>用户管理</h3>
       <p>分配角色、禁言、踢出</p>
     </a>
     {% endif %}
     {% if can_join %}
-    <a href="/domain/{{ domain_name }}/manage/join" class="manage-entry">
+    <a href="{{ domain_prefix }}/manage/join" class="manage-entry">
       <h3>加入设置</h3>
       <p>开放加入 / 审批 / 关闭</p>
     </a>
     {% endif %}
     {% if can_applications %}
-    <a href="/domain/{{ domain_name }}/manage/applications" class="manage-entry">
+    <a href="{{ domain_prefix }}/manage/applications" class="manage-entry">
       <h3>加入申请
         {% if pending_count > 0 %}<span class="badge-unread">{{ pending_count }}</span>{% endif %}
       </h3>
       <p>审批用户的加入申请</p>
     </a>
     {% endif %}
-    <a href="/domain/{{ domain_name }}/home" class="manage-entry">
+    <a href="{{ domain_prefix }}/home" class="manage-entry">
       <h3>返回域主页</h3>
       <p>查看域内容</p>
     </a>
     {% if domain.owner_id == (current_user.id or '') or (nav and nav.is_superuser) %}
-      <a href="/domain/{{ domain_name }}/manage/transfer" class="manage-entry"
+      <a href="{{ domain_prefix }}/manage/transfer" class="manage-entry"
          style="border-left-color:#faad14;">
         <h3 style="color:#faad14;">转让所有权</h3>
         <p>将域转让给其他成员</p>
       </a>
     {% endif %}
     {% if can_delete and domain_name != "system" %}
-      <a href="/domain/{{ domain_name }}/manage/delete" class="manage-entry" style="border-left-color:#ff4d4f;">
+      <a href="{{ domain_prefix }}/manage/delete" class="manage-entry" style="border-left-color:#ff4d4f;">
         <h3 style="color:#ff4d4f;">删除域</h3>
         <p>不可恢复，谨慎操作</p>
       </a>

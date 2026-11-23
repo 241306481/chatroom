@@ -4,7 +4,7 @@
   <h1>转让所有权 · {{ display_name }}</h1>
   <p class="hint">转让后你将变为管理员，且无法自行恢复所有权。请确认对方是可信成员。</p>
   {% if members and members.length %}
-    <form method="POST" action="/domain/{{ domain_name }}/manage/transfer" class="form-stack">
+    <form method="POST" action="{{ domain_prefix }}/manage/transfer" class="form-stack">
       <label>选择新所有者
         <select name="user_id" required>
           <option value="">— 请选择 —</option>
@@ -24,6 +24,6 @@
   {% else %}
     <p class="empty">没有其他成员可以转让</p>
   {% endif %}
-  <p style="margin-top:24px;"><a href="/domain/{{ domain_name }}/manage">← 返回域管理</a></p>
+  <p style="margin-top:24px;"><a href="{{ domain_prefix }}/manage">← 返回域管理</a></p>
 </div>
 {% endblock %}

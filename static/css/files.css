@@ -51,6 +51,9 @@
   border-radius: 6px; background: #fafafa; }
 .batch-form { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 .batch-count { font-size: 13px; color: #666; min-width: 72px; }
+.batch-all-label { display: inline-flex; align-items: center; gap: 4px;
+  font-size: 12px; color: #666; cursor: pointer; }
+.batch-all-label .batch-check { margin-right: 0; }
 .batch-form input[type="text"],
 .batch-form select { padding: 5px 7px; border: 1px solid #d9d9d9;
   border-radius: 4px; font-size: 12px; background: #fff; }

@@ -78,7 +78,8 @@ window.showToast = function (msg) {
     setTimeout(function () { t.remove(); }, 3000);
 };
 window.bumpUnreadBadge = function () {
-    const anchors = document.querySelectorAll('.topbar-actions a[href="/messages"]');
+    const anchors = document.querySelectorAll(
+        '.topbar-actions a[data-nav="messages"], .topbar-actions a[href$="/messages"]');
     anchors.forEach(a => {
         let badge = a.querySelector('.badge-unread');
         if (!badge) {

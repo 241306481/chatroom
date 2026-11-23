@@ -10,6 +10,13 @@
     <span class="profile-avatar" style="background: {{ target.avatar_color | avatarColor }}">{{ target.nickname | avatarText }}</span>
     <div class="profile-info">
       <h1>{{ target.nickname }}</h1>
+      {% if is_banned or domain_banned or is_muted %}
+        <div class="profile-status-badges">
+          {% if is_banned %}<span class="profile-status-badge ban">已封禁</span>{% endif %}
+          {% if domain_banned %}<span class="profile-status-badge ban">域内封禁</span>{% endif %}
+          {% if is_muted %}<span class="profile-status-badge mute">禁言中</span>{% endif %}
+        </div>
+      {% endif %}
       <div class="uid">UID: {{ target.id }}</div>
       <div class="profile-stats">
         <a href="{{ profile_prefix }}/user/{{ target.id }}/followers">
@@ -86,12 +93,9 @@
         </form>
       {% endif %}
     {% endif %}
-    <a href="/messages?target={{ target.id }}" class="profile-dm-btn">✉ 发送私信</a>
-    {% if nav and nav.can_manage_users %}
-      <a href="/manage/users?uid={{ target.id }}" class="profile-dm-btn">🛡 用户管理</a>
-    {% endif %}
-    {% if nav and nav.is_system_admin %}
-      <a href="/manage" class="profile-dm-btn">⚙ 系统管理</a>
+    <a href="{{ domain_prefix }}/messages?target={{ target.id }}" class="profile-dm-btn">✉ 发送私信</a>
+    {% if can_manage_domain_users %}
+      <a href="{{ domain_prefix }}/manage/user" class="profile-dm-btn">🛡 用户管理</a>
     {% endif %}
     {% if not is_me %}
       {% if is_blocked %}
