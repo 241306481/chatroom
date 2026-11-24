@@ -30,7 +30,9 @@
             <td>{{ u.nickname }}
               {% if u.is_owner %}<span class="badge owner">所有者</span>
               {% elif u.role == 'root' %}<span class="badge root">管理员</span>{% endif %}
-              {% if u.banned %}<span class="badge superuser">已封禁</span>{% endif %}
+              {% if u.is_banned %}<span class="badge tag-banned">已全域封禁</span>
+              {% elif u.banned %}<span class="badge superuser">已封禁</span>{% endif %}
+              {% if u.is_muted %}<span class="badge tag-muted">已禁言</span>{% endif %}
             </td>
             <td>{{ u.id }}</td>
             <td>
@@ -62,11 +64,9 @@
                   <form method="POST" action="{{ domain_prefix }}/manage/user" style="display:inline">
                     <input type="hidden" name="action" value="mute">
                     <input type="hidden" name="user_id" value="{{ u.id }}">
-                    <label style="display:inline-flex;align-items:center;gap:4px;">
-                      <input type="number" name="minutes" value="60" min="1" style="width:60px;">
-                      <span style="font-size:12px;color:#666;">分钟</span>
-                    </label>
-                    <button type="submit">禁言</button>
+                    <input type="hidden" name="minutes" data-duration-minutes value="60">
+                    <button type="submit" data-duration-action data-kind="mute"
+                            data-name="{{ u.nickname }}">禁言</button>
                   </form>
                 {% endif %}
               {% endif %}
@@ -84,14 +84,15 @@
                     <button type="submit" class="file-action-btn danger"
                             data-confirm="确定踢出该成员？">踢出</button>
                   </form>
-                  <form method="POST" action="{{ domain_prefix }}/manage/user" class="ban-form">
+                  <form method="POST" action="{{ domain_prefix }}/manage/user" class="ban-form"
+                        data-duration-form data-kind="ban">
                     <input type="hidden" name="action" value="ban">
                     <input type="hidden" name="user_id" value="{{ u.id }}">
-                    <input type="text" name="reason" placeholder="原因" class="ban-reason">
-                    <span style="font-size:11px;color:#888;">留空=永久</span>
-                    <input type="datetime-local" name="until_local" class="ban-until" title="留空 = 永久">
+                    <input type="hidden" name="until" data-duration-until>
+                    <input type="hidden" name="reason" data-duration-reason>
                     <button type="submit" class="file-action-btn danger"
-                            data-confirm="确定封禁该用户加入此域？">封禁</button>
+                            data-duration-action data-kind="ban"
+                            data-name="{{ u.nickname }}">封禁</button>
                   </form>
                 {% endif %}
               {% endif %}
@@ -105,31 +106,4 @@
   {% endif %}
   <p style="margin-top:24px;"><a href="{{ domain_prefix }}/manage">← 返回域管理</a></p>
 </div>
-<script nonce="{{ csp_nonce }}">  (function () {
-    function init() {
-      document.querySelectorAll('.ban-form').forEach(function (form) {
-        var input = form.querySelector('input[name="until_local"]');
-        if (!input) return;
-        var hidden = document.createElement('input');
-        hidden.type = 'hidden';
-        hidden.name = 'until';
-        hidden.value = '';
-        form.appendChild(hidden);
-        input.addEventListener('input', function () {
-          if (!input.value) { hidden.value = ''; return; }
-          try {
-            var d = new Date(input.value);
-            if (isNaN(d.getTime())) { hidden.value = ''; return; }
-            hidden.value = d.toISOString().replace(/\.\d{3}Z$/, 'Z');
-          } catch (e) { hidden.value = ''; }
-        });
-      });
-    }
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', init);
-    } else {
-      init();
-    }
-  })();
-</script>
 {% endblock %}

@@ -9,7 +9,8 @@
     <code>1.1.1-3.2</code>（范围）
   </p>
   <h2 style="margin-top:24px;">添加封禁</h2>
-  <form method="POST" action="/manage/ip_bans" data-native class="form-stack">
+  <form method="POST" action="/manage/ip_bans" data-native class="form-stack"
+        data-duration-form data-kind="ban" data-reason-prompt="0">
     <input type="hidden" name="action" value="add">
     {% if back %}<input type="hidden" name="back" value="{{ back }}">{% endif %}
     <label>IP 规则
@@ -19,11 +20,8 @@
     <label>原因
       <input type="text" name="reason" placeholder="可选，最多 200 字" maxlength="200">
     </label>
-    <label>到期时间（留空 = 永久）
-      <input type="datetime-local" name="until_local" data-until-local>
-      <input type="hidden" name="until" data-until-hidden>
-    </label>
-    <button type="submit" data-confirm="确定封禁该规则？封禁后该 IP 下的所有请求都会被拦截。">封禁</button>
+    <input type="hidden" name="until" data-duration-until>
+    <button type="submit" data-duration-action data-kind="ban">封禁</button>
   </form>
   <h2 style="margin-top:32px;">已封禁列表
     <span class="hint" style="font-weight:normal;">黄底为已过期的规则，不再生效</span>
@@ -49,19 +47,20 @@
             </td>
             <td>{{ item.reason or '—' }}</td>
             <td>
-              <form method="POST" action="/manage/ip_bans" data-native style="display:flex;gap:4px;align-items:center;">
+              <form method="POST" action="/manage/ip_bans" data-native
+                    data-duration-form data-kind="ban" data-reason-prompt="0">
                 <input type="hidden" name="action" value="set_until">
                 <input type="hidden" name="rule" value="{{ item.rule }}">
                 {% if back %}<input type="hidden" name="back" value="{{ back }}">{% endif %}
-                <input type="datetime-local" name="until_local" data-until-local style="font-size:12px;">
-<input type="hidden" name="until" data-until-hidden value="{{ item.until_local }}">
-                <button type="submit" class="file-action-btn">改时长</button>
+                <input type="hidden" name="until" data-duration-until>
+                <button type="submit" class="file-action-btn"
+                        data-duration-action data-kind="ban">改时长</button>
               </form>
               <div style="font-size:12px;color:#999;margin-top:2px;">
-                当前：{{ item.until or '永久' }}
+                当前：{% if item.until %}{{ item.until | fmtTime }}{% else %}永久{% endif %}
               </div>
             </td>
-            <td>{{ item.at }}</td>
+            <td>{{ item.at | fmtTime }}</td>
             <td>
               <form method="POST" action="/manage/ip_bans" data-native style="display:inline">
                 <input type="hidden" name="action" value="remove">
@@ -139,28 +138,6 @@
     }
     return '';
   };
-  document.querySelectorAll('[data-until-local]').forEach(function (input) {
-    var form = input.closest('form');
-    var hidden = form && form.querySelector('[data-until-hidden]');
-    if (!hidden) return;
-    var cur = hidden.value;
-    if (cur) {
-      var d = new Date(cur);
-      if (!isNaN(d.getTime())) {
-        var p = function (n) { return String(n).padStart(2, '0'); };
-        input.value = d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate())
-          + 'T' + p(d.getHours()) + ':' + p(d.getMinutes());
-      }
-    }
-    input.addEventListener('input', function () {
-      if (!input.value) { hidden.value = ''; return; }
-      try {
-        var d = new Date(input.value);
-        if (isNaN(d.getTime())) { hidden.value = ''; return; }
-        hidden.value = d.toISOString().replace(/\.\d{3}Z$/, 'Z');
-      } catch (e) { hidden.value = ''; }
-    });
-  });
 })();
 </script>
 {% endblock %}

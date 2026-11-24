@@ -461,6 +461,8 @@
         bubble.removeAttribute('data-mode');
         const copyBtn = bubble.querySelector('.source-copy-btn');
         if (copyBtn) copyBtn.remove();
+        const time = el.querySelector('.dm-time');
+        if (time && data.edited_at) time.textContent = window.formatTime(data.edited_at);
         let mark = el.querySelector('.dm-edited');
         if (!mark) {
             mark = document.createElement('button');
@@ -469,11 +471,10 @@
             mark.textContent = '已编辑';
             mark.dataset.action = 'show-message-history';
             mark.dataset.id = data.message_id;
-            const time = el.querySelector('.dm-time');
             if (time && time.parentNode) time.parentNode.insertBefore(mark, time.nextSibling);
             else el.querySelector('.dm-msg-header').appendChild(mark);
         }
-        mark.title = data.edited_at || '';
+        mark.title = data.edited_at ? window.formatTime(data.edited_at) : '';
         if (window.CollapseUI && window.CollapseUI.refreshMessage) {
             window.CollapseUI.refreshMessage(el);
         }

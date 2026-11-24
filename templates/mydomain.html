@@ -14,15 +14,22 @@
   {% if domains and domains.length %}
     <div class="domain-grid">
       {% for d in domains %}
-        <a class="domain-card" href="/domain/{{ d.name }}/home">
-          <h3>{{ d.display }}</h3>
-          <p>{{ d.announcement or '暂无公告' }}</p>
+        <div class="domain-card">
+          <a class="domain-card-title" href="/domain/{{ d.name }}/home">
+            <h3>{{ d.display }}</h3>
+          </a>
+          {% if d.announcement %}
+            <div class="domain-card-announcement announcement-content md-body"
+                 data-raw="{{ d.announcement | e }}"></div>
+          {% else %}
+            <p class="domain-card-empty">暂无公告</p>
+          {% endif %}
           {% if d.is_owner %}<span class="badge root">我创建的</span>{% endif %}
-        </a>
+        </div>
       {% endfor %}
     </div>
   {% else %}
-    <p class="empty">你还没有加入任何域，去 <a href="/search">搜索</a> 找找看</p>
+    <p class="empty">你还没有加入任何域，去 <a href="/search">搜索</a> 找找吧</p>
   {% endif %}
 </div>
 {% endblock %}

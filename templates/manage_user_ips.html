@@ -22,7 +22,7 @@
               {% for r in u.ips %}
                 <div style="font-size:12px;margin-bottom:6px;">
                   <code>{{ r.ip }}</code>
-                  <span style="color:#999;margin-left:8px;" title="{{ r.at }}">{{ r.at }}</span>
+                  <span style="color:#999;margin-left:8px;" data-local-title="{{ r.at }}">{{ r.at | fmtTime }}</span>
                   {% if r.banned %}<span class="tag-banned">已封禁</span>{% endif %}
                   {% if r.covered %}<span class="tag-warn">被通配规则覆盖</span>{% endif %}
                 </div>

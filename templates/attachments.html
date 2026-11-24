@@ -30,7 +30,7 @@
             </td>
             <td>{{ f.size_str }}</td>
             <td>{{ f.uploader_name }}</td>
-            <td>{{ f.created_at }}</td>
+            <td>{{ f.created_at | fmtTime }}</td>
             <td>
               <a class="file-action-btn" href="{{ f.url }}" target="_blank"
                  rel="noopener">查看</a>

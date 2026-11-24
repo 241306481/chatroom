@@ -80,7 +80,7 @@
                     data-action="inline-edit-filename">{{ f.filename }}</span>
             </td>
             <td>{{ f.size_str }}</td>
-            <td>{{ f.created_at }}</td>
+            <td>{{ f.created_at | fmtTime }}</td>
             <td>
               <a href="{{ domain_prefix }}/myfile/{{ current_user.id }}/{{ f.id }}"
                  target="_blank" rel="noopener" class="file-action-btn">查看</a>

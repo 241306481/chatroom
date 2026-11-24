@@ -233,19 +233,20 @@
                 bubble.removeAttribute('data-mode');
                 const copyBtn = bubble.querySelector('.source-copy-btn');
                 if (copyBtn) copyBtn.remove();
+                const time = el.querySelector('.msg-time');
+                if (time && editedAt) time.textContent = window.formatTime(editedAt);
                 let mark = el.querySelector('.msg-edited');
                 if (!mark) {
                     mark = document.createElement('button');
                     mark.type = 'button';
                     mark.className = 'msg-edited';
                     mark.textContent = '已编辑';
-                    const time = el.querySelector('.msg-time');
                     if (time && time.parentNode) time.parentNode.insertBefore(mark, time.nextSibling);
                     else el.querySelector('.msg-header').appendChild(mark);
                 }
                 mark.dataset.action = 'show-message-history';
                 mark.dataset.id = id;
-                mark.title = editedAt || '';
+                mark.title = editedAt ? window.formatTime(editedAt) : '';
                 if (window.CollapseUI && window.CollapseUI.refreshMessage) {
                     window.CollapseUI.refreshMessage(el);
                 }
@@ -320,7 +321,7 @@
             const meta = document.createElement('div');
             meta.className = 'history-meta';
             meta.textContent = (i === 0 ? '当前版本' : '历史版本 ' + (list.length - i))
-                + (v.edited_at ? ' · ' + v.edited_at : '');
+                + (v.edited_at ? ' · ' + window.formatTime(v.edited_at) : '');
             const content = document.createElement('div');
             content.className = 'history-content md-body';
             content.innerHTML = window.renderContent(v.content || '');
@@ -485,7 +486,7 @@
         const canPin = window.__CAN_PIN__ === true;
         const raw = msg ? (msg.content || '') : '';
         const nick = msg ? (msg.nickname || '') : '';
-        const createdAt = msg ? (msg.created_at || '') : '';
+        const createdAt = msg ? window.formatTime(msg.created_at) : '';
         item.innerHTML =
             '<div class="pinned-meta-top">' +
               '<span class="pinned-nick">' + esc(nick) + '</span>' +

@@ -84,8 +84,8 @@
                 <div class="msg-header">
                     <span class="msg-nick">${esc(msg.nickname)}</span>
                     ${msg.is_mod ? '<span class="badge mod">MOD</span>' : ''}
-                    <span class="msg-time">${esc(msg.created_at)}</span>
-                    ${msg.edited_at ? '<button type="button" class="msg-edited" data-action="show-message-history" data-id="' + escAttr(msg.id) + '" title="' + escAttr(msg.edited_at) + '">已编辑</button>' : ''}
+                    <span class="msg-time">${esc(window.formatTime(msg.edited_at || msg.created_at))}</span>
+                    ${msg.edited_at ? '<button type="button" class="msg-edited" data-action="show-message-history" data-id="' + escAttr(msg.id) + '" title="' + escAttr(window.formatTime(msg.edited_at)) + '">已编辑</button>' : ''}
                     <div class="msg-actions msg-actions-left">
                         ${replyBtn}
                         ${reactionBtn}
@@ -130,9 +130,9 @@
             + '<div class="dm-msg-body">'
               + '<div class="dm-msg-header">'
                 + '<span class="dm-nick">' + esc(nick) + '</span>'
-                + '<span class="dm-time">' + esc(msg.created_at) + '</span>'
+                + '<span class="dm-time">' + esc(window.formatTime(msg.edited_at || msg.created_at)) + '</span>'
                 + (msg.edited_at
-                    ? '<button type="button" class="dm-edited" data-action="show-message-history" data-id="' + escAttr(msg.id) + '" title="' + escAttr(msg.edited_at) + '">已编辑</button>'
+                    ? '<button type="button" class="dm-edited" data-action="show-message-history" data-id="' + escAttr(msg.id) + '" title="' + escAttr(window.formatTime(msg.edited_at)) + '">已编辑</button>'
                     : '')
                 + (isMe
                     ? (!msg.forwarded_from

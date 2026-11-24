@@ -9,15 +9,15 @@
   <p class="hint">封禁后该用户无法登录；管理员拥有系统管理权限</p>
   {% if users and users.length %}
     <div class="batch-toolbar">
-      <form method="POST" action="/manage/users/batch" class="batch-form" data-batch-form>
+      <form method="POST" action="/manage/users/batch" class="batch-form"
+            data-batch-form data-duration-form data-kind="ban" data-reason-prompt="0">
         <input type="hidden" name="ids" data-batch-ids>
         <input type="hidden" name="action" data-batch-action-field>
+        <input type="hidden" name="until" data-duration-until>
         <span class="batch-count" data-batch-count>已选 0 个</span>
         <input type="text" name="reason" placeholder="封禁原因">
-        <span style="font-size:11px;color:#888;">留空=永久</span>
-        <input type="datetime-local" name="until_local" style="font-size:12px;">
         <button type="submit" data-batch-action="ban"
-                data-confirm="封禁选中的用户？">批量封禁</button>
+                data-duration-action data-kind="ban">批量封禁</button>
         <button type="submit" data-batch-action="unban">批量解封</button>
       </form>
     </div>
@@ -87,7 +87,7 @@
             <td style="font-size:12px;color:#888;">
               {% if u.banned %}
                 {{ u.ban_reason }}<br>
-                {% if u.banned_until %}至 {{ u.banned_until }}{% else %}永久{% endif %}
+                {% if u.banned_until %}至 {{ u.banned_until | fmtTime }}{% else %}永久{% endif %}
               {% else %}—{% endif %}
             </td>
             <td>
@@ -102,16 +102,14 @@
                   </form>
                 {% else %}
                   <form method="POST" action="/manage/users/ban"
-                        style="display:inline-flex;gap:4px;align-items:center;">
+                        style="display:inline" data-duration-form data-kind="ban">
                     <input type="hidden" name="action" value="ban">
                     <input type="hidden" name="user_id" value="{{ u.id }}">
-                    <input type="text" name="reason" placeholder="原因"
-                           style="width:80px;padding:4px;font-size:12px;">
-                    <span style="font-size:11px;color:#888;">留空=永久</span>
-                    <input type="datetime-local" name="until_local"
-                           style="font-size:12px;width:150px;">
+                    <input type="hidden" name="until" data-duration-until>
+                    <input type="hidden" name="reason" data-duration-reason>
                     <button type="submit" class="file-action-btn danger"
-                            data-confirm="封禁该用户？">封禁</button>
+                            data-duration-action data-kind="ban"
+                            data-name="{{ u.nickname }}">封禁</button>
                   </form>
                 {% endif %}
               {% endif %}
@@ -125,32 +123,4 @@
   {% endif %}
   <p style="margin-top:16px;"><a href="/manage">← 返回系统管理</a></p>
 </div>
-<script nonce="{{ csp_nonce }}">  (function () {
-    function init() {
-      document.querySelectorAll('input[name="until_local"]').forEach(function (input) {
-        var hidden = input.form.querySelector('input[name="until"]');
-        if (!hidden) {
-          hidden = document.createElement('input');
-          hidden.type = 'hidden';
-          hidden.name = 'until';
-          hidden.value = '';
-          input.form.appendChild(hidden);
-        }
-        input.addEventListener('input', function () {
-          if (!input.value) { hidden.value = ''; return; }
-          try {
-            var d = new Date(input.value);
-            if (isNaN(d.getTime())) { hidden.value = ''; return; }
-            hidden.value = d.toISOString().replace(/\.\d{3}Z$/, 'Z');
-          } catch (e) { hidden.value = ''; }
-        });
-      });
-    }
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', init);
-    } else {
-      init();
-    }
-  })();
-</script>
 {% endblock %}

@@ -100,6 +100,9 @@
         if (user.is_owner) insertBadge('owner', '所有者');
         else if (user.role === 'root') insertBadge('root', '管理员');
         if (user.is_mod) insertBadge('mod', 'MOD');
+        if (user.is_banned) insertBadge('tag-banned', '已全域封禁');
+        else if (user.banned) insertBadge('tag-banned', '已封禁');
+        if (user.is_muted) insertBadge('tag-muted', '已禁言');
         ensureActions(row, user);
     }
     function createRow(user) {

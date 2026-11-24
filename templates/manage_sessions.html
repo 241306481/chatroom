@@ -27,7 +27,7 @@
           {% for s in detail.sessions %}
           <tr>
             <td><code>{{ s.sid }}</code></td>
-            <td>{{ s.created }}</td>
+            <td>{{ s.created | fmtTime }}</td>
             <td>{{ s.left }}</td>
             <td>
               {% for ip in s.ips %}<code>{{ ip }}</code>{% if not loop.last %}, {% endif %}{% endfor %}

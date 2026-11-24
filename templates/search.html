@@ -64,7 +64,7 @@
              href="/domain/{{ r.domain }}/discuss/{{ r.disc }}#msg-{{ r.msg_id }}">
             <div class="search-result-meta">
               <span>{{ r.nickname }}</span>
-              <span>{{ r.created_at }}</span>
+              <span>{{ r.created_at | fmtTime }}</span>
               <span class="search-result-loc">{{ r.domain }} / #{{ r.disc }}</span>
             </div>
             <div class="search-result-content">{{ r.content }}</div>

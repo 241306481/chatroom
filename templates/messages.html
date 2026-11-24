@@ -73,11 +73,11 @@
               <div class="dm-msg-body">
                 <div class="dm-msg-header">
                   <span class="dm-nick">{{ m.nickname }}</span>
-                  <span class="dm-time">{{ m.created_at }}</span>
+                  <span class="dm-time">{{ (m.edited_at or m.created_at) | fmtTime }}</span>
                   {% if m.edited_at %}
                     <button type="button" class="dm-edited"
                             data-action="show-message-history" data-id="{{ m.id }}"
-                            title="{{ m.edited_at }}">已编辑</button>
+                            data-local-title="{{ m.edited_at }}">已编辑</button>
                   {% endif %}
                   {% if m.is_me %}
                     {% if not m.forwarded %}

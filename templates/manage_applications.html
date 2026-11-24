@@ -27,7 +27,7 @@
             <td>{{ a.nickname }}</td>
             <td>{{ a.uid }}</td>
             <td class="user-table-message">{{ a.message }}</td>
-            <td>{{ a.created_at }}</td>
+            <td>{{ a.created_at | fmtTime }}</td>
             <td>
               <form method="POST" action="{{ domain_prefix }}/manage/applications" style="display:inline">
                 <input type="hidden" name="uid" value="{{ a.uid }}">

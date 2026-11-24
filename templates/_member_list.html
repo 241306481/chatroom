@@ -14,6 +14,9 @@
         <span class="badge root">管理员</span>
       {% endif %}
       {% if u.is_mod %}<span class="badge mod">MOD</span>{% endif %}
+      {% if u.is_banned %}<span class="badge tag-banned">已全域封禁</span>
+      {% elif u.banned %}<span class="badge tag-banned">已封禁</span>{% endif %}
+      {% if u.is_muted %}<span class="badge tag-muted">已禁言</span>{% endif %}
       {% if not u.is_owner %}
         <div class="member-actions" data-member-actions>
           {% if u.is_muted %}

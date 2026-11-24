@@ -57,12 +57,16 @@
   </div>
   <nav class="topbar-nav">
     {% set prefix = domain_prefix | default('') %}
+    {% set domain_base = prefix %}
+    {% if not domain_base and domain_name %}
+      {% set domain_base = '/domain/' + domain_name %}
+    {% endif %}
     <a href="{{ prefix }}/home">首页</a>
     <a href="{{ prefix }}/discuss">讨论</a>
     <a href="{{ prefix }}/files">文件</a>
     <a href="{{ prefix }}/users">成员</a>
-    {% if nav and nav.is_logged_in and domain_prefix and nav.can_manage_current %}
-      <a href="{{ domain_prefix }}/manage" class="nav-manage">管理域</a>
+    {% if nav and nav.is_logged_in and domain_name and nav.can_manage_current %}
+      <a href="{{ domain_base }}/manage" class="nav-manage">管理域</a>
     {% endif %}
     {% if nav and nav.can_manage_system %}
       <a href="/manage" class="nav-manage">系统管理</a>
@@ -165,6 +169,16 @@
   })();
 </script>
 <script nonce="{{ csp_nonce }}">  document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('time[data-local-time]').forEach(function (el) {
+        var iso = el.getAttribute('datetime') || '';
+        if (window.formatTime) el.textContent = window.formatTime(iso, { seconds: el.dataset.seconds === '1' });
+    });
+    document.querySelectorAll('[data-local-title]').forEach(function (el) {
+        if (window.formatTime) {
+            el.title = (el.dataset.localTitlePrefix || '')
+                + window.formatTime(el.dataset.localTitle);
+        }
+    });
     document.querySelectorAll('.announcement-content[data-raw]:not(.site-announcement-content), .pinned-content[data-raw]')
         .forEach(function (el) {
             if (el.dataset.rendered === '1') return;
@@ -286,6 +300,8 @@
 <script src="/static/js/file-visibility.js">
 </script>
 <script src="/static/js/batch-select.js">
+</script>
+<script src="/static/js/manage-actions.js">
 </script>
 <script src="/static/js/site-announcement.js">
 </script>

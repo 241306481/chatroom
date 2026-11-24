@@ -15,6 +15,24 @@ window.escAttr = function (s) {
         .replace(/&/g, '&amp;').replace(/"/g, '&quot;')
         .replace(/</g, '&lt;').replace(/>/g, '&gt;');
 };
+window.formatTime = function (value, opts) {
+    if (!value) return '';
+    const d = value instanceof Date ? value : new Date(value);
+    if (Number.isNaN(d.getTime())) return String(value);
+    const options = {
+        year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
+    };
+    if (opts && opts.seconds) options.second = '2-digit';
+    const parts = new Intl.DateTimeFormat('en-US', options).formatToParts(d);
+    const map = {};
+    parts.forEach(function (p) {
+        if (p.type !== 'literal') map[p.type] = p.value;
+    });
+    return map.year + '-' + map.month + '-' + map.day + ' '
+        + map.hour + ':' + map.minute
+        + (opts && opts.seconds ? ':' + map.second : '');
+};
 const DANGEROUS_SCHEME_RE = /^(?:javascript|data|vbscript):/i;
 const URL_ATTRS = ['href', 'src', 'xlink:href', 'action', 'formaction',
     'srcset', 'poster', 'data', 'background', 'cite', 'srcdoc'];
@@ -399,6 +417,24 @@ function unwrapInlineHtmlParagraph(container, source) {
     while (first.firstChild) parent.insertBefore(first.firstChild, first);
     parent.removeChild(first);
 }
+const INLINE_TEXT_TAGS = new Set([
+    'A', 'IMG', 'STRONG', 'EM', 'DEL', 'CODE', 'BR',
+]);
+function unwrapElementOnlyParagraphs(container) {
+    container.querySelectorAll('p').forEach(function (p) {
+        const children = Array.from(p.childNodes).filter(function (node) {
+            return !(node.nodeType === 3 && !node.nodeValue.trim());
+        });
+        if (!children.length) return;
+        if (!children.every(function (node) { return node.nodeType === 1; })) return;
+        if (children.some(function (node) { return INLINE_TEXT_TAGS.has(node.tagName); })) {
+            return;
+        }
+        const parent = p.parentNode;
+        children.forEach(function (node) { parent.insertBefore(node, p); });
+        parent.removeChild(p);
+    });
+}
 window.renderContent = function (text) {
     if (text == null) return '';
     text = String(text);
@@ -423,6 +459,7 @@ window.renderContent = function (text) {
     tpl.innerHTML = html;
     const container = tpl.content;
     unwrapInlineHtmlParagraph(container, processed);
+    unwrapElementOnlyParagraphs(container);
     if (window.LuoguMarkdown) window.LuoguMarkdown.mergeTables(container);
     (function restoreMentions(root) {
         const walker = document.createTreeWalker(root, NodeFilter.SHOW_COMMENT, null);

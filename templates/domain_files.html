@@ -87,7 +87,7 @@
             </td>
             <td>{{ f.size_str }}</td>
             <td>{% if f.uploader %}<a href="{{ domain_prefix }}/user/{{ f.uploader }}">{{ f.uploader_name }}</a>{% else %}{{ f.uploader_name }}{% endif %}</td>
-            <td>{{ f.created_at }}</td>
+            <td>{{ f.created_at | fmtTime }}</td>
             <td>
               <a href="{{ domain_prefix }}/files/{{ f.id }}"
                  target="_blank" rel="noopener" class="file-action-btn">查看</a>

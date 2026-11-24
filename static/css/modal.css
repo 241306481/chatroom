@@ -32,6 +32,20 @@
 .modal-btn-ok:hover { background: #40a9ff; border-color: #40a9ff; }
 .modal-btn-ok.danger { background: #ff4d4f; border-color: #ff4d4f; }
 .modal-btn-ok.danger:hover { background: #ff7875; border-color: #ff7875; }
+.duration-box { width: min(440px, calc(100vw - 32px)); }
+.duration-presets { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px; margin-top: 14px; }
+.duration-option { padding: 8px 6px; border: 1px solid #d9d9d9; border-radius: 6px;
+  background: #fff; color: #555; font: inherit; font-size: 13px; cursor: pointer; }
+.duration-option:hover { border-color: #91caff; color: #1677ff; }
+.duration-option.active { border-color: #1890ff; background: #e6f4ff; color: #1677ff; }
+.duration-custom { margin-top: 12px; }
+.duration-custom label,
+.modal-body > label { display: block; margin-top: 12px; font-size: 13px; color: #666; }
+.duration-custom .modal-input,
+.modal-body > label .modal-input { margin-top: 6px; }
+html[data-theme="dark"] .duration-option { background: #2a2a2a; border-color: #444; color: #ddd; }
+html[data-theme="dark"] .duration-option.active { background: #1e3a5f; border-color: #4da3ff; color: #8cc4ff; }
 
 .history-box { max-width: 620px; width: calc(100% - 32px); }
 .history-body { max-height: min(60vh, 480px); overflow-y: auto;

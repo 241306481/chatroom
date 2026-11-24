@@ -103,14 +103,15 @@
         });
     }
     window.muteMember = function (uid) {
-        window.showPrompt('禁言时长（分钟）', '60', { title: '禁言成员' }).then(function (mins) {
-            if (mins === null) return;
-            const minutes = Math.max(1, Math.min(43200, parseInt(mins, 10) || 60));
-            memberAction(uid, {
-                action: 'mute',
-                minutes: String(minutes),
-            }, '已禁言 ' + minutes + ' 分钟');
-        });
+        window.showDurationPicker({ kind: 'mute', message: '请选择禁言时长' })
+            .then(function (result) {
+                if (!result) return;
+                const minutes = Math.max(1, Math.min(43200, parseInt(result.minutes, 10) || 60));
+                memberAction(uid, {
+                    action: 'mute',
+                    minutes: String(minutes),
+                }, '已禁言 ' + minutes + ' 分钟');
+            });
     };
     window.unmuteMember = function (uid) {
         window.showConfirm('确定解除该成员的禁言？').then(function (ok) {

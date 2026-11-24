@@ -102,11 +102,11 @@
                 {% if msg.pinned %}<span class="pin-icon">📌</span>{% endif %}
                 <span class="msg-nick">{{ msg.nickname }}</span>
                 {% if msg.is_mod %}<span class="badge mod">MOD</span>{% endif %}
-                <span class="msg-time">{{ msg.created_at }}</span>
+                <span class="msg-time">{{ (msg.edited_at or msg.created_at) | fmtTime }}</span>
                 {% if msg.edited_at %}
                   <button type="button" class="msg-edited"
                           data-action="show-message-history" data-id="{{ msg.id }}"
-                          title="{{ msg.edited_at }}">已编辑</button>
+                          data-local-title="{{ msg.edited_at }}">已编辑</button>
                 {% endif %}
                 {% if can_add_reaction or can_delete_any or msg.user_id == current_user.id or can_pin
                       or nav.can_revoke_own or nav.can_revoke_any or can_send %}
@@ -210,7 +210,7 @@
       {% elif nav and nav.is_logged_in %}
         <div class="input-disabled">
           {% if muted_until %}
-            你已被禁言至 {{ muted_until }}
+            你已被禁言至 {{ muted_until | fmtTime }}
           {% elif not is_member %}
             你还未加入此域，<a href="{{ domain_prefix }}/join">点此加入</a>
           {% else %}
@@ -231,7 +231,7 @@
           <div class="pinned-item {% if pin.is_system %}system-pin{% endif %}" data-id="{{ pin.id }}">
             <div class="pinned-meta-top">
               <span class="pinned-nick">{{ pin.nickname }}</span>
-              <span class="pinned-time">{{ pin.created_at }}</span>
+              <span class="pinned-time">{{ pin.created_at | fmtTime }}</span>
               <button type="button" class="pinned-src-btn"
                       data-action="scroll-to-message" data-id="{{ pin.id }}"
                       title="定位原消息">↩</button>

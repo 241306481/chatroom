@@ -7,6 +7,11 @@
     const FENCE_RE = /^ {0,3}(`{3,}|~{3,})/;
     const TABLE_START_RE = /\|/;
     const TABLE_ALIGN_RE = /^\s*\|?\s*:?-{3,}/;
+    const VOID_HTML_TAGS = new Set([
+        'area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input',
+        'link', 'meta', 'param', 'source', 'track', 'wbr',
+    ]);
+    const HTML_BLOCK_START_RE = /^ {0,3}<([A-Za-z][\w:-]*)(?:\s[^>]*)?>/;
     const CALLOUTS = {
         info: { title: '提示' },
         success: { title: '成功' },
@@ -30,6 +35,29 @@
     }
     function rawTagClosed(line, tag) {
         return new RegExp('</' + tag + '>', 'i').test(line);
+    }
+    function htmlBlockAt(lines, start) {
+        const m = HTML_BLOCK_START_RE.exec(lines[start]);
+        if (!m) return null;
+        const tag = m[1].toLowerCase();
+        if (tag === 'br' || VOID_HTML_TAGS.has(tag)) {
+            return { end: start, html: lines[start] };
+        }
+        const openRe = new RegExp('<' + tag + '\\b', 'gi');
+        const closeRe = new RegExp('</' + tag + '\\s*>', 'gi');
+        const selfCloseRe = new RegExp('<' + tag + '\\b[^>]*\\/\\s*>', 'gi');
+        let depth = 0;
+        const html = [];
+        for (let i = start; i < lines.length; i++) {
+            const line = lines[i];
+            html.push(line);
+            const opens = (line.match(openRe) || []).length;
+            const selfCloses = (line.match(selfCloseRe) || []).length;
+            const closes = (line.match(closeRe) || []).length;
+            depth += opens - selfCloses - closes;
+            if (depth <= 0) return { end: i, html: html.join('\n') };
+        }
+        return null;
     }
     function closeAfterFence(lines, start, fence, closeRe) {
         let closed = false;
@@ -232,6 +260,12 @@
                 out.push(line);
                 continue;
             }
+            const htmlBlock = htmlBlockAt(lines, i);
+            if (htmlBlock) {
+                out.push(addBlock(blocks, token, htmlBlock.html));
+                i = htmlBlock.end;
+                continue;
+            }
             const leaf = FILE_LEAF_RE.exec(line);
             if (leaf) {
                 const named = leaf[1] === 'file';
@@ -290,11 +324,15 @@
         const blocks = [];
         const md = preprocess(text, blocks, token);
         let html = parseMarkdown(md);
+        const commentRe = new RegExp('<!--' + token + '_(\\d+)-->', 'g');
+        const wrappedRe = new RegExp(
+            '<p(?:\\s[^>]*)?>\\s*((?:<!--' + token + '_\\d+-->\\s*)+)</p>', 'g');
+        html = html.replace(wrappedRe, (all, inner) =>
+            inner.replace(commentRe, (m, i) => blocks[+i] || ''));
         let prev;
         do {
             prev = html;
-            const re = new RegExp('<!--' + token + '_(\\d+)-->', 'g');
-            html = html.replace(re, (all, i) => blocks[+i] || '');
+            html = html.replace(commentRe, (all, i) => blocks[+i] || '');
         } while (html !== prev);
         return html;
     }
