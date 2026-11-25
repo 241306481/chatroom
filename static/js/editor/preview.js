@@ -1,5 +1,5 @@
 window.EditorPreview = {
-    attach({ ta, preview, counter, lineNumbers, lineCount, wrapper }) {
+    attach({ root, ta, preview, counter, lineNumbers, lineCount, wrapper }) {
         let lastText = null;
         let lastStatsText = null;
         let lastStatsWidth = -1;
@@ -166,7 +166,15 @@ window.EditorPreview = {
             const text = ta.value;
             const lines = text.split('\n');
             if (lineCount) lineCount.textContent = String(lines.length);
-            if (counter) counter.textContent = String(text.length);
+            if (counter) {
+                const maxLength = root ? parseInt(root.dataset.maxLength, 10) || 0 : 0;
+                const bypass = !!root && root.dataset.limitBypass === '1';
+                const length = Array.from(text).length;
+                counter.textContent = maxLength && !bypass
+                    ? length + ' / ' + maxLength : String(length);
+                counter.classList.toggle('md-editor-counter-over',
+                    !!maxLength && !bypass && length > maxLength);
+            }
             if (!lineNumbers) return;
             const gutterWidth = Math.max(3.5, String(lines.length).length + 2.5) + 'ch';
             if (lineNumbers.style.width !== gutterWidth) lineNumbers.style.width = gutterWidth;

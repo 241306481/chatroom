@@ -413,6 +413,12 @@
             let content = ta.value.trim();
             if (extra) content = content ? content + '\n\n' + extra : extra;
             if (!content) return;
+            const lengthError = window.checkMessageLength
+                && window.checkMessageLength(content);
+            if (lengthError) {
+                if (window.showToast) window.showToast(lengthError);
+                return;
+            }
             _pendingDM = { target: String(target), content, at: Date.now() };
             socket.send(JSON.stringify({ type: 'dm_send', target, content }));
             ta.value = '';

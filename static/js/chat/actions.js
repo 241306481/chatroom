@@ -46,6 +46,14 @@
             let content = input.value.trim();
             if (extra) content = content ? content + '\n\n' + extra : extra;
             if (!content) return;
+            const lengthError = window.checkMessageLength
+                && window.checkMessageLength(content);
+            if (lengthError) {
+                if (window.ChatRender && window.ChatRender.showToast) {
+                    window.ChatRender.showToast(lengthError);
+                }
+                return;
+            }
             const payload = { type: 'message', content };
             const replyTo = window.ChatReply && window.ChatReply.state.id;
             if (replyTo) payload.reply_to = replyTo;

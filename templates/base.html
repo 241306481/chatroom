@@ -155,6 +155,16 @@
   window.__CAN_ADD_REACTION__ = {{ 'true' if can_add_reaction else 'false' }};
   window.__CAN_REVOKE_OWN__ = {{ 'true' if can_revoke_own else 'false' }};
   window.__CAN_REVOKE_ANY__ = {{ 'true' if can_revoke_any else 'false' }};
+  window.__MAX_MESSAGE_CHARS__ = {{ (max_message_chars or 0) | jsdump }};
+  window.__CAN_BYPASS_MESSAGE_LIMIT__ = {{ 'true' if can_bypass_message_limit else 'false' }};
+  window.checkMessageLength = function (content) {
+    if (window.__CAN_BYPASS_MESSAGE_LIMIT__) return '';
+    var max = parseInt(window.__MAX_MESSAGE_CHARS__, 10) || 0;
+    if (!max || typeof content !== 'string') return '';
+    var length = Array.from(content).length;
+    if (length <= max) return '';
+    return '消息不能超过 ' + max + ' 个字符（当前 ' + length + ' 个字符）';
+  };
 </script>
 <script nonce="{{ csp_nonce }}">  (function () {
     var target = location.pathname + location.search;

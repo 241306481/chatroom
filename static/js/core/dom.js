@@ -41,7 +41,6 @@ const BLOCKED_TAGS = ['script', 'iframe', 'object', 'embed', 'link', 'meta', 'st
     'noscript', 'template'];
 const BLOCKED_SELECTOR = BLOCKED_TAGS.join(',');
 const INLINE_PARENTS = 'p, li, td, th, summary, h1, h2, h3, h4, h5, h6';
-const INLINE_HTML_START_RE = /^<(?:a|abbr|audio|b|bdi|bdo|br|cite|code|data|del|dfn|em|i|img|input|ins|kbd|label|mark|meter|output|picture|progress|q|rp|rt|ruby|s|samp|small|source|span|strong|sub|sup|time|track|u|var|video|wbr)\b/i;
 function normalizeUrlForSchemeCheck(value) {
     return String(value == null ? '' : value)
         .replace(/[\u0000-\u0020\u00a0\u2028\u2029\ufeff]/g, '');
@@ -406,35 +405,6 @@ document.addEventListener('click', function (e) {
     const code = box.querySelector('code');
     window.copyToClipboard(code ? code.textContent : box.textContent, btn);
 });
-function unwrapInlineHtmlParagraph(container, source) {
-    const first = container.firstElementChild;
-    if (!first || first !== container.lastElementChild) return;
-    if (first.tagName !== 'P') return;
-    const raw = String(source == null ? '' : source).trim();
-    if (!INLINE_HTML_START_RE.test(raw)) return;
-    if (/\n\s*\n/.test(raw)) return;
-    const parent = first.parentNode;
-    while (first.firstChild) parent.insertBefore(first.firstChild, first);
-    parent.removeChild(first);
-}
-const INLINE_TEXT_TAGS = new Set([
-    'A', 'IMG', 'STRONG', 'EM', 'DEL', 'CODE', 'BR',
-]);
-function unwrapElementOnlyParagraphs(container) {
-    container.querySelectorAll('p').forEach(function (p) {
-        const children = Array.from(p.childNodes).filter(function (node) {
-            return !(node.nodeType === 3 && !node.nodeValue.trim());
-        });
-        if (!children.length) return;
-        if (!children.every(function (node) { return node.nodeType === 1; })) return;
-        if (children.some(function (node) { return INLINE_TEXT_TAGS.has(node.tagName); })) {
-            return;
-        }
-        const parent = p.parentNode;
-        children.forEach(function (node) { parent.insertBefore(node, p); });
-        parent.removeChild(p);
-    });
-}
 window.renderContent = function (text) {
     if (text == null) return '';
     text = String(text);
@@ -458,8 +428,6 @@ window.renderContent = function (text) {
     const tpl = document.createElement('template');
     tpl.innerHTML = html;
     const container = tpl.content;
-    unwrapInlineHtmlParagraph(container, processed);
-    unwrapElementOnlyParagraphs(container);
     if (window.LuoguMarkdown) window.LuoguMarkdown.mergeTables(container);
     (function restoreMentions(root) {
         const walker = document.createTreeWalker(root, NodeFilter.SHOW_COMMENT, null);

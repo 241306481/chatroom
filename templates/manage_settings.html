@@ -35,6 +35,13 @@
     <label>会话超时（小时）
       <input type="number" name="session_timeout_hours" value="{{ config.session_timeout_hours or 24 }}" min="1">
     </label>
+    <label>消息最大字数（字符）
+      <input type="number" name="max_message_chars" value="{{ max_message_chars }}"
+             min="1" max="{{ max_message_chars_limit }}">
+    </label>
+    <p class="hint" style="margin-top:-4px;">
+      默认 1000000。系统公告不受此限制；拥有「绕过消息字数上限」权限的用户不受限制。
+    </p>
     <hr style="margin:12px 0;border:none;border-top:1px solid #eee;">
     <label class="checkbox-row">
       <input type="checkbox" name="allow_username_change" {% if allow_username_change %}checked{% endif %}>

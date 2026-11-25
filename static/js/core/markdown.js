@@ -11,6 +11,18 @@
         'area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input',
         'link', 'meta', 'param', 'source', 'track', 'wbr',
     ]);
+    const HTML_BLOCK_TAGS = new Set([
+        'address', 'article', 'aside', 'base', 'basefont', 'blockquote',
+        'body', 'caption', 'center', 'col', 'colgroup', 'dd', 'details',
+        'dialog', 'dir', 'div', 'dl', 'dt', 'fieldset', 'figcaption',
+        'figure', 'footer', 'form', 'frame', 'frameset', 'h1', 'h2', 'h3',
+        'h4', 'h5', 'h6', 'head', 'header', 'hr', 'html', 'iframe',
+        'legend', 'li', 'link', 'main', 'menu', 'menuitem', 'nav',
+        'noframes', 'noscript', 'ol', 'optgroup', 'option', 'p', 'param',
+        'plaintext', 'pre', 'script', 'section', 'source', 'style',
+        'summary', 'table', 'tbody', 'td', 'template', 'textarea', 'tfoot',
+        'th', 'thead', 'title', 'tr', 'track', 'ul', 'xmp',
+    ]);
     const HTML_BLOCK_START_RE = /^ {0,3}<([A-Za-z][\w:-]*)(?:\s[^>]*)?>/;
     const CALLOUTS = {
         info: { title: '提示' },
@@ -40,6 +52,7 @@
         const m = HTML_BLOCK_START_RE.exec(lines[start]);
         if (!m) return null;
         const tag = m[1].toLowerCase();
+        if (!HTML_BLOCK_TAGS.has(tag)) return null;
         if (tag === 'br' || VOID_HTML_TAGS.has(tag)) {
             return { end: start, html: lines[start] };
         }
@@ -126,6 +139,18 @@
                     return task ? out.replace(/^<li>/, '<li class="task-list-item">') : out;
                 };
             }
+            const baseHtml = renderer.html;
+            renderer.html = function (html, block) {
+                if (block) {
+                    const m = /^ {0,3}<([A-Za-z][\w:-]*)/.exec(String(html || ''));
+                    const tag = m ? m[1].toLowerCase() : '';
+                    if (tag && !HTML_BLOCK_TAGS.has(tag)) {
+                        return '<p>' + inline(String(html || '').trim()) + '</p>\n';
+                    }
+                }
+                return typeof baseHtml === 'function'
+                    ? baseHtml.call(this, html, block) : html;
+            };
             opts.renderer = renderer;
         }
         const html = root.marked.parse(md, opts);

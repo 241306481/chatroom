@@ -141,6 +141,7 @@
   display: inline-flex; align-items: center; gap: 4px; }
 .md-editor-counter,
 .md-editor-line-count { color: #555; font-variant-numeric: tabular-nums; }
+.md-editor-counter-over { color: #d4380d; font-weight: 600; }
 .md-editor-sync { margin: 0; }
 .md-editor-submit { padding: 5px 18px; background: #1890ff; color: #fff;
   border: none; border-radius: 4px; cursor: pointer; font-size: 13px;

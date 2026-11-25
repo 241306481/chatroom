@@ -136,6 +136,12 @@
                 return;
             }
             if (val === raw.trim()) { close(); return; }
+            const lengthError = window.checkMessageLength
+                && window.checkMessageLength(val);
+            if (lengthError) {
+                if (window.showToast) window.showToast(lengthError);
+                return;
+            }
             save.disabled = true;
             let settled = false;
             let entry = null;
